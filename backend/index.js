@@ -9,7 +9,7 @@ router.use(express.urlencoded());
 
 router.get('/', async (req, res) => {
     const users = await db.users.findAll();
-    res.send(`It's a home page for api routes. Users: ${JSON.stringify(users)}`);
+    res.send(users);
 });
 
 module.exports = router;

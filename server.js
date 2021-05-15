@@ -3,11 +3,13 @@ const path = require('path');
 const express = require('express');
 const compression = require('compression');
 const morgan = require('morgan');
+const cors = require('cors');
 
 const normalizePort = port => parseInt(port, 10);
 const PORT = normalizePort(process.env.PORT || 4000);
 
 const app = express();
+const apiRoutes = require('./backend');
 const env = app.get('env');
 
 if (env === 'production') {
@@ -18,7 +20,8 @@ if (env === 'production') {
     app.use(morgan('dev'));
 }
 
-app.use('/api', require('./api'));
+app.use(cors());
+app.use('/api', apiRoutes);
 
 if (env === 'production') {
     app.use(express.static(path.resolve(__dirname, 'build')));
