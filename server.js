@@ -14,22 +14,26 @@ if (env === 'production') {
     app.disable('x-powered-by');
     app.use(compression());
     app.use(morgan('common'));
+} else {
+    app.use(morgan('dev'));
+}
 
+app.use('/api', require('./api'));
+
+if (env === 'production') {
     app.use(express.static(path.resolve(__dirname, 'build')));
 
     app.get('/*', (req, res) => {
         res.sendFile(path.resolve(__dirname, 'build', 'index.html'));
     });
-} else {
-    app.use(morgan('dev'));
 }
 
-const server = createServer(app)
+const server = createServer(app);
 
 server.listen(PORT, err => {
     if (err) {
         throw err;
     }
 
-    console.log(`Sever is listening on port ${PORT}`)
-})
+    console.log(`Sever is listening on port ${PORT}`);
+});
