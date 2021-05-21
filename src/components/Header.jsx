@@ -1,10 +1,16 @@
 import React from 'react';
 import styled from "styled-components";
 import {Link, useHistory} from "react-router-dom";
+
 import {Grid} from "@material-ui/core";
+import Hidden from "@material-ui/core/Hidden";
+import IconButton from "@material-ui/core/IconButton";
+import MenuIcon from '@material-ui/icons/Menu';
 
 import Logo from "./Logo";
 import {PRIMARY_COLOR} from "../utils/constants";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
 
 const Container = styled(Grid)`
     max-width: 1280px; 
@@ -17,6 +23,11 @@ const MenuLink = styled(Link)`
     text-decoration: none;
 `;
 
+const DropdownMenuItem = styled(MenuItem)`
+    color: ${PRIMARY_COLOR};
+    font-weight: bold;
+`;
+
 const LogoutLink = styled.p`
     color: ${PRIMARY_COLOR};
     font-weight: bold;
@@ -24,7 +35,7 @@ const LogoutLink = styled.p`
     cursor: pointer;
 `
 
-const Menu = styled.div`
+const MenuBlock = styled.div`
     padding-right: 20px;
 `;
 
@@ -34,30 +45,83 @@ const Border = styled.hr`
 `;
 
 const Header = ({isLoggedIn, onLogout}) => {
+    const [anchorEl, setAnchorEl] = React.useState(null);
     const history = useHistory();
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const publicMenuItems = [
+        { event: () => history.push('/sign-up'), title: 'Sign Up' },
+        { event: () => history.push('/sign-in'), title: 'Sign In' }
+    ];
+
+    const privateMenuItems = [
+        { event: () => history.push('/event-manager'), title: 'EventManager' },
+        { event: () => history.push('/profile'), title: 'Profile' },
+        { event: () => onLogout(history), title: 'Logout' }
+    ];
 
     return (
         <React.Fragment>
             <Grid container justify="center">
                 <Container container alignItems="center" justify="space-between">
                     <Logo />
-                    <Menu>
+                    <MenuBlock>
                         <Grid item container alignItems="center" justify="flex-end">
-                            {isLoggedIn ? (
-                                <React.Fragment>
-                                    <MenuLink to="/profile">Profile</MenuLink>
-                                    <LogoutLink onClick={() => {
-                                        onLogout(history);
-                                    }}>Logout</LogoutLink>
-                                </React.Fragment>
-                            ) : (
-                                <React.Fragment>
-                                    <MenuLink to="/sign-up">Sign Up</MenuLink>
-                                    <MenuLink to="/sign-in">Sign In</MenuLink>
-                                </React.Fragment>
-                            )}
+                            <Hidden xsDown>
+                                {isLoggedIn ? (
+                                    <React.Fragment>
+                                        <MenuLink to="/event-manager">EventManager</MenuLink>
+                                        <MenuLink to="/profile">Profile</MenuLink>
+                                        <LogoutLink onClick={() => {
+                                            onLogout(history);
+                                        }}>Logout</LogoutLink>
+                                    </React.Fragment>
+                                ) : (
+                                    <React.Fragment>
+                                        <MenuLink to="/sign-up">Sign Up</MenuLink>
+                                        <MenuLink to="/sign-in">Sign In</MenuLink>
+                                    </React.Fragment>
+                                )}
+                            </Hidden>
+                            <Hidden smUp>
+                                <IconButton
+                                    aria-label="more"
+                                    aria-controls="long-menu"
+                                    aria-haspopup="true"
+                                    onClick={handleClick}
+                                >
+                                    <MenuIcon fontSize="large" color="primary"/>
+                                </IconButton>
+                                <Menu
+                                    id="simple-menu"
+                                    anchorEl={anchorEl}
+                                    keepMounted
+                                    open={Boolean(anchorEl)}
+                                    onClose={handleClose}
+                                >
+                                    {isLoggedIn ? privateMenuItems.map(item => (
+                                            <DropdownMenuItem key={item.title} onClick={()=> {
+                                                handleClose();
+                                                item.event();
+                                            }}>{item.title}</DropdownMenuItem>
+                                        )) : publicMenuItems.map(item => (
+                                            <DropdownMenuItem key={item.title} onClick={()=> {
+                                                handleClose();
+                                                item.event();
+                                            }}>{item.title}</DropdownMenuItem>
+                                        ))
+                                    }
+                                </Menu>
+                            </Hidden>
                         </Grid>
-                    </Menu>
+                    </MenuBlock>
                 </Container>
             </Grid>
             <Border />

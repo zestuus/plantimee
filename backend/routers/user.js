@@ -20,7 +20,8 @@ router.get('/profile', privateRoute, async (req, res) => {
         return res.status(403).send("Invalid token!");
     }
 
-    res.send(user);
+    const { username, full_name, email } = user;
+    res.send({ username, full_name, email });
 })
 
 module.exports = router;

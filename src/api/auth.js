@@ -2,7 +2,7 @@ import axios from "axios";
 
 import {APP_URL} from "../utils/constants";
 
-const prefix = `${APP_URL}/auth`
+const prefix = `${APP_URL}/auth`;
 
 export const signIn = async formData => {
     try {

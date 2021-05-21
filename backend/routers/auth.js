@@ -29,10 +29,7 @@ router.post('/sign-up', async (req, res) => {
 
     try {
         const existingUser = await user.save();
-        const token = jwt.sign(
-            { id: existingUser.id, username },
-            process.env.TOKEN_SECRET,
-            { expiresIn: 1800 });
+        const token = jwt.sign({ id: existingUser.id, username }, process.env.TOKEN_SECRET)
 
         res.send(token);
     } catch (err) {
@@ -55,10 +52,7 @@ router.post('/sign-in', async (req, res) => {
         return res.status(400).send("Bad credentials!");
     }
 
-    const token = jwt.sign(
-        { id: existingUser.id, username },
-        process.env.TOKEN_SECRET,
-        { expiresIn: 1800 });
+    const token = jwt.sign({ id: existingUser.id, username }, process.env.TOKEN_SECRET);
 
     res.send(token);
 })

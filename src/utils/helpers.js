@@ -1,0 +1,1 @@
+export const getAuthHeader = () => ({ headers: { authorization: localStorage.getItem('user') }});
