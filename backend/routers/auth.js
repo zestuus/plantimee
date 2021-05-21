@@ -15,7 +15,7 @@ router.post('/sign-up', async (req, res) => {
         return res.status(400).send(error.details[0].message);
     }
 
-    const existingUser = await db.users.findOne({ where: { username } });
+    const existingUser = await db.User.findOne({ where: { username } });
 
     if (existingUser) {
         return res.status(400).send("User already exists!");
@@ -25,7 +25,7 @@ router.post('/sign-up', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const userData = { username, password: hashedPassword, full_name, email };
-    const user = db.users.build(userData);
+    const user = db.User.build(userData);
 
     try {
         const existingUser = await user.save();
@@ -45,7 +45,7 @@ router.post('/sign-in', async (req, res) => {
         return res.status(400).send(error.details[0].message);
     }
 
-    const existingUser = await db.users.findOne({ where: { username } });
+    const existingUser = await db.User.findOne({ where: { username } });
     const validPassword = existingUser && await bcrypt.compare(password, existingUser.password);
 
     if (!existingUser || !validPassword) {

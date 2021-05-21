@@ -6,7 +6,7 @@ const { privateRoute } = require('../middlewares');
 
 const router = express.Router();
 
-router.get('/profile', privateRoute, async (req, res) => {
+router.get('/list-own', privateRoute, async (req, res) => {
     const { authorization } = req.headers;
 
     if (!authorization) {
@@ -14,14 +14,17 @@ router.get('/profile', privateRoute, async (req, res) => {
     }
 
     const { id } = jwt.decode(authorization.split(' ')[1]);
-    const user = await db.User.findOne({ where: { id } });
+    const user = await db.User.findOne({
+        where: { id },
+        include: ["own_events"]
+    });
 
     if (!user) {
         return res.status(403).send("Invalid token!");
     }
 
-    const { username, full_name, email } = user;
-    res.send({ username, full_name, email });
+    const { own_events } = user;
+    res.send(own_events);
 })
 
 module.exports = router;

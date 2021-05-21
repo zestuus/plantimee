@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styled from "styled-components";
 import {Link, useHistory} from "react-router-dom";
 
@@ -36,7 +36,10 @@ const LogoutLink = styled.p`
 `
 
 const MenuBlock = styled.div`
-    padding-right: 20px;
+    margin-right: 20px;
+    @media (max-width: 600px) {
+      margin-right: 0;
+    }
 `;
 
 const Border = styled.hr`
@@ -45,7 +48,7 @@ const Border = styled.hr`
 `;
 
 const Header = ({isLoggedIn, onLogout}) => {
-    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
     const history = useHistory();
 
     const handleClick = (event) => {

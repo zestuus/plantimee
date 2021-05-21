@@ -6,6 +6,10 @@ import {Container} from './SignIn';
 import largeLogo from '../images/logo_large.png';
 import {PRIMARY_COLOR} from '../utils/constants';
 
+const LogoWrapper = styled(Grid)`
+    padding: 5px;
+`;
+
 const LargeLogo = styled.img`
     width: 100%;
     @media (max-width: 960px) {
@@ -53,9 +57,9 @@ const Home = () => {
     return (
         <Grid container justify="center">
             <Container item container md={9} sm={11} alignItems="center">
-                <Grid item container md={6}>
+                <LogoWrapper item container md={6}>
                     <LargeLogo src={largeLogo} alt="plantimee large logo"/>
-                </Grid>
+                </LogoWrapper>
                 <WelcomeBlock item container md={6} direction="column" alignItems="center">
                     <Title>Welcome</Title>
                     <SecondTitle>It's <Name>plantimee</Name>: <br /> semi-automatic event planner.</SecondTitle>
