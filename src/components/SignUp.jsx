@@ -59,7 +59,7 @@ const SignUp = ({ onLogin }) => {
         if(!Object.values(formErrors).find(error => error)){
             const token = await signUp({...formData, password_repeat: undefined });
             if (token) {
-                onLogin(`Bearer ${token}`, history);
+                onLogin(token, history);
             } else {
                 setFormErrors({ form: 'Username is taken!' });
             }

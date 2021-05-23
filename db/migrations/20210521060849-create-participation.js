@@ -2,12 +2,12 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Participations', {
-      attendee: {
+      UserId: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      event: {
+      EventId: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.INTEGER
@@ -22,7 +22,7 @@ module.exports = {
       }
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('Participations');
   }
 };

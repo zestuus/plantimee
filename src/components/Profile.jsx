@@ -25,11 +25,11 @@ const Profile = () => {
                     <Grid container direction="column">
                         <h1>Profile</h1>
                         <h3>Username</h3>
-                        <TextField InputProps={{ readOnly: true }} variant="outlined" value={profileData.username || ''} />
+                        <TextField InputProps={{ readOnly: true }} value={profileData.username || ''} />
                         <h3>Full name</h3>
-                        <TextField InputProps={{ readOnly: true }} variant="outlined" value={profileData.full_name || ''} />
+                        <TextField InputProps={{ readOnly: true }} value={profileData.full_name || ''} />
                         <h3>Email</h3>
-                        <TextField InputProps={{ readOnly: true }} variant="outlined" value={profileData.email || ''} />
+                        <TextField InputProps={{ readOnly: true }} value={profileData.email || ''} />
                     </Grid>
                 )}
             </Container>

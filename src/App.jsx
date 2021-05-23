@@ -9,7 +9,7 @@ import SignUp from "./components/SignUp";
 import PublicRoute from "./components/PublicRoute";
 import PrivateRoute from "./components/PrivateRoute";
 import Profile from "./components/Profile";
-import EventManager from "./components/EventManager";
+import EventDashboard from "./components/EventDashboard";
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("user"));
@@ -34,7 +34,7 @@ const App = () => {
                 <PublicRoute path="/sign-in" component={() => <SignIn onLogin={handleLogin} />} />
                 <PublicRoute path="/sign-up" component={() => <SignUp onLogin={handleLogin} />} />
                 <PrivateRoute path="/profile" component={Profile} />
-                <PrivateRoute path="/event-manager" component={EventManager} />
+                <PrivateRoute path="/event-dashboard" component={EventDashboard} />
             </Switch>
         </Router>
     );

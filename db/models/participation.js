@@ -12,10 +12,10 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
     }
-  };
+  }
   Participation.init({
-    attendee: DataTypes.INTEGER,
-    event: DataTypes.INTEGER
+    UserId: DataTypes.INTEGER,
+    EventId: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Participation',

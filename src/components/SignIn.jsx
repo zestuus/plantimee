@@ -91,7 +91,7 @@ const SignIn = ({ onLogin }) => {
         if(!Object.values(formErrors).find(error => error)){
             const token = await signIn(formData);
             if (token) {
-                onLogin(`Bearer ${token}`, history);
+                onLogin(token, history);
             } else {
                 setFormErrors({ form: 'Invalid credentials!' });
             }

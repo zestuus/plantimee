@@ -14,7 +14,6 @@ function privateRoute(req, res, next) {
     }
 
     try {
-        jwt.verify(token, process.env.TOKEN_SECRET);
         req.user = jwt.verify(token, process.env.TOKEN_SECRET);
         next();
     } catch {

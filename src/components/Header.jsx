@@ -21,6 +21,9 @@ const MenuLink = styled(Link)`
     font-weight: bold;
     margin: 10px;
     text-decoration: none;
+    :hover {
+       text-decoration: underline;
+    }
 `;
 
 const DropdownMenuItem = styled(MenuItem)`
@@ -33,6 +36,9 @@ const LogoutLink = styled.p`
     font-weight: bold;
     margin: 10px;
     cursor: pointer;
+    :hover {
+       text-decoration: underline;
+    }
 `
 
 const MenuBlock = styled.div`
@@ -80,7 +86,7 @@ const Header = ({isLoggedIn, onLogout}) => {
                             <Hidden xsDown>
                                 {isLoggedIn ? (
                                     <React.Fragment>
-                                        <MenuLink to="/event-manager">EventManager</MenuLink>
+                                        <MenuLink to="/event-dashboard">Event Dashboard</MenuLink>
                                         <MenuLink to="/profile">Profile</MenuLink>
                                         <LogoutLink onClick={() => {
                                             onLogout(history);

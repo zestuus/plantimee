@@ -15,7 +15,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Timeline from "./Timeline";
 import Events from "./Events";
 import Settings from "./Settings";
-import {getOwnEvents} from "../../api/event";
+import {createEvent, deleteEvent, getInvitedEvents, getOwnEvents, rejectInvitation, updateEvent} from "../../api/event";
 
 const Title = styled.h1`
     @media (max-width: 600px) {
@@ -44,13 +44,15 @@ const Column = styled(Grid)`
 const ColumnSwitch = styled(Button)`
     text-transform: capitalize;
     font-size: 12px;
-    height: 30px;
+    height: 40px;
     width: 80px;
 `;
 
-const EventManager = () => {
+const EventDashboard = () => {
     // external state
+    const [chosenEvent, setChosenEvent] = useState(null);
     const [ownEvents, setOwnEvents] = useState([]);
+    const [invitedEvents, setInvitedEvents] = useState([]);
     // internal state
     const [screenWidth, setScreenWidth] = useState(getWindowSize().width);
     const [columnShown, setColumnShown] = useState('timeline');
@@ -65,8 +67,10 @@ const EventManager = () => {
     useEffect(() => {
         (async () => {
             try {
-                const events = await getOwnEvents();
-                setOwnEvents(events);
+                const ownEventsData = await getOwnEvents();
+                const invitedEventsData = await getInvitedEvents();
+                setOwnEvents(ownEventsData);
+                setInvitedEvents(invitedEventsData);
             } catch (err) {
                 setOwnEvents(null);
             }
@@ -80,38 +84,81 @@ const EventManager = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const handleChange = event => {
+    const handleSwitch = event => {
         setColumnShown(event.target.checked ? 'settings' : 'timeline');
     }
 
-    const handleClick = (event) => {
+    const handleClick = event => {
         setAnchorEl(event.currentTarget);
+    };
+
+    const openColumn = column => {
+        setColumnShown(column);
     };
 
     const handleClose = () => {
         setAnchorEl(null);
     };
 
+    const handleChangeOwnEvent = async newEventData => {
+        const events = ownEvents.map(event => event.id === newEventData.id ? { ...newEventData } : {...event} );
+        setOwnEvents(events);
+        await updateEvent(newEventData);
+    }
+
+    const handleChangeOwnEventLocally = async newEventData => {
+        const events = ownEvents.map(event => event.id === newEventData.id ? { ...newEventData } : {...event} );
+        setOwnEvents(events);
+    }
+
+    const handleSaveChangesOwnEvent = async newEventData => {
+        await updateEvent(newEventData);
+    }
+
+    const handleDeleteOwnEvent = async id => {
+        const events = ownEvents.filter(event => event.id !== id);
+        setChosenEvent(null);
+        setOwnEvents(events);
+        await deleteEvent(id);
+    }
+
+    const handleRejectInvitation = async id => {
+        const events = invitedEvents.filter(event => event.id !== id);
+        setChosenEvent(null);
+        setInvitedEvents(events);
+        await rejectInvitation(id);
+    }
+
+    const handleCreateNewEvent = async () => {
+        const newEvent = await createEvent();
+        setChosenEvent(newEvent.id);
+        const events = [...ownEvents, newEvent]
+        setOwnEvents(events);
+    }
+
     if (600 < screenWidth && screenWidth < 960) {
-        columnsVisibility.timeline = columnShown === 'timeline';
         columnsVisibility.settings = columnShown === 'settings';
+        columnsVisibility.timeline = !columnsVisibility.settings;
     } else if (screenWidth < 600) {
         columnsVisibility.timeline = columnShown === 'timeline';
         columnsVisibility.tasks = columnShown === 'tasks';
         columnsVisibility.settings = columnShown === 'settings';
     }
 
+    const chosenEventData =  ownEvents.find(event => event.id === chosenEvent)
+        || invitedEvents.find(event => event.id === chosenEvent);
+
     return (
         <Grid container justify="center">
             <Container item md={11} xs={11}>
                 <Grid container justify="space-between" alignItems="center">
-                    <Title>EventManager</Title>
+                    <Title>Dashboard</Title>
                     <Hidden xsDown mdUp>
                         <FormControlLabel
                             control={
                                 <Switch
                                     checked={columnShown === 'settings'}
-                                    onChange={handleChange}
+                                    onChange={handleSwitch}
                                     color="primary"
                                     name="show_settings"
                                     inputProps={{ 'aria-label': 'primary checkbox' }}
@@ -172,12 +219,26 @@ const EventManager = () => {
                     )}
                     {columnsVisibility['tasks'] && (
                         <Column item container direction="column" md={4} sm={6} xs={12}>
-                            <Events ownEvents={ownEvents} />
+                            <Events
+                                ownEvents={ownEvents}
+                                invitedEvents={invitedEvents}
+                                chosenEvent={chosenEvent}
+                                setChosenEvent={setChosenEvent}
+                                openColumn={openColumn}
+                                onCreateNewEvent={handleCreateNewEvent}
+                                onChangeOwnEvent={handleChangeOwnEvent}
+                            />
                         </Column>
                     )}
                     {columnsVisibility['settings'] && (
                         <Column item container direction="column" md={4} sm={6} xs={12}>
-                            <Settings />
+                            <Settings
+                                eventData={chosenEventData}
+                                onChangeOwnEventLocally={handleChangeOwnEventLocally}
+                                onSaveChangesOwnEvent={handleSaveChangesOwnEvent}
+                                onDeleteOwnEvent={handleDeleteOwnEvent}
+                                onRejectInvitation={handleRejectInvitation}
+                            />
                         </Column>
                     )}
                 </Table>
@@ -186,4 +247,4 @@ const EventManager = () => {
     );
 };
 
-export default EventManager;
+export default EventDashboard;

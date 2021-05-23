@@ -13,7 +13,10 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       completed: {
-        allowNull: false,
+        defaultValue: false,
+        type: Sequelize.BOOLEAN
+      },
+      is_full_day: {
         defaultValue: false,
         type: Sequelize.BOOLEAN
       },
@@ -30,10 +33,13 @@ module.exports = {
         type: Sequelize.DATE
       },
       latitude: {
-        type: Sequelize.FLOAT
+        type: Sequelize.DECIMAL(10, 8)
       },
       longitude: {
-        type: Sequelize.FLOAT
+        type: Sequelize.DECIMAL(11, 8)
+      },
+      location_name: {
+        type: Sequelize.STRING
       },
       url: {
         type: Sequelize.STRING
@@ -48,7 +54,7 @@ module.exports = {
       }
     });
   },
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.dropTable('Events');
   }
 };

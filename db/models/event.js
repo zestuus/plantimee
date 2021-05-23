@@ -16,16 +16,18 @@ module.exports = (sequelize, DataTypes) => {
       });
       Event.belongsToMany(models.User, { as: 'attendees', through: 'Participation' });
     }
-  };
+  }
   Event.init({
     UserId: DataTypes.INTEGER,
     name: DataTypes.STRING,
     description: DataTypes.STRING,
     completed: DataTypes.BOOLEAN,
+    is_full_day: DataTypes.BOOLEAN,
     start_time: DataTypes.DATE,
     end_time: DataTypes.DATE,
-    latitude: DataTypes.FLOAT,
-    longitude: DataTypes.FLOAT,
+    latitude: DataTypes.DECIMAL(10, 8),
+    longitude: DataTypes.DECIMAL(11, 8),
+    location_name: DataTypes.STRING,
     url: DataTypes.STRING
   }, {
     sequelize,
