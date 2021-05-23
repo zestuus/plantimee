@@ -38,6 +38,7 @@ export const ScrollContentWrapper = styled(Grid)`
   background-color: white;
   padding: 10px;
   min-height: 100%;
+  position: relative;
 `;
 
 const GroupSwitch = styled(Button)`
