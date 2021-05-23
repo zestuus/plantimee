@@ -15,7 +15,15 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Timeline from "./Timeline";
 import Events from "./Events";
 import Settings from "./Settings";
-import {createEvent, deleteEvent, getInvitedEvents, getOwnEvents, rejectInvitation, updateEvent} from "../../api/event";
+import {
+    createEvent,
+    deleteEvent, deleteInvitation,
+    getInvitedEvents,
+    getOwnEvents,
+    inviteParticipant,
+    rejectInvitation,
+    updateEvent
+} from "../../api/event";
 
 const Title = styled.h1`
     @media (max-width: 600px) {
@@ -115,6 +123,20 @@ const EventDashboard = () => {
         await updateEvent(newEventData);
     }
 
+    const handleInvite = async data => {
+        const events = ownEvents.map(event => event.id === data.eventId ?
+            { ...event, attendees: [...event.attendees, {
+                id: data.id,
+                username: data.username,
+                full_name: data.full_name,
+                email: data.email,
+            }] } :
+            {...event}
+        );
+        setOwnEvents(events);
+        await inviteParticipant(data);
+    }
+
     const handleDeleteOwnEvent = async id => {
         const events = ownEvents.filter(event => event.id !== id);
         setChosenEvent(null);
@@ -127,6 +149,15 @@ const EventDashboard = () => {
         setChosenEvent(null);
         setInvitedEvents(events);
         await rejectInvitation(id);
+    }
+
+    const handleDeleteInvitation = async data => {
+        const events = ownEvents.map(event => event.id === data.eventId ?
+            { ...event, attendees: [...event.attendees.filter(attendee => attendee.id !== data.userId)] } :
+            {...event}
+        );
+        setOwnEvents(events);
+        await deleteInvitation(data);
     }
 
     const handleCreateNewEvent = async () => {
@@ -214,7 +245,12 @@ const EventDashboard = () => {
                 <Table container alignItems="stretch">
                     {columnsVisibility['timeline'] && (
                         <Column item container direction="column" md={4} sm={6} xs={12}>
-                            <Timeline />
+                            <Timeline
+                                ownEvents={ownEvents}
+                                invitedEvents={invitedEvents}
+                                setChosenEvent={setChosenEvent}
+                                setColumnShown={setColumnShown}
+                            />
                         </Column>
                     )}
                     {columnsVisibility['tasks'] && (
@@ -234,10 +270,12 @@ const EventDashboard = () => {
                         <Column item container direction="column" md={4} sm={6} xs={12}>
                             <Settings
                                 eventData={chosenEventData}
+                                onInviteAttendee={handleInvite}
                                 onChangeOwnEventLocally={handleChangeOwnEventLocally}
                                 onSaveChangesOwnEvent={handleSaveChangesOwnEvent}
                                 onDeleteOwnEvent={handleDeleteOwnEvent}
                                 onRejectInvitation={handleRejectInvitation}
+                                onDeleteInvitation={handleDeleteInvitation}
                             />
                         </Column>
                     )}

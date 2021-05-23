@@ -13,3 +13,12 @@ export const getProfile = async () => {
         return null;
     }
 }
+
+export const getAllUsers = async () => {
+    try {
+        const response = await axios.get(`${url}/list`, getAuthHeader());
+        return response.data;
+    } catch (e) {
+        return null;
+    }
+}

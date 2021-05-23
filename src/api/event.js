@@ -50,9 +50,37 @@ export const rejectInvitation = async (id) => {
     }
 }
 
+export const deleteInvitation = async data => {
+    try {
+        const { userId, eventId } = data;
+
+        const response = await axios.delete(`${url}/invite`, {...getAuthHeader(), data: {
+            userId,
+            eventId
+        }});
+        return response.data;
+    } catch (e) {
+        return null;
+    }
+}
+
 export const createEvent = async () => {
     try {
         const response = await axios.post(url, {}, getAuthHeader());
+        return response.data;
+    } catch (e) {
+        return null;
+    }
+}
+
+export const inviteParticipant = async data => {
+    try {
+        const { id: userId, eventId } = data;
+
+        const response = await axios.post(`${url}/invite`, {
+            userId,
+            eventId
+        }, getAuthHeader());
         return response.data;
     } catch (e) {
         return null;

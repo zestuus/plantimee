@@ -41,11 +41,11 @@ const EventDescription = styled.p`
     overflow: hidden;
 `;
 
-const BubbleWrapper = styled.p`
+export const BubbleWrapper = styled.p`
     margin: 5px 0;
 `;
 
-const Bubble = styled.span`
+export const Bubble = styled.span`
     margin: 5px;
     padding: 5px;
     font-size: 12px;

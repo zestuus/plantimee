@@ -9,7 +9,15 @@ router.get('/list-own', privateRoute, async (req, res) => {
     const { id } = req.user;
     const user = await db.User.findOne({
         where: { id },
-        include: ["own_events"],
+        include: [{
+            model: db.Event,
+            as: "own_events",
+            include: [{
+                model: db.User,
+                as: 'attendees',
+                attributes: ['id', 'username', 'full_name', 'email']
+            }]
+        }],
         order: [
             ["own_events", 'id', 'asc'],
         ],
@@ -57,6 +65,22 @@ router.delete('/invited', privateRoute, async (req, res) => {
 
     if (!event) {
         res.status(400).send("You aren't invited for this event!");
+    }
+
+    try {
+        await event.destroy();
+        res.send(event);
+    } catch (e) {
+        res.status(400).send("Error during delete!");
+    }
+});
+
+router.delete('/invite', privateRoute, async (req, res) => {
+    const { userId: UserId, eventId: EventId } = req.body;
+    const event = await db.Participation.findOne({ where: { EventId, UserId }});
+
+    if (!event) {
+        res.status(400).send("User isn't invited for this event!");
     }
 
     try {
@@ -128,6 +152,24 @@ router.delete('/', privateRoute, async (req, res) => {
         res.send(event);
     } catch (e) {
         res.status(400).send("Error during delete!");
+    }
+});
+
+router.post('/invite', privateRoute, async (req, res) => {
+    const { userId: UserId, eventId: EventId } = req.body;
+
+    const participation = await db.Participation.build({
+        UserId,
+        EventId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    });
+
+    try {
+        const savedParticipation = await participation.save();
+        res.send(savedParticipation);
+    } catch (e) {
+        res.status(400).send("Error during invite!");
     }
 });
 
