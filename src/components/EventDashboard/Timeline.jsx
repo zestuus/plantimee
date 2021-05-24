@@ -13,6 +13,7 @@ import {HourHeight} from "../../utils/constants";
 export const ColumnTitle = styled.h3`
     margin: 7.5px;
     text-align: center;
+    font-size: 15px;
 `;
 
 const HourContainer = styled.div`
@@ -44,6 +45,7 @@ const ClockArrow = styled.div`
 
 const TimelineDateLabel = styled.h3`
     margin: 0;
+    font-size: 15px;
 `;
 
 const DateArrow = styled(IconButton)`

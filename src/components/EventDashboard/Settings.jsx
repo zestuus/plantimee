@@ -137,15 +137,17 @@ const Setting = ({
     const notInvited = eventData && eventData.attendees ? users
         .filter(user => !eventData.attendees.find(attendee => attendee.id === user.id)) : [];
 
-    console.log(location);
     return (
         <Container container direction="column" justify="flex-start">
             <ColumnHeader container direction="row" justify="space-between" alignItems="center">
                 <ColumnTitle>Settings</ColumnTitle>
                 {isInvitedEvent ? (
-                    <Button onClick={() => {
-                        onRejectInvitation(eventData.id);
-                    }}>
+                    <Button
+                        style={{ fontSize: 13 }}
+                        onClick={() => {
+                            onRejectInvitation(eventData.id);
+                        }}
+                    >
                         <CloseIcon /> Reject invite
                     </Button>
                 ) : (
@@ -204,13 +206,13 @@ const Setting = ({
                                         <ParticipantSelect
                                             label="Users"
                                             id="demo-simple-select"
-                                            value={chosenUser}
+                                            value={chosenUser || ''}
                                             onChange={event => {
                                                 setChosenUser(event.target.value);
                                             }}
                                         >
                                             {notInvited.map(user => (
-                                                <MenuItem value={user.id}>{user.username}</MenuItem>
+                                                <MenuItem key={user.id} value={user.id}>{user.username}</MenuItem>
                                             ))}
                                         </ParticipantSelect>
                                         <Button
@@ -412,13 +414,16 @@ const Setting = ({
                                 }}
                             />
                         </Row>
-                        <MapPicker
-                            defaultLocation={location}
-                            zoom={zoom}
-                            style={{height:'350px'}}
-                            onChangeLocation={handleChangeLocation}
-                            onChangeZoom={handleChangeZoom}
-                            apiKey={GOOGLE_MAPS_API_KEY}/>
+                        {(!isInvitedEvent || (eventData.latitude && eventData.longitude) ) && (
+                            <MapPicker
+                                disabled={isInvitedEvent}
+                                defaultLocation={location}
+                                zoom={zoom}
+                                style={{height: '350px'}}
+                                onChangeLocation={handleChangeLocation}
+                                onChangeZoom={handleChangeZoom}
+                                apiKey={GOOGLE_MAPS_API_KEY}/>
+                        )}
                         {!isInvitedEvent && (
                             <Row container direction="row" justify="flex-end">
                                 <Button

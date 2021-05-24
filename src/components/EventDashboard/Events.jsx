@@ -19,6 +19,7 @@ export const ColumnHeader = styled(Grid)`
 `;
 
 export const ScrollArea = styled.div`
+    width: 100%;
     height: calc(100% - 37px);
     overflow-y: auto;
     overflow-x: hidden;
