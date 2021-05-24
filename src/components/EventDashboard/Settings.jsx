@@ -55,6 +55,11 @@ const Row = styled(Grid)`
     margin: 15px 0;
 `;
 
+const EventNotChosen = styled(Grid)`
+    height: 100%;
+    background-color: white;
+`
+
 const DefaultLocation = { lat: 49.843625, lng: 24.026442};
 const DefaultZoom = 10;
 
@@ -159,8 +164,8 @@ const Setting = ({
                     </Button>
                 )}
             </ColumnHeader>
-            {eventData && (
-                <ScrollArea>
+            <ScrollArea>
+                {eventData ? (
                     <ScrollContentWrapper container direction="column" alignItems="stretch">
                         <Input
                             {...readOnly}
@@ -437,8 +442,13 @@ const Setting = ({
                             </Row>
                         )}
                     </ScrollContentWrapper>
-                </ScrollArea>
-            )}
+                ) : (
+                    <EventNotChosen container direction="column" justify="center" alignItems="center">
+                        <h2>Choose any event to continue</h2>
+                        <br/><br/>
+                    </EventNotChosen>
+                )}
+            </ScrollArea>
         </Container>
     );
 };

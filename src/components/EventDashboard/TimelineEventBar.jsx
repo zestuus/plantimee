@@ -11,7 +11,6 @@ const EventBar = styled.div`
     border-radius: 5px;
     width: calc(100% - 57px);
     margin: 0 26px;
-    padding: 10px;
     box-sizing: border-box;
     box-shadow: white 1px 1px;
     background-color: #ffa500;
@@ -21,8 +20,9 @@ const EventBar = styled.div`
     overflow: hidden;
     ${props => `
         top: ${props.$top + 21}px;
-        height: ${props.$height}px;
+        height: ${props.$height < 5 ? 5 : props.$height}px;
         ${props.$completed ? 'text-decoration: line-through;' : '' };
+        ${props.$height < 35 ? 'padding: 0;' : 'padding: 10px;' };
     `};
 `;
 
@@ -70,12 +70,13 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
         <Tooltip
             title={
                 <React.Fragment>
-                    {eventData.name}
-                    <Bubble small><ScheduleIcon fontSize="inherit" /> {dateString}</Bubble>
+                    <div style={completed ? { textDecoration: 'line-through' } : {}}>
+                        {eventData.name}
+                        <Bubble small><ScheduleIcon fontSize="inherit" /> {dateString}</Bubble>
+                    </div>
                 </React.Fragment>
             }
         >
-
                 <EventBar
                     $height={height}
                     $top={top}

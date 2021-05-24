@@ -64,12 +64,13 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown }) 
     const [chosenDate, setChosenDate] = useState(dateNow);
 
     useEffect(() => {
-        setTimeout(()=>{
+        const timer = setTimeout(()=>{
             const dateNow = new Date();
             setNow({
                 hour: dateNow.getHours(), minute: dateNow.getMinutes()
             });
         },1000)
+        return () => clearTimeout(timer);
     },[now]);
 
     const [month, dayNumber, year] = chosenDate.toDateString().split(' ').slice(-3);

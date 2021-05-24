@@ -71,7 +71,7 @@ const Header = ({isLoggedIn, onLogout}) => {
     ];
 
     const privateMenuItems = [
-        { event: () => history.push('/event-manager'), title: 'EventManager' },
+        { event: () => history.push('/event-dashboard'), title: 'Event Dashboard' },
         { event: () => history.push('/profile'), title: 'Profile' },
         { event: () => onLogout(history), title: 'Logout' }
     ];
