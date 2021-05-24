@@ -5,9 +5,10 @@ import {signUpSchema} from "../utils/validators";
 import {signUp} from "../api/auth";
 import {Container, Form, FormError, FormItem, Input, SubmitButton, Title} from "./SignIn";
 import {useHistory} from "react-router-dom";
+import Grid from "@material-ui/core/Grid";
 
 const SignUpForm = styled(Form)`
-    height: 620px;
+    height: 600px;
 `;
 
 export const SignUpTitle = styled(Title)`
@@ -69,8 +70,10 @@ const SignUp = ({ onLogin }) => {
     return (
         <Container container justify="center" alignItems="center">
             <SignUpForm item container direction="column" justify="space-between">
-                <SignUpTitle>Sign Up</SignUpTitle>
-                <FormError visible={!formErrors['form']}>{formErrors['form']}</FormError>
+                <Grid container direction="column">
+                    <SignUpTitle>Sign Up</SignUpTitle>
+                    <FormError visible={!formErrors['form']}>{formErrors['form']}</FormError>
+                </Grid>
                 <FormItem>
                     <Input
                         required
@@ -111,22 +114,22 @@ const SignUp = ({ onLogin }) => {
                 </FormItem>
                 <FormItem>
                     <Input
-                        label="Full name"
+                        label="Email"
                         variant="outlined"
-                        name="full_name"
-                        error={!!formErrors['full_name']}
-                        helperText={formErrors['full_name']}
+                        name="email"
+                        error={!!formErrors['email']}
+                        helperText={formErrors['email']}
                         onChange={handleChange}
                         onBlur={handleBlur}
                     />
                 </FormItem>
                 <FormItem>
                     <Input
-                        label="Email"
+                        label="Full name"
                         variant="outlined"
-                        name="email"
-                        error={!!formErrors['email']}
-                        helperText={formErrors['email']}
+                        name="full_name"
+                        error={!!formErrors['full_name']}
+                        helperText={formErrors['full_name']}
                         onChange={handleChange}
                         onBlur={handleBlur}
                     />

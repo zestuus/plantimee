@@ -24,7 +24,7 @@ export const Form = styled(Grid)`
     border-radius: 5px;
 `;
 export const FormItem = styled(Grid)`
-    height: 80px;
+    height: 60px;
 `
 
 export const Title = styled.h1`
@@ -34,11 +34,15 @@ export const Title = styled.h1`
 export const FormError = styled.p`
     color: red;
     height: 20px;
-    margin: 12px 0;
+    margin: 12px 0 5px 0;
 `;
 
 export const Input = styled(TextField)`
     width: 100%;
+    height: 50px;
+    .MuiOutlinedInput-input {
+      padding: 16px 15px;
+    }
 `;
 
 export const SubmitButton = styled(Button)`

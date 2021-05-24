@@ -40,10 +40,6 @@ const ClockArrow = styled.div`
     width: calc(100% - 37px);
     margin: 0 16px;
     top: ${props => props.minute*0.7+19}px;
-`
-
-const TimelineDateRow = styled(Grid)`
-    width: calc(100% - 95px);
 `;
 
 const TimelineDateLabel = styled.h3`
@@ -80,8 +76,8 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown }) 
         <Container container direction="column" justify="flex-start">
             <ColumnHeader container direction="row" justify="space-between" alignItems="center">
                 <ColumnTitle>Timeline</ColumnTitle>
-                <TimelineDateRow container direction="row" justify="flex-end" alignItems="center">
-                    <DateArrow onClick={() => {
+                <div style={{ flex: 1 }} />
+                <DateArrow onClick={() => {
                         const date = new Date(chosenDate);
                         date.setDate(date.getDate() - 1)
                         setChosenDate(date);
@@ -97,7 +93,6 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown }) 
                     }}>
                         <ChevronRightIcon />
                     </DateArrow>
-                </TimelineDateRow>
             </ColumnHeader>
                 <ScrollArea>
                     <ScrollContentWrapper container direction="column" alignItems="stretch">

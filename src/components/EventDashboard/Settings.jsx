@@ -85,11 +85,7 @@ const Setting = ({
 
     const now = new Date();
 
-    const startNowDateString = formatDateString(now);
-
     now.setMinutes(now.getMinutes() + 1);
-
-    const endNowDateString = formatDateString(now);
 
     const startDateString = eventData && formatDateString(eventData.start_time);
     const endDateString = eventData && formatDateString(eventData.end_time);
@@ -119,11 +115,6 @@ const Setting = ({
     const endDateStringFinal = eventData && eventData.is_full_day ?
         endDateString.split('T')[0] : endDateString;
 
-    const startDefaultDateString = eventData && eventData.is_full_day ?
-        startNowDateString.split('T')[0] : startNowDateString;
-    const endDefaultDateString = eventData && eventData.is_full_day ?
-        endNowDateString.split('T')[0] : endNowDateString;
-
     const handleChangeLocation = (lat, lng) => {
         onChangeOwnEventLocally({...eventData, latitude: lat, longitude: lng });
     }
@@ -146,6 +137,7 @@ const Setting = ({
     const notInvited = eventData && eventData.attendees ? users
         .filter(user => !eventData.attendees.find(attendee => attendee.id === user.id)) : [];
 
+    console.log(location);
     return (
         <Container container direction="column" justify="flex-start">
             <ColumnHeader container direction="row" justify="space-between" alignItems="center">
@@ -269,7 +261,7 @@ const Setting = ({
                                 {...readOnly}
                                 label="Start date&time"
                                 type={eventData.is_full_day ? "date" : "datetime-local"}
-                                value={eventData.start_time ? startDateStringFinal : startDefaultDateString}
+                                value={eventData.start_time ? startDateStringFinal: ''}
                                 error={!datesAreValid}
                                 InputLabelProps={{
                                     shrink: true,
@@ -278,7 +270,7 @@ const Setting = ({
                                     onChangeOwnEventLocally({
                                         ...eventData,
                                         start_time: event.target.value,
-                                        end_time: eventData.end_time ? eventData.end_time : endDefaultDateString,
+                                        end_time: eventData.end_time ? eventData.end_time : event.target.value,
                                     });
                                 }}
                             />
@@ -288,7 +280,7 @@ const Setting = ({
                                 {...readOnly}
                                 label="End date&time"
                                 type={eventData.is_full_day ? "date" : "datetime-local"}
-                                value={eventData.end_time ? endDateStringFinal : endDefaultDateString}
+                                value={eventData.end_time ? endDateStringFinal : ''}
                                 error={!datesAreValid}
                                 helperText={!datesAreValid && "End time should be after start time"}
                                 InputLabelProps={{
@@ -298,7 +290,7 @@ const Setting = ({
                                     onChangeOwnEventLocally({
                                         ...eventData,
                                         end_time: event.target.value,
-                                        start_time: eventData.start_time ? eventData.start_time : startDefaultDateString,
+                                        start_time: eventData.start_time ? eventData.start_time : event.target.value,
                                     });
                                 }}
                             />

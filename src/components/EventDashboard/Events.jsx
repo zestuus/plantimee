@@ -66,10 +66,13 @@ const Events = ({
         <Container container direction="column" justify="flex-start">
             <ColumnHeader container direction="row" justify="space-between" alignItems="center">
                 <ColumnTitle>Events</ColumnTitle>
-                <Button onClick={() => {
-                    onCreateNewEvent();
-                    openColumn('settings');
-                }}>
+                <Button
+                    style={{ paddingLeft: 0 }}
+                    onClick={() => {
+                        onCreateNewEvent();
+                        openColumn('settings');
+                    }}
+                >
                     <AddIcon />Create new
                 </Button>
             </ColumnHeader>
