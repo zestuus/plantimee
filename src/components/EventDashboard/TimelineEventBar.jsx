@@ -4,6 +4,7 @@ import {HourHeight, OneHour} from "../../utils/constants";
 import {formatEventTime} from "../../utils/helpers";
 import ScheduleIcon from "@material-ui/icons/Schedule";
 import {Bubble} from "./Event";
+import Tooltip from "@material-ui/core/Tooltip";
 
 const EventBar = styled.div`
     position: absolute;
@@ -12,9 +13,12 @@ const EventBar = styled.div`
     margin: 0 26px;
     padding: 10px;
     box-sizing: border-box;
+    box-shadow: white 1px 1px;
     background-color: #ffa500;
     font-weight: bold;
+    font-size: 10px;
     color: white;
+    overflow: hidden;
     ${props => `
         top: ${props.$top + 21}px;
         height: ${props.$height}px;
@@ -63,18 +67,30 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
     const dateString = formatEventTime(start_time, end_time, is_full_day);
 
     return (
-        <EventBar
-            $height={height}
-            $top={top}
-            $completed={completed}
-            onClick={() => {
-                setChosenEvent(eventData.id);
-                setColumnShown('settings')
-            }}
+        <Tooltip
+            title={
+                <React.Fragment>
+                    {eventData.name}
+                    <Bubble small><ScheduleIcon fontSize="inherit" /> {dateString}</Bubble>
+                </React.Fragment>
+            }
         >
-            {eventData.name}
-            <Bubble><ScheduleIcon fontSize="inherit" /> {dateString}</Bubble>
-        </EventBar>
+
+                <EventBar
+                    $height={height}
+                    $top={top}
+                    $completed={completed}
+                    onClick={() => {
+                        setChosenEvent(eventData.id);
+                        setColumnShown('settings')
+                    }}
+                >
+                    {height>=35 ? (<React.Fragment>
+                        {eventData.name}
+                        <Bubble small><ScheduleIcon fontSize="inherit" /> {dateString}</Bubble>
+                    </React.Fragment>): (<div />)}
+                </EventBar>
+        </Tooltip>
     );
 };
 

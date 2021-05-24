@@ -7,11 +7,16 @@ import TextField from "@material-ui/core/TextField";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Grid from "@material-ui/core/Grid";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from '@material-ui/icons/Delete';
 import CloseIcon from '@material-ui/icons/Close';
 import SaveIcon from '@material-ui/icons/Save';
 import SearchIcon from '@material-ui/icons/Search';
 import AddIcon from '@material-ui/icons/Add';
+import SettingsIcon from '@material-ui/icons/Settings';
+import Alert from '@material-ui/lab/Alert';
 
 import {ColumnTitle} from "./Timeline";
 import {ColumnHeader, Container, ScrollArea, ScrollContentWrapper} from "./Events";
@@ -19,8 +24,7 @@ import {formatDateString} from "../../utils/helpers";
 import {GOOGLE_MAPS_API_KEY, OneDay, OneHour, OneMinute} from "../../utils/constants";
 import Participant from "./Participant";
 import {getAllUsers} from "../../api/user";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
+import AutoFindModal from "./AutoFindModal";
 
 const Input = styled(TextField)`
     margin: 10px 0;
@@ -39,7 +43,7 @@ const ParticipantsTitle = styled.p`
 `;
 
 const DurationPicker = styled(Input)`
-    margin: 0 15px;
+    margin: 0 10px;
     width: 15%;
 `;
 
@@ -61,9 +65,13 @@ const Setting = ({
     onDeleteOwnEvent,
     onRejectInvitation,
     onInviteAttendee,
-    onDeleteInvitation
+    onDeleteInvitation,
+    onFindAutomatically
 }) => {
     const [zoom, setZoom] = useState(DefaultZoom);
+    const [open, setOpen] = useState(false);
+    const [autoFindProps, setAutoFindProps] = useState({});
+    const [autoFindError, setAutoFindError] = useState('');
     const [users, setUsers] = useState([]);
     const [chosenUser, setChosenUser] = useState(null);
 
@@ -72,7 +80,12 @@ const Setting = ({
 
     const now = new Date();
 
-    const nowDateString = formatDateString(now);
+    const startNowDateString = formatDateString(now);
+
+    now.setMinutes(now.getMinutes() + 1);
+
+    const endNowDateString = formatDateString(now);
+
     const startDateString = eventData && formatDateString(eventData.start_time);
     const endDateString = eventData && formatDateString(eventData.end_time);
 
@@ -85,7 +98,6 @@ const Setting = ({
         && { lat: parseFloat(eventData.latitude), lng: parseFloat(eventData.longitude)}) || DefaultLocation;
 
     const timedelta = endTime - startTime;
-
 
     let daysLong = Math.trunc( timedelta/ OneDay);
     let hoursLong = Math.trunc( (timedelta - daysLong*OneDay)/ OneHour);
@@ -101,8 +113,11 @@ const Setting = ({
         startDateString.split('T')[0] : startDateString;
     const endDateStringFinal = eventData && eventData.is_full_day ?
         endDateString.split('T')[0] : endDateString;
-    const defaultDateString = eventData && eventData.is_full_day ?
-        nowDateString.split('T')[0] : nowDateString;
+
+    const startDefaultDateString = eventData && eventData.is_full_day ?
+        startNowDateString.split('T')[0] : startNowDateString;
+    const endDefaultDateString = eventData && eventData.is_full_day ?
+        endNowDateString.split('T')[0] : endNowDateString;
 
     const handleChangeLocation = (lat, lng) => {
         onChangeOwnEventLocally({...eventData, latitude: lat, longitude: lng });
@@ -206,8 +221,10 @@ const Setting = ({
                                             variant="contained"
                                             color="primary"
                                             onClick={() => {
-                                                const userData = users.find(user => user.id = chosenUser);
-                                                onInviteAttendee({...userData, eventId: eventData.id});
+                                                if (chosenUser){
+                                                    const userData = users.find(user => user.id = chosenUser);
+                                                    onInviteAttendee({...userData, eventId: eventData.id});
+                                                }
                                             }}
                                         >
                                             <AddIcon /> Add participant
@@ -247,13 +264,17 @@ const Setting = ({
                                 {...readOnly}
                                 label="Start date&time"
                                 type={eventData.is_full_day ? "date" : "datetime-local"}
-                                value={eventData.start_time ? startDateStringFinal : defaultDateString}
+                                value={eventData.start_time ? startDateStringFinal : startDefaultDateString}
                                 error={!datesAreValid}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
                                 onChange={(event) => {
-                                    onChangeOwnEventLocally({...eventData, start_time: event.target.value });
+                                    onChangeOwnEventLocally({
+                                        ...eventData,
+                                        start_time: event.target.value,
+                                        end_time: eventData.end_time ? eventData.end_time : endDefaultDateString,
+                                    });
                                 }}
                             />
                         )}
@@ -262,14 +283,18 @@ const Setting = ({
                                 {...readOnly}
                                 label="End date&time"
                                 type={eventData.is_full_day ? "date" : "datetime-local"}
-                                value={eventData.end_time ? endDateStringFinal : defaultDateString}
+                                value={eventData.end_time ? endDateStringFinal : endDefaultDateString}
                                 error={!datesAreValid}
                                 helperText={!datesAreValid && "End time should be after start time"}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
                                 onChange={(event) => {
-                                    onChangeOwnEventLocally({...eventData, end_time: event.target.value });
+                                    onChangeOwnEventLocally({
+                                        ...eventData,
+                                        end_time: event.target.value,
+                                        start_time: eventData.start_time ? eventData.start_time : startDefaultDateString,
+                                    });
                                 }}
                             />
                         )}
@@ -282,11 +307,16 @@ const Setting = ({
                                     value={daysLong}
                                     InputProps={{ inputProps: { min: 0, max: 9999 } }}
                                     onChange={(event) => {
-                                        const startDate = new Date(eventData.start_time)
-                                        startDate.setDate(startDate.getDate() + parseInt(event.target.value))
-                                        startDate.setHours(startDate.getHours() + hoursLong)
-                                        startDate.setMinutes(startDate.getMinutes() + minutesLong)
-                                        onChangeOwnEventLocally({...eventData, end_time: formatDateString(startDate) });
+                                        if (event.target.value) {
+                                            const startDate = new Date(eventData.start_time)
+                                            startDate.setDate(startDate.getDate() + parseInt(event.target.value))
+                                            startDate.setHours(startDate.getHours() + hoursLong)
+                                            startDate.setMinutes(startDate.getMinutes() + minutesLong)
+                                            onChangeOwnEventLocally({
+                                                ...eventData,
+                                                end_time: formatDateString(startDate)
+                                            });
+                                        }
                                     }} />
                                 <DurationPicker
                                     type="number"
@@ -294,11 +324,17 @@ const Setting = ({
                                     value={hoursLong}
                                     InputProps={{ inputProps: { min: 0, max: 9999 } }}
                                     onChange={(event) => {
-                                        const startDate = new Date(eventData.start_time);
-                                        startDate.setDate(startDate.getDate() + daysLong)
-                                        startDate.setHours(startDate.getHours() + parseInt(event.target.value))
-                                        startDate.setMinutes(startDate.getMinutes() + minutesLong)
-                                        onChangeOwnEventLocally({...eventData, end_time: formatDateString(startDate) });
+                                        if (event.target.value) {
+                                            const startDate = new Date(eventData.start_time);
+                                            startDate.setDate(startDate.getDate() + daysLong)
+                                            startDate.setHours(startDate.getHours() + parseInt(event.target.value))
+                                            startDate.setMinutes(startDate.getMinutes() + minutesLong)
+                                            onChangeOwnEventLocally({
+                                                ...eventData,
+                                                end_time: formatDateString(startDate)
+                                            });
+                                        }
+
                                     }} />
                                 <DurationPicker
                                     type="number"
@@ -306,18 +342,58 @@ const Setting = ({
                                     value={minutesLong}
                                     InputProps={{ inputProps: { min: 0, max: 9999 } }}
                                     onChange={(event) => {
-                                        const startDate = new Date(eventData.start_time)
-                                        startDate.setDate(startDate.getDate() + daysLong)
-                                        startDate.setHours(startDate.getHours() + hoursLong)
-                                        startDate.setMinutes(startDate.getMinutes() + parseInt(event.target.value))
-                                        onChangeOwnEventLocally({...eventData, end_time: formatDateString(startDate) });
+                                        if (event.target.value) {
+                                            const startDate = new Date(eventData.start_time)
+                                            startDate.setDate(startDate.getDate() + daysLong)
+                                            startDate.setHours(startDate.getHours() + hoursLong)
+                                            startDate.setMinutes(startDate.getMinutes() + parseInt(event.target.value))
+                                            onChangeOwnEventLocally({
+                                                ...eventData,
+                                                end_time: formatDateString(startDate)
+                                            });
+                                        }
                                     }} />
                             </Row>
                         )}
                         {!isInvitedEvent && (
-                            <Button fullWidth color="primary" variant="contained">
-                                <SearchIcon /> Auto search free time
-                            </Button>
+                            <Grid container direction="row">
+                                <Button
+                                    style={{ flex: 1 }}
+                                    color="primary"
+                                    variant="contained"
+                                    onClick={ async () => {
+                                        const result = onFindAutomatically({
+                                            event: eventData.id,
+                                            duration: daysLong* 24*60 + hoursLong*60 + minutesLong,
+                                            ...autoFindProps
+                                        })
+                                        if (!await result) {
+                                            setAutoFindError("Cannot find free time in chosen range. Please update conditions")
+                                        } else {
+                                            setAutoFindError('')
+                                        }
+                                    }}
+                                >
+                                    <SearchIcon /> Auto find free time
+                                </Button>
+                                <IconButton
+                                    style={{ padding: 0, marginLeft: 10 }}
+                                    onClick={() => {
+                                        setOpen(true);
+                                    }}>
+                                    <SettingsIcon />
+                                </IconButton>
+                                {autoFindError && (
+                                    <Alert severity="error" style={{ margin: '10px 0'}}>
+                                        {autoFindError}
+                                    </Alert>
+                                )}
+                                <AutoFindModal
+                                    open={open}
+                                    autoFindProps={autoFindProps}
+                                    onClose={() => {setOpen(false);}}
+                                    setAutoFindProps={setAutoFindProps} />
+                            </Grid>
                         )}
                         <Row container direction="row" justify="space-between">
                             <HalfWidthInput

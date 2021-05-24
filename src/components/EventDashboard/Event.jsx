@@ -53,6 +53,7 @@ export const Bubble = styled.span`
     border-radius: 4px;
     vertical-align: middle;
     background-color: #ffffff22;
+    ${props=> props.small ? 'font-size: 10px;' : ''}
 `
 
 const Event = ({ invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent }) => {

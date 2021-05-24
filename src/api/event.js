@@ -86,3 +86,31 @@ export const inviteParticipant = async data => {
         return null;
     }
 }
+
+export const findHoursAutomatically = async data => {
+    try {
+        const {
+            event,
+            duration,
+            fromDate,
+            toDate,
+            fromTime,
+            toTime
+        } = data;
+
+        const response = await axios.get(`${url}/hours`, {
+            ...getAuthHeader(),
+            params: {
+                event,
+                duration,
+                fromDate,
+                toDate,
+                fromTime,
+                toTime
+            }
+        });
+        return response.data;
+    } catch (e) {
+        return null;
+    }
+}

@@ -17,7 +17,7 @@ import Events from "./Events";
 import Settings from "./Settings";
 import {
     createEvent,
-    deleteEvent, deleteInvitation,
+    deleteEvent, deleteInvitation, findHoursAutomatically,
     getInvitedEvents,
     getOwnEvents,
     inviteParticipant,
@@ -167,6 +167,18 @@ const EventDashboard = () => {
         setOwnEvents(events);
     }
 
+    const handleFindAutomatically = async data => {
+        const updatedEvent = await findHoursAutomatically(data);
+        console.log(updatedEvent);
+        if (updatedEvent) {
+            const events = ownEvents.map(event => event.id === updatedEvent.id ? {...updatedEvent} : {...event});
+            setOwnEvents(events);
+            return updatedEvent;
+        } else {
+            return null;
+        }
+    }
+
     if (600 < screenWidth && screenWidth < 960) {
         columnsVisibility.settings = columnShown === 'settings';
         columnsVisibility.timeline = !columnsVisibility.settings;
@@ -276,6 +288,7 @@ const EventDashboard = () => {
                                 onDeleteOwnEvent={handleDeleteOwnEvent}
                                 onRejectInvitation={handleRejectInvitation}
                                 onDeleteInvitation={handleDeleteInvitation}
+                                onFindAutomatically={handleFindAutomatically}
                             />
                         </Column>
                     )}
