@@ -12,7 +12,7 @@ import {useHistory} from "react-router-dom";
 
 
 export const Container = styled(Grid)`
-    height: calc(100vh - 80px);
+    height: calc(100vh - 115px);
 `;
 
 export const Form = styled(Grid)`

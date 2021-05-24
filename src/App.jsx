@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import styled from 'styled-components';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
 
@@ -10,6 +11,12 @@ import PublicRoute from "./components/PublicRoute";
 import PrivateRoute from "./components/PrivateRoute";
 import Profile from "./components/Profile";
 import EventDashboard from "./components/EventDashboard";
+
+const Footer = styled.div`
+    text-align: center;
+    font-size: 13px;
+    margin: 5px;
+`
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("user"));
@@ -36,6 +43,7 @@ const App = () => {
                 <PrivateRoute path="/profile" component={Profile} />
                 <PrivateRoute path="/event-dashboard" component={EventDashboard} />
             </Switch>
+            <Footer>2021 &copy; Andrii Kushka</Footer>
         </Router>
     );
 }

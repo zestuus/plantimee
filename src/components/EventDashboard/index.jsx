@@ -34,7 +34,7 @@ const Title = styled.h1`
 const Table = styled(Grid)`
     border: 2px solid ${PRIMARY_COLOR};
     border-radius: 5px;
-    height: calc(100% - 100px);
+    height: calc(100% - 85px);
     @media (max-width: 600px) {
       height: calc(100% - 70px);
     }
