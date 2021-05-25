@@ -1,4 +1,5 @@
 # plantimee
-We help you to plan where and when to hold your event
+### Semi-automatic event planner
 
-And we can do it automatically)
+Automatic system can analyze your agenda and agendas of all participants to make predictions 
+where and when your event can happen.
