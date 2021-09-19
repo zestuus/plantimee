@@ -11,7 +11,7 @@ router.use('/user', require('./routers/user'))
 router.use('/event', require('./routers/event'))
 
 router.get('/', async (req, res) => {
-    res.send("Welcome to plantimee backend!");
+  res.send("Welcome to plantimee backend!");
 });
 
 module.exports = router;
