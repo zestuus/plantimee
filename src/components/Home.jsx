@@ -5,6 +5,7 @@ import Grid from '@material-ui/core/Grid';
 import {Container} from './SignIn';
 import largeLogo from '../images/logo_large.png';
 import {PRIMARY_COLOR} from '../constants/config';
+import withSettings from './HOCs/withSettings';
 
 const LogoWrapper = styled(Grid)`
   padding: 5px;
@@ -49,10 +50,7 @@ const Description = styled.p`
   line-height: 25px;
 `;
 
-const Home = () => {
-  const description = `Automatic system can analyze your agenda and agendas of all participants to make predictions 
-    where and when your event can happen.`
-
+const Home = ({translate: __}) => {
   return (
     <Grid container justify="center">
       <Container item container md={9} sm={11} alignItems="center">
@@ -60,13 +58,16 @@ const Home = () => {
           <LargeLogo src={largeLogo} alt="plantimee large logo"/>
         </LogoWrapper>
         <WelcomeBlock item container md={6} direction="column" alignItems="center">
-          <Title>Welcome</Title>
-          <SecondTitle>It's <Name>plantimee</Name>: <br /> semi-automatic event planner.</SecondTitle>
-          <Description>{description}</Description>
+          <Title>{__('Welcome')}</Title>
+          <SecondTitle>{__("It's")} <Name>plantimee</Name> &ndash; <br /> {__('automatic event planner.')}</SecondTitle>
+          <Description>
+            {__('Automatic system can analyze your agenda and agendas of all participants ')}
+            {__('to make predictions where and when your event can happen.')}
+          </Description>
         </WelcomeBlock>
       </Container>
     </Grid>
   );
 };
 
-export default Home;
+export default withSettings(Home);

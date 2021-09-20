@@ -10,7 +10,9 @@ import {
   ColumnHeader, Container, ScrollArea, ScrollContentWrapper,
 } from "./Events";
 import TimelineEventBar from "./TimelineEventBar";
-import { HourHeight } from "../../constants/config";
+import { HourHeight, UkrainianMonths } from '../../constants/config';
+import withSettings from '../HOCs/withSettings';
+import { LANGUAGE } from '../../constants/enums';
 
 export const ColumnTitle = styled.h3`
   margin: 7.5px;
@@ -55,7 +57,7 @@ const DateArrow = styled(IconButton)`
   padding: 0;
 `;
 
-const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown }) => {
+const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, translate: __, language }) => {
   const dateNow = new Date();
   const [now, setNow] = useState({
     hour: dateNow.getHours(), minute: dateNow.getMinutes()
@@ -74,12 +76,15 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown }) 
   },[now]);
 
   const [month, dayNumber, year] = chosenDate.toDateString().split(' ').slice(-3);
-  const chosenDateString = `${month} ${dayNumber}, ${year}`;
+  const ukrMonth = UkrainianMonths[chosenDate.getMonth()].slice(0,3);
+  const chosenDateString = language === LANGUAGE.EN
+    ? `${month} ${dayNumber}, ${year}`
+    : `${dayNumber} ${ukrMonth} ${year}`;
 
   return (
     <Container container direction="column" justify="flex-start">
       <ColumnHeader container direction="row" justify="space-between" alignItems="center">
-        <ColumnTitle>Timeline</ColumnTitle>
+        <ColumnTitle>{__('Timeline')}</ColumnTitle>
         <div style={{ flex: 1 }} />
         <DateArrow onClick={() => {
           const date = new Date(chosenDate);
@@ -137,4 +142,4 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown }) 
   );
 };
 
-export default Timeline;
+export default withSettings(Timeline);

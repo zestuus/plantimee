@@ -4,15 +4,16 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
+import withSettings from '../HOCs/withSettings';
 
-const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps }) => {
+const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, translate: __ }) => {
   return (
     <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
-      <DialogTitle id="form-dialog-title">Auto find properties</DialogTitle>
+      <DialogTitle id="form-dialog-title">{__('Auto find properties')}</DialogTitle>
       <DialogContent>
         <Grid style={{ margin: '10px 0' }} container direction="column">
           <TextField
-            label="Find from date"
+            label={__('From date')}
             type="date"
             value={autoFindProps.fromDate}
             InputLabelProps={{
@@ -25,7 +26,7 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps }) => {
             }}
           />
           <TextField
-            label="Find to date"
+            label={__('To date')}
             type="date"
             value={autoFindProps.toDate}
             InputLabelProps={{
@@ -38,7 +39,7 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps }) => {
             }}
           />
           <TextField
-            label="Find from time"
+            label={__('From time')}
             type="time"
             value={autoFindProps.fromTime}
             InputLabelProps={{
@@ -51,7 +52,7 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps }) => {
             }}
           />
           <TextField
-            label="Find to time"
+            label={__('To time')}
             type="time"
             value={autoFindProps.toTime}
             InputLabelProps={{
@@ -69,4 +70,4 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps }) => {
   );
 };
 
-export default AutoFindModal;
+export default withSettings(AutoFindModal);

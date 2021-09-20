@@ -29,6 +29,7 @@ import {
 import Participant from './Participant';
 import {getAllUsers} from '../../api/user';
 import AutoFindModal from './AutoFindModal';
+import withSettings from '../HOCs/withSettings';
 
 const Input = styled(TextField)`
     margin: 10px 0;
@@ -67,7 +68,8 @@ const EventNotChosen = styled(Grid)`
 const DefaultLocation = { lat: 49.843625, lng: 24.026442};
 const DefaultZoom = 10;
 
-const Setting = ({
+const Settings = ({
+   translate: __,
    eventData,
    onChangeOwnEventLocally,
    onSaveChangesOwnEvent,
@@ -153,7 +155,7 @@ const Setting = ({
         justify="space-between"
         alignItems="center"
       >
-        <ColumnTitle>Settings</ColumnTitle>
+        <ColumnTitle>{__('Settings')}</ColumnTitle>
         {isInvitedEvent ? (
           <Button
             style={{ fontSize: 13 }}
@@ -161,13 +163,13 @@ const Setting = ({
               onRejectInvitation(eventData.id);
             }}
           >
-            <CloseIcon /> Reject invite
+            <CloseIcon /> {__('Reject invite')}
           </Button>
         ) : (
           <Button disabled={!eventData} onClick={() => {
             onDeleteOwnEvent(eventData.id);
           }}>
-            <DeleteIcon /> Remove
+            <DeleteIcon /> {__('Remove')}
           </Button>
         )}
       </ColumnHeader>
@@ -180,7 +182,7 @@ const Setting = ({
           >
             <Input
               {...readOnly}
-              label="Title"
+              label={__('Title')}
               value={eventData.name || ''}
               onChange={(event) => {
                 onChangeOwnEventLocally({
@@ -189,7 +191,7 @@ const Setting = ({
               }} />
             <Input
               {...readOnly}
-              label="Description"
+              label={__('Description')}
               value={eventData.description || ''}
               onChange={(event) => {
                 onChangeOwnEventLocally({
@@ -201,7 +203,7 @@ const Setting = ({
               <React.Fragment>
                 <Input
                   {...readOnly}
-                  label="Online meet url"
+                  label={__('Online meet url')}
                   value={eventData.url || ''}
                   onChange={(event) => {
                     onChangeOwnEventLocally({
@@ -217,7 +219,7 @@ const Setting = ({
                 direction="column"
                 alignItems="stretch"
               >
-                <ParticipantsTitle>Participants</ParticipantsTitle>
+                <ParticipantsTitle>{__('Participants')}</ParticipantsTitle>
                 {eventData && eventData.attendees
                   && eventData.attendees.length ?
                     eventData.attendees.map(attendee => (
@@ -231,7 +233,7 @@ const Setting = ({
                 {notInvited.length ? (
                   <React.Fragment>
                     <ParticipantSelect
-                      label="Users"
+                      label={__('Users')}
                       id="demo-simple-select"
                       value={chosenUser || ''}
                       onChange={event => {
@@ -257,7 +259,7 @@ const Setting = ({
                         }
                       }}
                     >
-                      <AddIcon /> Add participant
+                      <AddIcon /> {__('Add participant')}
                     </Button>
                   </React.Fragment>
                 ): null}
@@ -289,12 +291,12 @@ const Setting = ({
                   }}
                 />
               }
-              label="Full day event"
+              label={__('Full day event')}
             />
             {(!isInvitedEvent || (isInvitedEvent && eventData.start_time)) && (
               <Input
                 {...readOnly}
-                label="Start date&time"
+                label={__('Start date&time')}
                 type={eventData.is_full_day ? "date" : "datetime-local"}
                 value={eventData.start_time ? startDateStringFinal: ''}
                 error={!datesAreValid}
@@ -313,11 +315,11 @@ const Setting = ({
             {(!isInvitedEvent || (isInvitedEvent && eventData.end_time)) && (
               <Input
                 {...readOnly}
-                label="End date&time"
+                label={__('End date&time')}
                 type={eventData.is_full_day ? "date" : "datetime-local"}
                 value={eventData.end_time ? endDateStringFinal : ''}
                 error={!datesAreValid}
-                helperText={!datesAreValid && "End time should be after start time"}
+                helperText={!datesAreValid && __("End time should be after start time")}
                 InputLabelProps={{
                   shrink: true,
                 }}
@@ -337,10 +339,10 @@ const Setting = ({
                 justify="flex-start"
                 alignItems="center"
               >
-                Duration:
+                {__('Duration')}:
                 <DurationPicker
                   type="number"
-                  label="Days"
+                  label={__('Days')}
                   value={daysLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
                   onChange={(event) => {
@@ -357,14 +359,14 @@ const Setting = ({
                   }} />
                 <DurationPicker
                   type="number"
-                  label="Hours"
+                  label={__('Hours')}
                   value={hoursLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
                   onChange={(event) => {
                     if (event.target.value) {
                       const startDate = new Date(eventData.start_time);
                       startDate.setDate(startDate.getDate() + daysLong);
-                      startDate.setHours(startDate.getHours() + parseInt(event.target.value));
+                      startDate.setHours(startDate.getHours() + parseInt(event.target.value, 10));
                       startDate.setMinutes(startDate.getMinutes() + minutesLong);
                       onChangeOwnEventLocally({
                         ...eventData,
@@ -375,7 +377,7 @@ const Setting = ({
                   }} />
                 <DurationPicker
                   type="number"
-                  label="Minutes"
+                  label={__('Minutes')}
                   value={minutesLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
                   onChange={(event) => {
@@ -383,7 +385,7 @@ const Setting = ({
                       const startDate = new Date(eventData.start_time)
                       startDate.setDate(startDate.getDate() + daysLong)
                       startDate.setHours(startDate.getHours() + hoursLong);
-                      startDate.setMinutes(startDate.getMinutes() + parseInt(event.target.value));
+                      startDate.setMinutes(startDate.getMinutes() + parseInt(event.target.value, 10));
                       onChangeOwnEventLocally({
                         ...eventData,
                         end_time: formatDateString(startDate)
@@ -406,15 +408,13 @@ const Setting = ({
                     })
                     if (!await result) {
                       setAutoFindError(
-                        "Cannot find free time in chosen range. " +
-                        "Please update conditions"
-                      )
+                        __("Cannot find free time in chosen range. Please update find conditions"))
                     } else {
                       setAutoFindError('')
                     }
                   }}
                 >
-                  <SearchIcon /> Auto find free time
+                  <SearchIcon /> {__('Auto find free time')}
                 </Button>
                 <IconButton
                   style={{ padding: 0, marginLeft: 10 }}
@@ -438,7 +438,7 @@ const Setting = ({
             <Row container direction="row" justify="space-between">
               <HalfWidthInput
                 {...readOnly}
-                label="Latitude"
+                label={__('Latitude')}
                 type="number"
                 value={eventData.latitude || ''}
                 onChange={(event) => {
@@ -449,7 +449,7 @@ const Setting = ({
               />
               <HalfWidthInput
                 {...readOnly}
-                label="Longitude"
+                label={__('Longitude')}
                 type="number"
                 value={eventData.longitude || ''}
                 onChange={(event) => {
@@ -480,7 +480,7 @@ const Setting = ({
                     onSaveChangesOwnEvent(eventData);
                   }}
                 >
-                  <SaveIcon/> Save
+                  <SaveIcon/> {__('Save')}
                 </Button>
               </Row>
             )}
@@ -492,7 +492,7 @@ const Setting = ({
             justify="center"
             alignItems="center"
           >
-            <h2>Choose any event to continue</h2>
+            <h2>{__('Choose any event to continue')}</h2>
             <br/><br/>
           </EventNotChosen>
         )}
@@ -501,4 +501,4 @@ const Setting = ({
   );
 };
 
-export default Setting;
+export default withSettings(Settings);

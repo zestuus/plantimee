@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { signInSchema, signUpSchema } from './validators';
 import { signIn, signUp } from '../api/auth';
 import { useHistory } from 'react-router-dom';
+import { FORM_TYPE } from '../constants/enums';
 
 export const useFormHandler = (type, onLogin) => {
-  const schema = type === 'signUp' ? signUpSchema : signInSchema;
+  const schema = type === FORM_TYPE.SIGN_UP ? signUpSchema : signInSchema;
 
   const history = useHistory();
   const [formData, setFormData] = useState({});
@@ -50,7 +51,7 @@ export const useFormHandler = (type, onLogin) => {
       setFormErrors(newFormErrors);
     }
     if(!Object.values(formErrors).find(error => error)){
-      const token = type === 'signUp' ? (
+      const token = type === FORM_TYPE.SIGN_UP ? (
           await signUp({...formData, password_repeat: undefined })
         ) : (
           await signIn(formData)
@@ -59,7 +60,7 @@ export const useFormHandler = (type, onLogin) => {
         onLogin(token, history);
       } else {
         setFormErrors({
-          form: type === 'signUp'
+          form: type === FORM_TYPE.SIGN_UP
             ? 'Username is taken!' : 'Invalid credentials!'
         });
       }

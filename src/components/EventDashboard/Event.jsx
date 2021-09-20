@@ -10,6 +10,7 @@ import LocationOnIcon from '@material-ui/icons/LocationOn';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 
 import { formatEventTime } from '../../utils/helpers';
+import withSettings from '../HOCs/withSettings';
 
 export const EventCard = styled(Grid)`
   border-radius: 10px;
@@ -57,7 +58,7 @@ export const Bubble = styled.span`
 `;
 
 const Event = ({
- invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent
+ invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent, translate: __
 }) => {
   const {
     id,
@@ -131,7 +132,7 @@ const Event = ({
         {invited && organizer && (
           <BubbleWrapper>
             <Bubble>
-              <AccountCircleIcon fontSize="inherit" /> organizer: {organizer}
+              <AccountCircleIcon fontSize="inherit" /> {__('organizer')}: {organizer}
             </Bubble>
           </BubbleWrapper>
         )}
@@ -140,4 +141,4 @@ const Event = ({
   );
 };
 
-export default Event;
+export default withSettings(Event);

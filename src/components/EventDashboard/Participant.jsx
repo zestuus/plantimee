@@ -7,6 +7,7 @@ import CloseIcon from '@material-ui/icons/Close';
 
 import {PRIMARY_COLOR} from "../../constants/config";
 import IconButton from "@material-ui/core/IconButton";
+import withSettings from '../HOCs/withSettings';
 
 const ParticipantContainer = styled.div`
   margin: 5px 0;
@@ -25,10 +26,10 @@ const ParticipantInfo = styled.p`
   font-size: 12px;
 `;
 
-const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation }) => {
+const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, translate: __ }) => {
   return (
     <ParticipantContainer >
-      {noAttendees ? 'There are no participants in the event. Do you want to add some?' : (
+      {noAttendees ? __('There are no participants in the event. Do you want to add some?') : (
         <Grid container direction="row" alignItems="center">
           <AccountCircleIcon fontSize="large"/>
           <ParticipantInfoBlock container direction="column">
@@ -49,4 +50,4 @@ const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation }) => 
   );
 };
 
-export default Participant;
+export default withSettings(Participant);

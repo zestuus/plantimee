@@ -6,9 +6,9 @@ import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 
 import { PRIMARY_COLOR } from "../constants/config";
-import { signIn } from "../api/auth";
 import { useFormHandler } from '../utils/hooks';
-
+import { FORM_TYPE } from '../constants/enums';
+import withSettings from './HOCs/withSettings';
 
 export const Container = styled(Grid)`
   height: calc(100vh - 115px);
@@ -49,22 +49,22 @@ export const SubmitButton = styled(Button)`
   height: 50px;
 `;
 
-const SignIn = ({ onLogin }) => {
+const SignIn = ({ onLogin, translate: __ }) => {
   const [
     formErrors, handleChange, handleBlur, handleSubmit
-  ] = useFormHandler('signIn', onLogin);
+  ] = useFormHandler(FORM_TYPE.SIGN_IN, onLogin);
 
   return (
     <Container container justify="center" alignItems="center">
       <Form item container direction="column" justify="space-between">
-        <Title>Sign In</Title>
+        <Title>{__('Sign In')}</Title>
         <FormError visible={!formErrors['form']}>
           {formErrors['form']}
         </FormError>
         <FormItem>
           <Input
             required
-            label="Username"
+            label={__('Username')}
             variant="outlined"
             name="username"
             error={!!formErrors['username']}
@@ -76,7 +76,7 @@ const SignIn = ({ onLogin }) => {
         <FormItem>
           <Input
             required
-            label="Password"
+            label={__('Password')}
             variant="outlined"
             name="password"
             type="password"
@@ -91,11 +91,11 @@ const SignIn = ({ onLogin }) => {
           color="primary"
           onClick={handleSubmit}
         >
-          Submit
+          {__('Submit')}
         </SubmitButton>
       </Form>
     </Container>
   );
 };
 
-export default SignIn;
+export default withSettings(SignIn);

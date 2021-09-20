@@ -1,9 +1,13 @@
 import React from 'react';
 import styled from "styled-components";
 
-import {Container, Form, FormError, FormItem, Input, SubmitButton, Title} from "./SignIn";
+import {
+  Container, Form, FormError, FormItem, Input, SubmitButton, Title
+} from "./SignIn";
 import Grid from "@material-ui/core/Grid";
 import { useFormHandler } from '../utils/hooks';
+import { FORM_TYPE } from '../constants/enums';
+import withSettings from './HOCs/withSettings';
 
 const SignUpForm = styled(Form)`
   height: 600px;
@@ -13,16 +17,16 @@ export const SignUpTitle = styled(Title)`
   margin-top: 0;
 `;
 
-const SignUp = ({ onLogin }) => {
+const SignUp = ({ onLogin, translate: __ }) => {
   const [
     formErrors, handleChange, handleBlur, handleSubmit
-  ] = useFormHandler('signUp', onLogin);
+  ] = useFormHandler(FORM_TYPE.SIGN_UP, onLogin);
 
   return (
     <Container container justify="center" alignItems="center">
       <SignUpForm item container direction="column" justify="space-between">
         <Grid container direction="column">
-          <SignUpTitle>Sign Up</SignUpTitle>
+          <SignUpTitle>{__('Sign Up')}</SignUpTitle>
           <FormError visible={!formErrors['form']}>
             {formErrors['form']}
           </FormError>
@@ -30,7 +34,7 @@ const SignUp = ({ onLogin }) => {
         <FormItem>
           <Input
             required
-            label="Username"
+            label={__('Username')}
             variant="outlined"
             name="username"
             error={!!formErrors['username']}
@@ -42,7 +46,7 @@ const SignUp = ({ onLogin }) => {
         <FormItem>
           <Input
             required
-            label="Password"
+            label={__('Password')}
             variant="outlined"
             name="password"
             type="password"
@@ -55,7 +59,7 @@ const SignUp = ({ onLogin }) => {
         <FormItem>
           <Input
             required
-            label="Repeat password"
+            label={__('Repeat password')}
             variant="outlined"
             name="password_repeat"
             type="password"
@@ -78,7 +82,7 @@ const SignUp = ({ onLogin }) => {
         </FormItem>
         <FormItem>
           <Input
-            label="Full name"
+            label={__('Full name')}
             variant="outlined"
             name="full_name"
             error={!!formErrors['full_name']}
@@ -99,4 +103,4 @@ const SignUp = ({ onLogin }) => {
   );
 };
 
-export default SignUp;
+export default withSettings(SignUp);

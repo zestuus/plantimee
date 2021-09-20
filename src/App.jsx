@@ -11,6 +11,8 @@ import PublicRoute from "./components/Router/PublicRoute";
 import PrivateRoute from "./components/Router/PrivateRoute";
 import Profile from "./components/Profile";
 import EventDashboard from "./components/EventDashboard";
+import { loadStorageItem, saveItemInStorage, deleteStorageItem } from './utils/localStorage';
+import withSettings from './components/HOCs/withSettings';
 
 const Footer = styled.div`
   text-align: center;
@@ -18,18 +20,18 @@ const Footer = styled.div`
   margin: 5px;
 `
 
-const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("user"));
+const App = ({ translate: __ }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!loadStorageItem("user"));
 
   const handleLogout = history => {
     setIsLoggedIn(false);
-    localStorage.removeItem('user');
+    deleteStorageItem('user');
     history.push('/');
   }
 
   const handleLogin = (token, history) => {
     setIsLoggedIn(true);
-    localStorage.setItem('user', token);
+    saveItemInStorage('user', token);
     history.push('/');
   }
 
@@ -43,9 +45,9 @@ const App = () => {
         <PrivateRoute path="/profile" component={Profile} />
         <PrivateRoute path="/event-dashboard" component={EventDashboard} />
       </Switch>
-      <Footer>2021 &copy; Andrii Kushka</Footer>
+      <Footer>{new Date().getFullYear()} &copy; {__('Andrii Kushka')}</Footer>
     </Router>
   );
 }
 
-export default App;
+export default withSettings(App);

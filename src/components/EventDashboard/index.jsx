@@ -24,6 +24,7 @@ import {
   rejectInvitation,
   updateEvent
 } from "../../api/event";
+import withSettings from '../HOCs/withSettings';
 
 const Title = styled.h1`
   @media (max-width: 600px) {
@@ -50,13 +51,12 @@ const Column = styled(Grid)`
 `
 
 const ColumnSwitch = styled(Button)`
-  text-transform: capitalize;
   font-size: 12px;
   height: 40px;
-  width: 80px;
+  width: 118px;
 `;
 
-const EventDashboard = () => {
+const EventDashboard = ({ translate: __ }) => {
   // external state
   const [chosenEvent, setChosenEvent] = useState(null);
   const [ownEvents, setOwnEvents] = useState([]);
@@ -68,7 +68,7 @@ const EventDashboard = () => {
 
   const columnsVisibility = {
     timeline: true,
-    tasks: true,
+    events: true,
     settings: true,
   }
 
@@ -184,18 +184,18 @@ const EventDashboard = () => {
     columnsVisibility.timeline = !columnsVisibility.settings;
   } else if (screenWidth < 600) {
     columnsVisibility.timeline = columnShown === 'timeline';
-    columnsVisibility.tasks = columnShown === 'tasks';
+    columnsVisibility.events = columnShown === 'events';
     columnsVisibility.settings = columnShown === 'settings';
   }
 
-  const chosenEventData =  ownEvents.find(event => event.id === chosenEvent)
-    || invitedEvents.find(event => event.id === chosenEvent);
+  const chosenEventData = ownEvents ? ownEvents.find(event => event.id === chosenEvent)
+    : invitedEvents && invitedEvents.find(event => event.id === chosenEvent);
 
   return (
     <Grid container justify="center">
       <Container item md={11} xs={11}>
         <Grid container justify="space-between" alignItems="center">
-          <Title>Dashboard</Title>
+          <Title>{__('Event Dashboard')}</Title>
           <Hidden xsDown mdUp>
             <FormControlLabel
               control={
@@ -207,7 +207,7 @@ const EventDashboard = () => {
                   inputProps={{ 'aria-label': 'primary checkbox' }}
                 />
               }
-              label={columnShown === 'settings' ? "Settings" : "Timeline"}
+              label={columnShown === 'settings' ? __("Settings") : __("Timeline")}
             />
           </Hidden>
           <Hidden smUp>
@@ -217,7 +217,7 @@ const EventDashboard = () => {
               variant="contained"
               color="primary"
               onClick={handleClick}>
-              {columnShown}
+              {__(columnShown.charAt(0).toUpperCase() + columnShown.slice(1))}
             </ColumnSwitch>
             <Menu
               id="simple-menu"
@@ -232,15 +232,16 @@ const EventDashboard = () => {
                   handleClose();
                   setColumnShown('timeline')
                 }}>
-                Timeline</MenuItem>
+                {__('Timeline')}
+              </MenuItem>
               <MenuItem
-                selected={columnShown === 'tasks'}
+                selected={columnShown === 'events'}
                 onClick={() => {
                   handleClose();
-                  setColumnShown('tasks')
+                  setColumnShown('events')
                 }}
               >
-                Tasks
+                {__('Events')}
               </MenuItem>
               <MenuItem
                 selected={columnShown === 'settings'}
@@ -249,7 +250,7 @@ const EventDashboard = () => {
                   setColumnShown('settings')
                 }}
               >
-                Settings
+                {__('Settings')}
               </MenuItem>
             </Menu>
           </Hidden>
@@ -265,7 +266,7 @@ const EventDashboard = () => {
               />
             </Column>
           )}
-          {columnsVisibility['tasks'] && (
+          {columnsVisibility['events'] && (
             <Column item container direction="column" md={4} sm={6} xs={12}>
               <Events
                 ownEvents={ownEvents}
@@ -298,4 +299,4 @@ const EventDashboard = () => {
   );
 };
 
-export default EventDashboard;
+export default withSettings(EventDashboard);

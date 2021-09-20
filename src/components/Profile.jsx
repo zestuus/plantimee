@@ -3,8 +3,9 @@ import {Container} from "./SignIn";
 import Grid from "@material-ui/core/Grid";
 import {getProfile} from "../api/user";
 import TextField from "@material-ui/core/TextField";
+import withSettings from './HOCs/withSettings';
 
-const Profile = () => {
+const Profile = ({ translate: __ }) => {
   const [profileData, setProfileData] = useState({});
 
   useEffect(() => {
@@ -21,12 +22,12 @@ const Profile = () => {
   return (
     <Grid container justify="center">
       <Container item container md={9} xs={10}>
-        {profileData === null ? <p>Cannot get your profile info</p> : (
+        {profileData === null ? <p>{__('Cannot get your profile info')}</p> : (
           <Grid container direction="column">
-            <h1>Profile</h1>
-            <h3>Username</h3>
+            <h1>{__('Profile')}</h1>
+            <h3>{__('Username')}</h3>
             <TextField InputProps={{ readOnly: true }} value={profileData.username || ''} />
-            <h3>Full name</h3>
+            <h3>{__('Full name')}</h3>
             <TextField InputProps={{ readOnly: true }} value={profileData.full_name || ''} />
             <h3>Email</h3>
             <TextField InputProps={{ readOnly: true }} value={profileData.email || ''} />
@@ -37,4 +38,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default withSettings(Profile);

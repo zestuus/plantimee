@@ -9,6 +9,7 @@ import AddIcon from '@material-ui/icons/Add';
 
 import {ColumnTitle} from "./Timeline";
 import Event, {EventCard} from "./Event";
+import withSettings from '../HOCs/withSettings';
 
 export const Container = styled(Grid)`
   height: 100%;
@@ -47,7 +48,7 @@ const GroupSwitch = styled(Button)`
 `;
 
 const Events = ({
-  ownEvents, invitedEvents, chosenEvent, setChosenEvent, openColumn, onCreateNewEvent, onChangeOwnEvent
+  ownEvents, invitedEvents, chosenEvent, setChosenEvent, openColumn, onCreateNewEvent, onChangeOwnEvent, translate: __
 }) => {
   const [showInvitedEvents, setShowInvitedEvents] = useState(true);
   const [showActiveEvents, setShowActiveEvents] = useState(true);
@@ -66,7 +67,7 @@ const Events = ({
   return (
     <Container container direction="column" justify="flex-start">
       <ColumnHeader container direction="row" justify="space-between" alignItems="center">
-        <ColumnTitle>Events</ColumnTitle>
+        <ColumnTitle>{__('Events')}</ColumnTitle>
         <Button
           style={{ paddingLeft: 0 }}
           onClick={() => {
@@ -74,7 +75,7 @@ const Events = ({
             openColumn('settings');
           }}
         >
-          <AddIcon />Create new
+          <AddIcon />{__('Create new')}
         </Button>
       </ColumnHeader>
       <ScrollArea>
@@ -83,7 +84,7 @@ const Events = ({
             setShowInvitedEvents(!showInvitedEvents)
           }}>
             {showInvitedEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
-            Events you're invited to
+            {__("Events you're invited to")}
           </GroupSwitch>
           {showInvitedEvents && ( invitedEvents.length ? (
             <Grid container direction="column">
@@ -98,12 +99,12 @@ const Events = ({
                 />
               ))}
             </Grid>
-          ) : <EventCard>You have no invited events</EventCard>)}
+          ) : <EventCard>{__('You have no invited events')}</EventCard>)}
           <GroupSwitch onClick={() => {
             setShowActiveEvents(!showActiveEvents)
           }}>
             {showActiveEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
-            Your own active events
+            {__('Your own active events')}
           </GroupSwitch>
           {showActiveEvents && ( ownActive.length ? (
             <Grid container direction="column">
@@ -117,12 +118,12 @@ const Events = ({
                   onChangeOwnEvent={onChangeOwnEvent} />
               ))}
             </Grid>
-          ) : <EventCard>You have no own active events</EventCard>)}
+          ) : <EventCard>{__('You have no own active events')}</EventCard>)}
           <GroupSwitch onClick={() => {
             setShowCompletedEvents(!showCompletedEvents)
           }}>
             {showCompletedEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
-            Completed events
+            {__('Completed events')}
           </GroupSwitch>
           {showCompletedEvents && ( ownCompleted.length ? (
             <Grid container direction="column">
@@ -136,11 +137,11 @@ const Events = ({
                   onChangeOwnEvent={onChangeOwnEvent} />
               ))}
             </Grid>
-          ) : <EventCard>You have no completed events</EventCard>)}
+          ) : <EventCard>{__('You have no completed events')}</EventCard>)}
         </ScrollContentWrapper>
       </ScrollArea>
     </Container>
   );
 };
 
-export default Events;
+export default withSettings(Events);
