@@ -16,8 +16,8 @@ const translation = {
   'Automatic system can analyze your agenda and agendas of all participants ': {
     [LANGUAGE.UK]: 'Автоматизована система вміє аналізувати ваш розклад дня та розклад дня усіх учасників  ',
   },
-  'to make predictions where and when your event can happen.': {
-    [LANGUAGE.UK]: 'щоб зробити припущення де і коли ваша подія може відбутись',
+  'to make predictions when and where your event can happen.': {
+    [LANGUAGE.UK]: 'щоб зробити припущення коли і де ваша подія може відбутись',
   },
   'Settings': {
     [LANGUAGE.UK]: 'Налаштування',

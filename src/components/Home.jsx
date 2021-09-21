@@ -62,7 +62,7 @@ const Home = ({translate: __}) => {
           <SecondTitle>{__("It's")} <Name>plantimee</Name> &ndash; <br /> {__('automatic event planner.')}</SecondTitle>
           <Description>
             {__('Automatic system can analyze your agenda and agendas of all participants ')}
-            {__('to make predictions where and when your event can happen.')}
+            {__('to make predictions when and where your event can happen.')}
           </Description>
         </WelcomeBlock>
       </Container>
