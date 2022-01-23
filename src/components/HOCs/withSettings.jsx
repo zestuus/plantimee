@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import i18n from '../../constants/i18n';
+import i18n from '../../utils/i18n';
 
 
 const withTranslate = Component => (props) => {

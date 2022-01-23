@@ -20,4 +20,5 @@ export const signInSchema = yup.object({
     .min(6)
     .required(),
   password: yup.string().min(6).required(),
+  mfa: yup.string(),
 });

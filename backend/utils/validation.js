@@ -13,6 +13,7 @@ const signUpSchema = joi.object({
 const signInSchema = joi.object({
   username: joi.string().min(6).required(),
   password: joi.string().min(6).required(),
+  mfa: joi.string(),
 });
 
 module.exports = { signUpSchema, signInSchema };

@@ -3,15 +3,15 @@ import styled from 'styled-components';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
 
+import { loadStorageItem, saveItemInStorage, deleteStorageItem } from './utils/localStorage';
 import Header from "./components/Header";
 import Home from "./components/Home";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
-import PublicRoute from "./components/Router/PublicRoute";
-import PrivateRoute from "./components/Router/PrivateRoute";
 import Profile from "./components/Profile";
 import EventDashboard from "./components/EventDashboard";
-import { loadStorageItem, saveItemInStorage, deleteStorageItem } from './utils/localStorage';
+import PublicRoute from "./components/Router/PublicRoute";
+import PrivateRoute from "./components/Router/PrivateRoute";
 import withSettings from './components/HOCs/withSettings';
 
 const Footer = styled.div`

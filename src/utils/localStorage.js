@@ -1,4 +1,3 @@
-
 export const loadStorageItem = (key) => {
   try {
     return localStorage.getItem(key) || undefined;

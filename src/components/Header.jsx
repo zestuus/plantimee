@@ -38,7 +38,7 @@ const MenuLink = styled.div`
   :hover {
     text-decoration: underline;
   }
-`
+`;
 
 const DropdownMenuItem = styled(MenuItem)`
   color: ${PRIMARY_COLOR};
@@ -174,7 +174,7 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
                     color="primary"
                     value={language}
                     exclusive
-                    onChange={(e, value) => actions.changeLanguage(value)}
+                    onChange={(e, value) => value && actions.changeLanguage(value)}
                   >
                     <ToggleButton value={LANGUAGE.EN}>EN</ToggleButton>
                     <ToggleButton value={LANGUAGE.UK}>UK</ToggleButton>

@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 
+const { TOKEN_SECRET } = require('../constants/config');
+
 function privateRoute(req, res, next) {
   const { authorization } = req.headers;
 
@@ -14,7 +16,7 @@ function privateRoute(req, res, next) {
   }
 
   try {
-    req.user = jwt.verify(token, process.env.TOKEN_SECRET);
+    req.user = jwt.verify(token, TOKEN_SECRET);
     next();
   } catch {
     res.status(403).send('Invalid token!');

@@ -16,6 +16,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
+      mfa: {
+        type: Sequelize.STRING
+      },
       full_name: {
         type: Sequelize.STRING
       },

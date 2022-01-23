@@ -1,13 +1,15 @@
 import React from 'react';
 import styled from "styled-components";
 
+import Grid from "@material-ui/core/Grid";
+
 import {
   Container, Form, FormError, FormItem, Input, SubmitButton, Title
 } from "./SignIn";
-import Grid from "@material-ui/core/Grid";
+import withSettings from './HOCs/withSettings';
+
 import { useFormHandler } from '../utils/hooks';
 import { FORM_TYPE } from '../constants/enums';
-import withSettings from './HOCs/withSettings';
 
 const SignUpForm = styled(Form)`
   height: 600px;
@@ -20,11 +22,11 @@ export const SignUpTitle = styled(Title)`
 const SignUp = ({ onLogin, translate: __ }) => {
   const [
     formErrors, handleChange, handleBlur, handleSubmit
-  ] = useFormHandler(FORM_TYPE.SIGN_UP, onLogin);
+  ] = useFormHandler(FORM_TYPE.SIGN_UP, onLogin, __);
 
   return (
-    <Container container justify="center" alignItems="center">
-      <SignUpForm item container direction="column" justify="space-between">
+    <Container container justifyContent="center" alignItems="center">
+      <SignUpForm item container direction="column" justifyContent="space-between">
         <Grid container direction="column">
           <SignUpTitle>{__('Sign Up')}</SignUpTitle>
           <FormError visible={!formErrors['form']}>
@@ -96,7 +98,7 @@ const SignUp = ({ onLogin, translate: __ }) => {
           color="primary"
           onClick={handleSubmit}
         >
-          Submit
+          {__('Submit')}
         </SubmitButton>
       </SignUpForm>
     </Container>

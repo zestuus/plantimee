@@ -2,7 +2,7 @@ const express = require('express');
 const _ = require('lodash');
 
 const db = require('../../db/models');
-const { privateRoute } = require('../middlewares');
+const { privateRoute } = require('../utils/middlewares');
 
 const router = express.Router();
 

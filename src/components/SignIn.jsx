@@ -42,24 +42,38 @@ export const Input = styled(TextField)`
   .MuiOutlinedInput-input {
     padding: 16px 15px;
   }
+  & label.Mui-focused {
+    color: ${PRIMARY_COLOR};
+  }
+  & .MuiOutlinedInput-root {
+    &.Mui-focused fieldset {
+      border-color: ${PRIMARY_COLOR};
+    }
+  }
 `;
 
 export const SubmitButton = styled(Button)`
+  background-color: ${PRIMARY_COLOR};
+  color: white;
   margin: 10px 0;  
   height: 50px;
+  :hover {
+    background-color: ${PRIMARY_COLOR}cc;
+    color: white;
+  }
 `;
 
 const SignIn = ({ onLogin, translate: __ }) => {
   const [
     formErrors, handleChange, handleBlur, handleSubmit
-  ] = useFormHandler(FORM_TYPE.SIGN_IN, onLogin);
+  ] = useFormHandler(FORM_TYPE.SIGN_IN, onLogin, __);
 
   return (
-    <Container container justify="center" alignItems="center">
-      <Form item container direction="column" justify="space-between">
+    <Container container justifyContent="center" alignItems="center">
+      <Form item container direction="column" justifyContent="space-between">
         <Title>{__('Sign In')}</Title>
         <FormError visible={!formErrors['form']}>
-          {formErrors['form']}
+          {formErrors['form'] !== 'mfa' && formErrors['form']}
         </FormError>
         <FormItem>
           <Input
@@ -86,6 +100,21 @@ const SignIn = ({ onLogin, translate: __ }) => {
             onBlur={handleBlur}
           />
         </FormItem>
+        {formErrors.form === 'mfa' && (
+          <FormItem>
+            <Input
+              required
+              label={__('Verification code')}
+              variant="outlined"
+              name="mfa"
+              type="text"
+              error={!!formErrors['mfa']}
+              helperText={formErrors['mfa']}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            />
+          </FormItem>
+        )}
         <SubmitButton
           variant="contained"
           color="primary"
