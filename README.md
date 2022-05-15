@@ -12,7 +12,7 @@ where and when your event can happen.
     - **psql** command installed on your computer
 2. Install all required packages: `yarn` or `yarn install`
 3. Create superuser for the local database: `psql -U postgres -c "CREATE USER plantimee_admin SUPERUSER PASSWORD '1111';"`
-   - If your OS is Ubuntu you may need to use following command instead: `sudo -u postnpx sequelize-cli db:creategres psql -c "CREATE USER plantimee_admin SUPERUSER PASSWORD '1111';"`
+   - If your OS is Ubuntu you may need to use the following command instead: `sudo -u postnpx sequelize-cli db:creategres psql -c "CREATE USER plantimee_admin SUPERUSER PASSWORD '1111';"`
 4. Go to the db folder: `cd db`
 5. Create the local database **plantimee**: `npx sequelize-cli db:create`
 6. Run all required migrations: `npx sequelize-cli db:migrate`
