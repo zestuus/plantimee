@@ -55,7 +55,7 @@ const Profile = ({ translate: __ }) => {
   };
 
   return (
-    <Grid container justify="center">
+    <Grid container justifyContent="center">
       <Container item container md={9} xs={10}>
         {profileData === null ? <p>{__('Cannot get your profile info')}</p> : (
           <Grid container direction="column">

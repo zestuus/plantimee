@@ -50,7 +50,7 @@ const DICTIONARY = {
     [LANGUAGE.UK]: 'Не вдається отримати дані вашого профілю',
   },
   'Username': {
-    [LANGUAGE.UK]: "Ім'я користувача",
+    [LANGUAGE.UK]: "Нікнейм",
   },
   'Full name': {
     [LANGUAGE.UK]: "Повне ім'я",
@@ -259,6 +259,12 @@ const DICTIONARY = {
   'password_repeat is a required field': {
     [LANGUAGE.UK]: 'введіть пароль ще раз',
   },
+  'Input username': {
+    [LANGUAGE.UK]: 'Введіть нікнейм',
+  },
+  'Cannot find user with given username or user is already invited': {
+    [LANGUAGE.UK]: 'Не вдалось знайти користувача з вказаним нікнеймом або користувач вже запрошений на подію',
+  }
 };
 
 export default DICTIONARY;

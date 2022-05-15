@@ -65,8 +65,8 @@ const Events = ({
   }, [[],[]])
 
   return (
-    <Container container direction="column" justify="flex-start">
-      <ColumnHeader container direction="row" justify="space-between" alignItems="center">
+    <Container container direction="column" justifyContent="flex-start">
+      <ColumnHeader container direction="row" justifyContent="space-between" alignItems="center">
         <ColumnTitle>{__('Events')}</ColumnTitle>
         <Button
           style={{ paddingLeft: 0 }}

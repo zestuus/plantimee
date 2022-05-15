@@ -157,20 +157,34 @@ router.delete('/', privateRoute, async (req, res) => {
 });
 
 router.post('/invite', privateRoute, async (req, res) => {
-  const { userId: UserId, eventId: EventId } = req.body;
+  const { usernameToLookFor, eventId: EventId } = req.body;
 
-  const participation = await db.Participation.build({
-    UserId,
-    EventId,
-    createdAt: new Date(),
-    updatedAt: new Date()
+  const user = await db.User.findOne({ where: { username: usernameToLookFor } });
+  const event = await db.Event.findOne({
+    where: { id: EventId },
+    include: [{
+      model: db.User,
+      as: "organizer",
+    }],
   });
 
-  try {
-    const savedParticipation = await participation.save();
-    res.send(savedParticipation);
-  } catch (e) {
-    res.status(400).send("Error during invite!");
+  if (user && event && event.organizer.id !== user.id) {
+    const participation = await db.Participation.build({
+      UserId: user.id,
+      EventId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    try {
+      await participation.save();
+
+      res.send(user);
+    } catch (e) {
+      res.status(400).send("Error during invite!");
+    }
+  } else {
+    res.status(400).send("User not found!");
   }
 });
 

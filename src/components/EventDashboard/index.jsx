@@ -60,6 +60,7 @@ const EventDashboard = ({ translate: __ }) => {
   // external state
   const [chosenEvent, setChosenEvent] = useState(null);
   const [ownEvents, setOwnEvents] = useState([]);
+  const [ownEventsBackup, setOwnEventsBackup] = useState([]);
   const [invitedEvents, setInvitedEvents] = useState([]);
   // internal state
   const [screenWidth, setScreenWidth] = useState(getWindowSize().width);
@@ -78,6 +79,7 @@ const EventDashboard = ({ translate: __ }) => {
         const ownEventsData = await getOwnEvents();
         const invitedEventsData = await getInvitedEvents();
         setOwnEvents(ownEventsData);
+        setOwnEventsBackup(ownEventsData);
         setInvitedEvents(invitedEventsData);
       } catch (err) {
         setOwnEvents(null);
@@ -120,21 +122,31 @@ const EventDashboard = ({ translate: __ }) => {
   }
 
   const handleSaveChangesOwnEvent = async newEventData => {
-    await updateEvent(newEventData);
+    const result = await updateEvent(newEventData);
+    if (result) {
+      setOwnEventsBackup(ownEvents);
+    }
   }
 
   const handleInvite = async data => {
-    const events = ownEvents.map(event => event.id === data.eventId ?
-      { ...event, attendees: [...event.attendees, {
-          id: data.id,
-          username: data.username,
-          full_name: data.full_name,
-          email: data.email,
-        }] } :
-      {...event}
-    );
-    setOwnEvents(events);
-    await inviteParticipant(data);
+    const attendee = await inviteParticipant(data);
+    if (attendee) {
+      const events = ownEvents.map(event => event.id === data.eventId ?
+        {
+          ...event, attendees: [...event.attendees, {
+            id: attendee.id,
+            username: attendee.username,
+            full_name: attendee.full_name,
+            email: attendee.email,
+          }]
+        } :
+        {...event}
+      );
+      setOwnEvents(events);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   const handleDeleteOwnEvent = async id => {
@@ -169,7 +181,6 @@ const EventDashboard = ({ translate: __ }) => {
 
   const handleFindAutomatically = async data => {
     const updatedEvent = await findHoursAutomatically(data);
-    console.log(updatedEvent);
     if (updatedEvent) {
       const events = ownEvents.map(event => event.id === updatedEvent.id ? {...updatedEvent} : {...event});
       setOwnEvents(events);
@@ -188,13 +199,14 @@ const EventDashboard = ({ translate: __ }) => {
     columnsVisibility.settings = columnShown === 'settings';
   }
 
-  const chosenEventData = ownEvents ? ownEvents.find(event => event.id === chosenEvent)
-    : invitedEvents && invitedEvents.find(event => event.id === chosenEvent);
+  const chosenEventData = (ownEvents && ownEvents.find(event => event.id === chosenEvent))
+    || (invitedEvents && invitedEvents.find(event => event.id === chosenEvent));
+  const chosenEventDataBackup = ownEventsBackup.find(event => event.id === chosenEvent);
 
   return (
-    <Grid container justify="center">
+    <Grid container justifyContent="center">
       <Container item md={11} xs={11}>
-        <Grid container justify="space-between" alignItems="center">
+        <Grid container justifyContent="space-between" alignItems="center">
           <Title>{__('Event Dashboard')}</Title>
           <Hidden xsDown mdUp>
             <FormControlLabel
@@ -283,6 +295,7 @@ const EventDashboard = ({ translate: __ }) => {
             <Column item container direction="column" md={4} sm={6} xs={12}>
               <Settings
                 eventData={chosenEventData}
+                eventDataBackup={chosenEventDataBackup}
                 onInviteAttendee={handleInvite}
                 onChangeOwnEventLocally={handleChangeOwnEventLocally}
                 onSaveChangesOwnEvent={handleSaveChangesOwnEvent}

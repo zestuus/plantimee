@@ -80,7 +80,7 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
 
   const commonMenuItems = [
     { key: 'Settings', event: (event) => setSettingsAnchorEl(event.currentTarget), title: (
-        <Grid container justify="center" alignItems="center">
+        <Grid container justifyContent="center" alignItems="center">
           {__('Settings')}
           <SettingsIcon />
         </Grid>
@@ -96,19 +96,19 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
   const privateMenuItems = [
     ...commonMenuItems,
     { key: 'Event Dashboard', event: () => history.push('/event-dashboard'), title: (
-        <Grid container justify="center" alignItems="center">
+        <Grid container justifyContent="center" alignItems="center">
           {__('Event Dashboard')}
           <EventIcon />
         </Grid>
       )},
     { key: 'Profile', event: () => history.push('/profile'), title: (
-      <Grid container justify="center" alignItems="center">
+      <Grid container justifyContent="center" alignItems="center">
         {__('Profile')}
         <ProfileIcon />
       </Grid>
     )},
     { key: 'Logout', event: () => onLogout(history), title: (
-      <Grid container justify="center" alignItems="center">
+      <Grid container justifyContent="center" alignItems="center">
         {__('Logout')}
         <LogoutIcon />
       </Grid>
@@ -117,11 +117,11 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
 
   return (
     <React.Fragment>
-      <Grid container justify="center">
-        <Container container alignItems="center" justify="space-between">
+      <Grid container justifyContent="center">
+        <Container container alignItems="center" justifyContent="space-between">
           <Logo />
           <MenuBlock>
-            <Grid item container alignItems="center" justify="flex-end">
+            <Grid item container alignItems="center" justifyContent="flex-end">
               <Hidden xsDown>
                 {isLoggedIn ? privateMenuItems.map(item => (
                   <MenuLink key={item.key} onClick={item.event}>{item.title}</MenuLink>

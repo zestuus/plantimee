@@ -75,10 +75,10 @@ export const createEvent = async () => {
 
 export const inviteParticipant = async data => {
   try {
-    const { id: userId, eventId } = data;
+    const { usernameToLookFor, eventId } = data;
 
     const response = await axios.post(`${url}/invite`, {
-      userId,
+      usernameToLookFor,
       eventId
     }, getAuthHeader());
     return response.data;

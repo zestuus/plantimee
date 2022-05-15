@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import styled from "styled-components";
 import MapPicker from "react-google-map-picker";
 
@@ -7,12 +7,9 @@ import TextField from "@material-ui/core/TextField";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Grid from "@material-ui/core/Grid";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from '@material-ui/icons/Delete';
 import CloseIcon from '@material-ui/icons/Close';
-import SaveIcon from '@material-ui/icons/Save';
 import SearchIcon from '@material-ui/icons/Search';
 import AddIcon from '@material-ui/icons/Add';
 import SettingsIcon from '@material-ui/icons/Settings';
@@ -27,7 +24,6 @@ import {
   GOOGLE_MAPS_API_KEY, OneDay, OneHour, OneMinute
 } from '../../constants/config';
 import Participant from './Participant';
-import {getAllUsers} from '../../api/user';
 import AutoFindModal from './AutoFindModal';
 import withSettings from '../HOCs/withSettings';
 
@@ -36,10 +32,6 @@ const Input = styled(TextField)`
 `;
 
 const ParticipantsBlock = styled(Grid)`
-  margin: 10px 0;
-`;
-
-const ParticipantSelect = styled(Select)`
   margin: 10px 0;
 `;
 
@@ -71,6 +63,7 @@ const DefaultZoom = 10;
 const Settings = ({
    translate: __,
    eventData,
+   eventDataBackup,
    onChangeOwnEventLocally,
    onSaveChangesOwnEvent,
    onDeleteOwnEvent,
@@ -83,8 +76,8 @@ const Settings = ({
   const [open, setOpen] = useState(false);
   const [autoFindProps, setAutoFindProps] = useState({});
   const [autoFindError, setAutoFindError] = useState('');
-  const [users, setUsers] = useState([]);
-  const [chosenUser, setChosenUser] = useState(null);
+  const [attendeeFindError, setAttendeeFindError] = useState('');
+  const [usernameToLookFor, setUsernameToLookFor] = useState('');
 
   const isInvitedEvent = !!(eventData && eventData.organizer);
   const readOnly = isInvitedEvent ? { InputProps: { readOnly: true }} : {};
@@ -125,34 +118,25 @@ const Settings = ({
 
   const handleChangeLocation = (lat, lng) => {
     onChangeOwnEventLocally({...eventData, latitude: lat, longitude: lng });
+    onSaveChangesOwnEvent({...eventData, latitude: lat, longitude: lng });
   }
 
   const handleChangeZoom = (newZoom) => {
     setZoom(newZoom);
   }
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const users = await getAllUsers();
-        setUsers(users);
-      } catch (err) {
-        setUsers([]);
-      }
-    })();
-  }, [])
-
-  const notInvited = eventData && eventData.attendees ? users
-    .filter(user => !eventData.attendees
-      .find(attendee => attendee.id === user.id)
-    ) : [];
+  const handleBlur = (key) => {
+    if (eventData && eventDataBackup && eventData[key] !== eventDataBackup[key]) {
+      onSaveChangesOwnEvent(eventData);
+    }
+  }
 
   return (
-    <Container container direction="column" justify="flex-start">
+    <Container container direction="column" justifyContent="flex-start">
       <ColumnHeader
         container
         direction="row"
-        justify="space-between"
+        justifyContent="space-between"
         alignItems="center"
       >
         <ColumnTitle>{__('Settings')}</ColumnTitle>
@@ -188,7 +172,9 @@ const Settings = ({
                 onChangeOwnEventLocally({
                   ...eventData, name: event.target.value,
                 });
-              }} />
+              }}
+              onBlur={() => handleBlur('name')}
+            />
             <Input
               {...readOnly}
               label={__('Description')}
@@ -198,6 +184,7 @@ const Settings = ({
                   ...eventData, description: event.target.value,
                 });
               }}
+              onBlur={() => handleBlur('description')}
             />
             {(!isInvitedEvent || (isInvitedEvent && eventData.url)) && (
               <React.Fragment>
@@ -210,6 +197,7 @@ const Settings = ({
                       ...eventData, url: event.target.value,
                     });
                   }}
+                  onBlur={() => handleBlur('url')}
                 />
               </React.Fragment>
             )}
@@ -230,39 +218,36 @@ const Settings = ({
                         onDeleteInvitation={onDeleteInvitation}/>
                     )) : <Participant noAttendees />
                 }
-                {notInvited.length ? (
-                  <React.Fragment>
-                    <ParticipantSelect
-                      label={__('Users')}
-                      id="demo-simple-select"
-                      value={chosenUser || ''}
-                      onChange={event => {
-                        setChosenUser(event.target.value);
-                      }}
-                    >
-                      {notInvited.map(user => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.username}
-                        </MenuItem>
-                      ))}
-                    </ParticipantSelect>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      color="primary"
-                      onClick={() => {
-                        if (chosenUser){
-                          const userData = users.find(user => user.id = chosenUser);
-                          onInviteAttendee({
-                            ...userData, eventId: eventData.id
-                          });
-                        }
-                      }}
-                    >
-                      <AddIcon /> {__('Add participant')}
-                    </Button>
-                  </React.Fragment>
-                ): null}
+                <Input
+                  label={__('Input username')}
+                  value={usernameToLookFor || ''}
+                  onChange={(event) => {
+                    setUsernameToLookFor(event.target.value);
+                  }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  onClick={async () => {
+                    const result = await onInviteAttendee({
+                      usernameToLookFor, eventId: eventData.id
+                    });
+
+                    if (!result) {
+                      setAttendeeFindError(__("Cannot find user with given username or user is already invited"))
+                    } else {
+                      setAttendeeFindError('');
+                    }
+                  }}
+                >
+                  <AddIcon /> {__('Add participant')}
+                </Button>
+                {attendeeFindError && (
+                  <Alert severity="error" style={{ margin: '10px 0'}}>
+                    {attendeeFindError}
+                  </Alert>
+                )}
               </ParticipantsBlock>
             )}
             <FormControlLabel
@@ -270,24 +255,36 @@ const Settings = ({
                 <Checkbox
                   color="primary"
                   checked={!!eventData.is_full_day}
+                  onBlur={() => handleBlur('is_full_day')}
                   onChange={(event) => {
-                    const date = new Date();
-                    const dateString = `${date.getFullYear()}-` +
-                      `${(date.getMonth()+1).toString().padStart(2,'0')}-` +
-                      `${date.getDate().toString().padStart(2,'0')}`;
+                    if (!isInvitedEvent) {
+                      const date = new Date();
+                      const dateString = `${date.getFullYear()}-` +
+                        `${(date.getMonth() + 1).toString().padStart(2, '0')}-` +
+                        `${date.getDate().toString().padStart(2, '0')}`;
 
-                    const start_time =
-                      (eventData.start_time || dateString)
-                        .split('T')[0] + 'T00:00';
-                    const end_time =
-                      (eventData.end_time || dateString)
-                        .split('T')[0] + 'T23:59';
-                    onChangeOwnEventLocally({
-                      ...eventData,
-                      is_full_day: event.target.checked,
-                      start_time,
-                      end_time,
-                    });
+                      if (!eventDataBackup.is_full_day && eventData.is_full_day && !event.target.checked) {
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          is_full_day: false,
+                          start_time: eventDataBackup.start_time,
+                          end_time: eventDataBackup.end_time,
+                        });
+                      } else {
+                        const start_time =
+                          (eventData.start_time || dateString)
+                            .split('T')[0] + 'T00:00';
+                        const end_time =
+                          (eventData.end_time || dateString)
+                            .split('T')[0] + 'T23:59';
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          is_full_day: event.target.checked,
+                          start_time,
+                          end_time,
+                        });
+                      }
+                    }
                   }}
                 />
               }
@@ -303,12 +300,26 @@ const Settings = ({
                 InputLabelProps={{
                   shrink: true,
                 }}
+                onBlur={() => handleBlur('start_time')}
                 onChange={(event) => {
-                  onChangeOwnEventLocally({
-                    ...eventData,
-                    start_time: event.target.value,
-                    end_time: eventData.end_time || event.target.value,
-                  });
+                  if (eventData.end_time) {
+                    const startDate = new Date(event.target.value);
+                    startDate.setDate(startDate.getDate() + daysLong);
+                    startDate.setHours(startDate.getHours() + hoursLong);
+                    startDate.setMinutes(startDate.getMinutes() + minutesLong);
+
+                    onChangeOwnEventLocally({
+                      ...eventData,
+                      start_time: event.target.value,
+                      end_time: formatDateString(startDate),
+                    });
+                  } else {
+                    onChangeOwnEventLocally({
+                      ...eventData,
+                      start_time: event.target.value,
+                      end_time: event.target.value,
+                    });
+                  }
                 }}
               />
             )}
@@ -323,6 +334,7 @@ const Settings = ({
                 InputLabelProps={{
                   shrink: true,
                 }}
+                onBlur={() => handleBlur('end_time')}
                 onChange={(event) => {
                   onChangeOwnEventLocally({
                     ...eventData,
@@ -336,7 +348,7 @@ const Settings = ({
               <Row
                 container
                 direction="row"
-                justify="flex-start"
+                justifyContent="flex-start"
                 alignItems="center"
               >
                 {__('Duration')}:
@@ -345,6 +357,7 @@ const Settings = ({
                   label={__('Days')}
                   value={daysLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
+                  onBlur={() => handleBlur('end_time')}
                   onChange={(event) => {
                     if (event.target.value) {
                       const startDate = new Date(eventData.start_time)
@@ -362,6 +375,7 @@ const Settings = ({
                   label={__('Hours')}
                   value={hoursLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
+                  onBlur={() => handleBlur('end_time')}
                   onChange={(event) => {
                     if (event.target.value) {
                       const startDate = new Date(eventData.start_time);
@@ -380,6 +394,7 @@ const Settings = ({
                   label={__('Minutes')}
                   value={minutesLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
+                  onBlur={() => handleBlur('end_time')}
                   onChange={(event) => {
                     if (event.target.value) {
                       const startDate = new Date(eventData.start_time)
@@ -412,6 +427,7 @@ const Settings = ({
                     } else {
                       setAutoFindError('')
                     }
+                    handleBlur('start_time');
                   }}
                 >
                   <SearchIcon /> {__('Auto find free time')}
@@ -435,7 +451,7 @@ const Settings = ({
                   setAutoFindProps={setAutoFindProps} />
               </Grid>
             )}
-            <Row container direction="row" justify="space-between">
+            <Row container direction="row" justifyContent="space-between">
               <HalfWidthInput
                 {...readOnly}
                 label={__('Latitude')}
@@ -470,26 +486,12 @@ const Settings = ({
                   onChangeZoom={handleChangeZoom}
                   apiKey={GOOGLE_MAPS_API_KEY}/>
               )}
-            {!isInvitedEvent && (
-              <Row container direction="row" justify="flex-end">
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    onSaveChangesOwnEvent(eventData);
-                  }}
-                >
-                  <SaveIcon/> {__('Save')}
-                </Button>
-              </Row>
-            )}
           </ScrollContentWrapper>
         ) : (
           <EventNotChosen
             container
             direction="column"
-            justify="center"
+            justifyContent="center"
             alignItems="center"
           >
             <h2>{__('Choose any event to continue')}</h2>

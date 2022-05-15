@@ -52,7 +52,7 @@ const Description = styled.p`
 
 const Home = ({translate: __}) => {
   return (
-    <Grid container justify="center">
+    <Grid container justifyContent="center">
       <Container item container md={9} sm={11} alignItems="center">
         <LogoWrapper item container md={6}>
           <LargeLogo src={largeLogo} alt="plantimee large logo"/>
