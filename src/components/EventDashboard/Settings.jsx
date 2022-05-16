@@ -157,7 +157,7 @@ const Settings = ({
   }
 
   const handleBlur = (key) => {
-    if (!eventDataBackup || (eventData && eventData[key] !== eventDataBackup[key])) {
+    if (!isInvitedEvent && (!eventDataBackup || (eventData && eventData[key] !== eventDataBackup[key]))) {
       onSaveChangesOwnEvent(eventData);
     }
   }
