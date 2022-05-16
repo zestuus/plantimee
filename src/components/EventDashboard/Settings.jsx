@@ -29,11 +29,18 @@ import withSettings from '../HOCs/withSettings';
 import {findNearbyLocation} from "../../api/maps";
 import ChooseLocationDialog from "../dialogs/ChooseLocationDialog";
 
+import {KeyboardDateTimePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
+import DateFnsUtils from "@date-io/date-fns";
+
 const Input = styled(TextField)`
     margin: 10px 0;
 `;
 
 const ParticipantsBlock = styled(Grid)`
+  margin: 10px 0;
+`;
+
+const DateTimePicker = styled(KeyboardDateTimePicker)`
   margin: 10px 0;
 `;
 
@@ -67,12 +74,19 @@ const OnlineURL = styled.a`
   }
 `;
 
+const MapWrapper = styled(Grid)`
+  & [aria-label="Map"] {
+    ${props => props.readOnly ? 'pointer-events: none;': ''}
+  }
+`;
+
 const DefaultLocation = { lat: 49.843625, lng: 24.026442};
 const DefaultZoom = 10;
 
 const Settings = ({
    translate: __,
    language,
+   militaryTime,
    eventData,
    eventDataBackup,
    onChangeOwnEventLocally,
@@ -91,17 +105,16 @@ const Settings = ({
   const [usernameToLookFor, setUsernameToLookFor] = useState('');
   const [placesToChoose, setPlacesToChoose] = useState([]);
   const [showMap, setShowMap] = useState(true);
+  const [selectedRange, setSelectedRange] = useState(0);
 
   const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
   const isInvitedEvent = !!(eventData && eventData.organizer);
   const readOnly = isInvitedEvent ? { InputProps: { readOnly: true }} : {};
+  const selectionRanges = [[0,4], [5,7], [8,10], [11,13], [14,16], [17,19]];
 
   const now = new Date();
 
   now.setMinutes(now.getMinutes() + 1);
-
-  const startDateString = eventData && formatDateString(eventData.start_time);
-  const endDateString = eventData && formatDateString(eventData.end_time);
 
   const startTime = eventData && new Date(eventData.start_time);
   const endTime = eventData && new Date(eventData.end_time);
@@ -125,10 +138,86 @@ const Settings = ({
     minutesLong = 0;
   }
 
-  const startDateStringFinal = eventData && eventData.is_full_day ?
-    startDateString.split('T')[0] : startDateString;
-  const endDateStringFinal = eventData && eventData.is_full_day ?
-    endDateString.split('T')[0] : endDateString;
+  const handleArrowPressed = (event, key, addValue = 0) => {
+    event.preventDefault();
+    let date = new Date(eventData[key]);
+    const { value } = event.target;
+
+    switch (selectedRange) {
+      case 0:
+        date.setFullYear(date.getFullYear() + addValue);
+        break;
+      case 1:
+        date.setMonth(date.getMonth() + addValue);
+        break;
+      case 2:
+        date.setDate(date.getDate() + addValue);
+        break;
+      case 3:
+        date.setHours(date.getHours() + addValue);
+        break;
+      case 4:
+        date.setMinutes(date.getMinutes() + addValue);
+        break;
+      case 5:
+        const ampm = value.slice(...selectionRanges[selectedRange]);
+
+        date.setHours(date.getHours() + (ampm === 'AM' ? 12 : -12));
+        break;
+    }
+
+    if (key === 'start_time' && eventData.end_time) {
+      const startDate = new Date(date.getTime());
+      startDate.setDate(startDate.getDate() + daysLong);
+      startDate.setHours(startDate.getHours() + hoursLong);
+      startDate.setMinutes(startDate.getMinutes() + minutesLong);
+
+      onChangeOwnEventLocally({
+        ...eventData,
+        start_time: formatDateString(date),
+        end_time: formatDateString(startDate),
+      });
+    } else {
+      onChangeOwnEventLocally({ ...eventData, [key]: formatDateString(date) });
+    }
+
+    setTimeout(() => event.target.setSelectionRange(...selectionRanges[selectedRange]), 0);
+  };
+
+  const handleDateTimeClick = (event) => {
+    const {
+      target: { selectionStart }
+    } = event;
+
+    const foundRangeIndex = selectionRanges.findIndex(([start, end]) => (
+      start <= selectionStart && selectionStart <= end
+    ));
+    const foundRange = selectionRanges[foundRangeIndex];
+
+    if (foundRange) {
+      event.target.setSelectionRange(...foundRange);
+      setSelectedRange(foundRangeIndex);
+    }
+  };
+
+  const handleKeyDown = (event, key) => {
+    const { code } = event;
+
+    if ( code === 'Tab') {
+      event.preventDefault();
+      const newRangeIndex = (selectedRange + 1) % selectionRanges.length;
+      const newRange = selectionRanges[newRangeIndex];
+
+      if (newRange) {
+        event.target.setSelectionRange(...newRange);
+        setSelectedRange(newRangeIndex);
+      }
+    } else if ( code === 'ArrowUp') {
+      handleArrowPressed(event, key, 1);
+    } else if ( code === 'ArrowDown') {
+      handleArrowPressed(event, key, -1);
+    }
+  };
 
   const handleChangeLocation = async (lat, lng) => {
     const latitude = roundFloat(lat,7);
@@ -337,59 +426,65 @@ const Settings = ({
               }
               label={__('Full day event')}
             />
-            {(!isInvitedEvent || (isInvitedEvent && eventData.start_time)) && (
-              <Input
-                {...readOnly}
-                label={__('Start date&time')}
-                type={eventData.is_full_day ? "date" : "datetime-local"}
-                value={eventData.start_time ? startDateStringFinal: ''}
-                error={!datesAreValid}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onBlur={() => handleBlur('start_time')}
-                onChange={(event) => {
-                  if (eventData.end_time) {
-                    const startDate = new Date(event.target.value);
-                    startDate.setDate(startDate.getDate() + daysLong);
-                    startDate.setHours(startDate.getHours() + hoursLong);
-                    startDate.setMinutes(startDate.getMinutes() + minutesLong);
+            <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils}>
+              {(!isInvitedEvent || (isInvitedEvent && eventData.start_time)) && (
+                <DateTimePicker
+                  variant="inline"
+                  ampm={!militaryTime}
+                  readOnly={isInvitedEvent}
+                  value={new Date(eventData.start_time)}
+                  format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
+                  onBlur={() => handleBlur('start_time')}
+                  onClick={handleDateTimeClick}
+                  onKeyDown={(event) => handleKeyDown(event, 'start_time')}
+                  onChange={(value) => {
+                    if (eventData.end_time) {
+                      const startDate = new Date(value);
+                      startDate.setDate(startDate.getDate() + daysLong);
+                      startDate.setHours(startDate.getHours() + hoursLong);
+                      startDate.setMinutes(startDate.getMinutes() + minutesLong);
+
+                      onChangeOwnEventLocally({
+                        ...eventData,
+                        start_time: formatDateString(value),
+                        end_time: formatDateString(startDate),
+                      });
+                    } else {
+                      onChangeOwnEventLocally({
+                        ...eventData,
+                        start_time: value,
+                        end_time: value,
+                      });
+                    }
+                  }}
+                />
+              )}
+              {(!isInvitedEvent || (isInvitedEvent && eventData.end_time)) && (
+                <DateTimePicker
+                  variant="inline"
+                  readOnly={isInvitedEvent}
+                  ampm={!militaryTime}
+                  value={new Date(eventData.end_time)}
+                  format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
+                  onBlur={() => handleBlur('end_time')}
+                  onClick={handleDateTimeClick}
+                  onKeyDown={(event) => handleKeyDown(event, 'end_time')}
+                  onChange={(value) => {
+                    const formatedValue = formatDateString(value);
 
                     onChangeOwnEventLocally({
                       ...eventData,
-                      start_time: event.target.value,
-                      end_time: formatDateString(startDate),
+                      end_time: formatedValue,
+                      start_time: eventData.start_time || formatedValue,
                     });
-                  } else {
-                    onChangeOwnEventLocally({
-                      ...eventData,
-                      start_time: event.target.value,
-                      end_time: event.target.value,
-                    });
-                  }
-                }}
-              />
-            )}
-            {(!isInvitedEvent || (isInvitedEvent && eventData.end_time)) && (
-              <Input
-                {...readOnly}
-                label={__('End date&time')}
-                type={eventData.is_full_day ? "date" : "datetime-local"}
-                value={eventData.end_time ? endDateStringFinal : ''}
-                error={!datesAreValid}
-                helperText={!datesAreValid && __("End time should be after start time")}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onBlur={() => handleBlur('end_time')}
-                onChange={(event) => {
-                  onChangeOwnEventLocally({
-                    ...eventData,
-                    end_time: event.target.value,
-                    start_time: eventData.start_time || event.target.value,
-                  });
-                }}
-              />
+                  }}
+                />
+              )}
+            </MuiPickersUtilsProvider>
+            {!datesAreValid && (
+              <Alert severity="error" style={{ margin: '10px 0'}}>
+                {__('End time should be after start time')}
+              </Alert>
             )}
             {!isInvitedEvent && (
               <Row
@@ -548,16 +643,18 @@ const Settings = ({
             />
             {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && googleMapsApiKey && showMap
               && (
-                <MapPicker
-                  defaultLocation={location}
-                  zoom={zoom}
-                  style={{
-                    height: '350px',
-                  }}
-                  onChangeLocation={isInvitedEvent ? () => {} : handleChangeLocation}
-                  onChangeZoom={handleChangeZoom}
-                  apiKey={googleMapsApiKey}
-                />
+                <MapWrapper readOnly={isInvitedEvent}>
+                  <MapPicker
+                    defaultLocation={location}
+                    zoom={zoom}
+                    style={{
+                      height: '350px',
+                    }}
+                    onChangeLocation={isInvitedEvent ? () => {} : handleChangeLocation}
+                    onChangeZoom={handleChangeZoom}
+                    apiKey={googleMapsApiKey}
+                  />
+                </MapWrapper>
               )}
             <ChooseLocationDialog
               placesToChoose={placesToChoose}

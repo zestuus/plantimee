@@ -6,7 +6,6 @@ const {GOOGLE_MAPS_API_URL, GOOGLE_MAPS_API_KEY} = require("../constants/config"
 const router = express.Router();
 
 router.get('/nearbysearch', privateRoute,  async (req, res) => {
-  console.log(req.query);
   try {
     const response = await axios.get(`${GOOGLE_MAPS_API_URL}/place/nearbysearch/json`, {
       params: {
