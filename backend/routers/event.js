@@ -8,28 +8,32 @@ const router = express.Router();
 
 router.get('/list-own', privateRoute, async (req, res) => {
   const { id } = req.user;
-  const user = await db.User.findOne({
-    where: { id },
-    include: [{
-      model: db.Event,
-      as: "own_events",
+  try {
+    const user = await db.User.findOne({
+      where: {id},
       include: [{
-        model: db.User,
-        as: 'attendees',
-        attributes: ['id', 'username', 'full_name', 'email']
-      }]
-    }],
-    order: [
-      ["own_events", 'id', 'asc'],
-    ],
-  });
+        model: db.Event,
+        as: "own_events",
+        include: [{
+          model: db.User,
+          as: 'attendees',
+          attributes: ['id', 'username', 'full_name', 'email']
+        }]
+      }],
+      order: [
+        ["own_events", 'id', 'asc'],
+      ],
+    });
 
-  if (!user) {
-    return res.status(403).send("Invalid token!");
+    if (!user) {
+      return res.status(403).send("Invalid token!");
+    }
+
+    const {own_events} = user;
+    res.send(own_events);
+  } catch (e) {
+    return res.status(400).send(e);
   }
-
-  const { own_events } = user;
-  res.send(own_events);
 });
 
 router.get('/list-invited', privateRoute, async (req, res) => {
@@ -110,7 +114,7 @@ router.put('/', privateRoute, async (req, res) => {
   const { id: UserId } = req.user;
 
   const {
-    id, name, description, completed, start_time, end_time, is_full_day, latitude, longitude, location_name, url,
+    id, name, description, completed, start_time, end_time, is_full_day, latitude, longitude, placeName, address, url,
   } = req.body;
   const event = await db.Event.findOne({ where: { id, UserId }});
 
@@ -126,7 +130,8 @@ router.put('/', privateRoute, async (req, res) => {
   event.end_time = end_time;
   event.latitude = latitude;
   event.longitude = longitude;
-  event.location_name = location_name;
+  event.placeName = placeName;
+  event.address = address;
   event.url = url;
   event.updatedAt = new Date();
 

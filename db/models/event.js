@@ -27,7 +27,8 @@ module.exports = (sequelize, DataTypes) => {
     end_time: DataTypes.DATE,
     latitude: DataTypes.DECIMAL(10, 8),
     longitude: DataTypes.DECIMAL(11, 8),
-    location_name: DataTypes.STRING,
+    placeName: DataTypes.STRING,
+    address: DataTypes.STRING,
     url: DataTypes.STRING
   }, {
     sequelize,

@@ -1,6 +1,6 @@
 export const LANGUAGE = Object.freeze({
-  EN: 'EN',
-  UK: 'UK',
+  EN: 'en',
+  UK: 'uk',
 });
 
 export const FORM_TYPE = Object.freeze({

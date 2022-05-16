@@ -38,7 +38,10 @@ module.exports = {
       longitude: {
         type: Sequelize.DECIMAL(11, 8)
       },
-      location_name: {
+      placeName: {
+        type: Sequelize.STRING
+      },
+      address: {
         type: Sequelize.STRING
       },
       url: {

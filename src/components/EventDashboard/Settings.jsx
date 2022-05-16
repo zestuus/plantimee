@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from "styled-components";
 import MapPicker from "react-google-map-picker";
 
@@ -19,13 +19,15 @@ import {ColumnTitle} from './Timeline';
 import {
   ColumnHeader, Container, ScrollArea, ScrollContentWrapper
 } from './Events';
-import {formatDateString} from '../../utils/helpers';
+import {formatDateString, roundFloat} from '../../utils/helpers';
 import {
-  GOOGLE_MAPS_API_KEY, OneDay, OneHour, OneMinute
+  OneDay, OneHour, OneMinute
 } from '../../constants/config';
 import Participant from './Participant';
-import AutoFindModal from './AutoFindModal';
+import AutoFindModal from '../dialogs/AutoFindModal';
 import withSettings from '../HOCs/withSettings';
+import {findNearbyLocation, getGoogleMapsApiKey} from "../../api/maps";
+import ChooseLocationDialog from "../dialogs/ChooseLocationDialog";
 
 const Input = styled(TextField)`
     margin: 10px 0;
@@ -55,13 +57,22 @@ const Row = styled(Grid)`
 const EventNotChosen = styled(Grid)`
   height: 100%;
   background-color: white;
-`
+`;
+
+const OnlineURL = styled.a`
+  color: #1e8cf8;
+
+  :hover {
+    color: #5babfa;
+  }
+`;
 
 const DefaultLocation = { lat: 49.843625, lng: 24.026442};
 const DefaultZoom = 10;
 
 const Settings = ({
    translate: __,
+   language,
    eventData,
    eventDataBackup,
    onChangeOwnEventLocally,
@@ -78,6 +89,9 @@ const Settings = ({
   const [autoFindError, setAutoFindError] = useState('');
   const [attendeeFindError, setAttendeeFindError] = useState('');
   const [usernameToLookFor, setUsernameToLookFor] = useState('');
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+  const [placesToChoose, setPlacesToChoose] = useState([]);
+  const [showMap, setShowMap] = useState(true);
 
   const isInvitedEvent = !!(eventData && eventData.organizer);
   const readOnly = isInvitedEvent ? { InputProps: { readOnly: true }} : {};
@@ -116,20 +130,55 @@ const Settings = ({
   const endDateStringFinal = eventData && eventData.is_full_day ?
     endDateString.split('T')[0] : endDateString;
 
-  const handleChangeLocation = (lat, lng) => {
-    onChangeOwnEventLocally({...eventData, latitude: lat, longitude: lng });
-    onSaveChangesOwnEvent({...eventData, latitude: lat, longitude: lng });
-  }
+  const handleChangeLocation = async (lat, lng) => {
+    const latitude = roundFloat(lat,7);
+    const longitude = roundFloat(lng,7);
+
+    const { results } = await findNearbyLocation({ location: `${latitude},${longitude}`, language });
+    const placesFound = results.filter(place => place.business_status === 'OPERATIONAL');
+    const updatedEventData = {...eventData, latitude, longitude };
+
+    setPlacesToChoose(placesFound);
+
+    onChangeOwnEventLocally(updatedEventData);
+    onSaveChangesOwnEvent(updatedEventData);
+  };
+
+  const handleChooseLocation = (place) => {
+    const updatedEventData = { ...eventData, ...place };
+
+    onChangeOwnEventLocally(updatedEventData);
+    onSaveChangesOwnEvent(updatedEventData);
+    setPlacesToChoose([]);
+  };
 
   const handleChangeZoom = (newZoom) => {
     setZoom(newZoom);
   }
 
   const handleBlur = (key) => {
-    if (eventData && eventDataBackup && eventData[key] !== eventDataBackup[key]) {
+    if (!eventDataBackup || (eventData && eventData[key] !== eventDataBackup[key])) {
       onSaveChangesOwnEvent(eventData);
     }
   }
+
+  useEffect(() => {
+    (async () => {
+      const apiKey = await getGoogleMapsApiKey();
+
+      setGoogleMapsApiKey(apiKey);
+    })()
+  }, [])
+
+  useEffect(() => {
+    setShowMap(false);
+  }, [language])
+
+  useEffect(() => {
+    if (!showMap) {
+      setTimeout(() => setShowMap(true),0);
+    }
+  }, [showMap])
 
   return (
     <Container container direction="column" justifyContent="flex-start">
@@ -187,11 +236,12 @@ const Settings = ({
               onBlur={() => handleBlur('description')}
             />
             {(!isInvitedEvent || (isInvitedEvent && eventData.url)) && (
-              <React.Fragment>
+              <div style={{ position: 'relative' }}>
                 <Input
-                  {...readOnly}
+                  disabled={isInvitedEvent}
+                  style={{ width: '100%' }}
                   label={__('Online meet url')}
-                  value={eventData.url || ''}
+                  value={isInvitedEvent ? ' ' : eventData.url || ''}
                   onChange={(event) => {
                     onChangeOwnEventLocally({
                       ...eventData, url: event.target.value,
@@ -199,7 +249,12 @@ const Settings = ({
                   }}
                   onBlur={() => handleBlur('url')}
                 />
-              </React.Fragment>
+                {isInvitedEvent && (
+                  <div style={{ position: 'absolute', top: 32 }}>
+                    <OnlineURL href={eventData.url} target="_blank">{eventData.url}</OnlineURL>
+                  </div>
+                )}
+              </div>
             )}
             {!isInvitedEvent && (
               <ParticipantsBlock
@@ -244,7 +299,7 @@ const Settings = ({
                   <AddIcon /> {__('Add participant')}
                 </Button>
                 {attendeeFindError && (
-                  <Alert severity="error" style={{ margin: '10px 0'}}>
+                  <Alert severity="error" style={{ margin: '10px 0'}} onClose={() => setAttendeeFindError('')}>
                     {attendeeFindError}
                   </Alert>
                 )}
@@ -440,7 +495,7 @@ const Settings = ({
                   <SettingsIcon />
                 </IconButton>
                 {autoFindError && (
-                  <Alert severity="error" style={{ margin: '10px 0'}}>
+                  <Alert severity="error" style={{ margin: '10px 0'}} onClose={() => setAutoFindError('')}>
                     {autoFindError}
                   </Alert>
                 )}
@@ -451,12 +506,13 @@ const Settings = ({
                   setAutoFindProps={setAutoFindProps} />
               </Grid>
             )}
-            <Row container direction="row" justifyContent="space-between">
+            <Grid container direction="row" justifyContent="space-between">
               <HalfWidthInput
                 {...readOnly}
                 label={__('Latitude')}
                 type="number"
                 value={eventData.latitude || ''}
+                onBlur={() => handleBlur('latitude')}
                 onChange={(event) => {
                   onChangeOwnEventLocally({
                     ...eventData, latitude: event.target.value,
@@ -468,24 +524,54 @@ const Settings = ({
                 label={__('Longitude')}
                 type="number"
                 value={eventData.longitude || ''}
+                onBlur={() => handleBlur('longitude')}
                 onChange={(event) => {
                   onChangeOwnEventLocally({
                     ...eventData, longitude: event.target.value,
                   });
                 }}
               />
-            </Row>
-            {(!isInvitedEvent || (eventData.latitude && eventData.longitude))
+            </Grid>
+            <Input
+              {...readOnly}
+              label={__('Place name')}
+              value={eventData.placeName || ''}
+              onBlur={() => handleBlur('placeName')}
+              onChange={(event) => {
+                onChangeOwnEventLocally({
+                  ...eventData, placeName: event.target.value,
+                });
+              }}
+            />
+            <Input
+              {...readOnly}
+              label={__('Address')}
+              value={eventData.address || ''}
+              onBlur={() => handleBlur('address')}
+              onChange={(event) => {
+                onChangeOwnEventLocally({
+                  ...eventData, address: event.target.value,
+                });
+              }}
+            />
+            {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && googleMapsApiKey && showMap
               && (
                 <MapPicker
-                  disabled={isInvitedEvent}
                   defaultLocation={location}
                   zoom={zoom}
-                  style={{height: '350px'}}
-                  onChangeLocation={handleChangeLocation}
+                  style={{
+                    height: '350px',
+                  }}
+                  onChangeLocation={isInvitedEvent ? () => {} : handleChangeLocation}
                   onChangeZoom={handleChangeZoom}
-                  apiKey={GOOGLE_MAPS_API_KEY}/>
+                  apiKey={googleMapsApiKey}
+                />
               )}
+            <ChooseLocationDialog
+              placesToChoose={placesToChoose}
+              onClose={() => { setPlacesToChoose([]); }}
+              onSubmit={handleChooseLocation}
+            />
           </ScrollContentWrapper>
         ) : (
           <EventNotChosen

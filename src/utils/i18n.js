@@ -2,7 +2,7 @@ import { LANGUAGE } from '../constants/enums';
 import DICTIONARY from '../constants/i18n';
 
 const i18n = Object
-  .keys(LANGUAGE)
+  .values(LANGUAGE)
   .reduce((accum, key) => ({
     ...accum,
     [key]: (value) => key === LANGUAGE.EN ? value : (DICTIONARY[value] ? DICTIONARY[value][key] : value),

@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { HourHeight, OneHour } from "../../constants/config";
 import {formatEventTime} from "../../utils/helpers";
 import ScheduleIcon from "@material-ui/icons/Schedule";
-import { Bubble } from "./Event";
+import { BubbleInline } from "./Event";
 import Tooltip from "@material-ui/core/Tooltip";
 
 const EventBar = styled.div`
@@ -26,7 +26,7 @@ const EventBar = styled.div`
   `};
 `;
 
-const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShown}) => {
+const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShown, militaryTime}) => {
   const { start_time, end_time, is_full_day, completed } = eventData || {};
 
   const dayStart = new Date(chosenDate);
@@ -64,7 +64,8 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
     height = (endTime - startTime) / OneHour * HourHeight;
   }
 
-  const dateString = formatEventTime(start_time, end_time, is_full_day);
+  console.log(militaryTime);
+  const dateString = formatEventTime(start_time, end_time, is_full_day, militaryTime);
 
   return (
     <Tooltip
@@ -72,7 +73,7 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
         <React.Fragment>
           <div style={completed ? { textDecoration: 'line-through' } : {}}>
             {eventData.name}
-            <Bubble small><ScheduleIcon fontSize="inherit" /> {dateString}</Bubble>
+            <BubbleInline small><ScheduleIcon fontSize="inherit" /> {dateString}</BubbleInline>
           </div>
         </React.Fragment>
       }
@@ -88,7 +89,7 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
       >
         {height>=35 ? (<React.Fragment>
           {eventData.name}
-          <Bubble small><ScheduleIcon fontSize="inherit" /> {dateString}</Bubble>
+          <BubbleInline small><ScheduleIcon fontSize="inherit" /> {dateString}</BubbleInline>
         </React.Fragment>): (<div />)}
       </EventBar>
     </Tooltip>

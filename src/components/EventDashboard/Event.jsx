@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import { Grid } from '@material-ui/core';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -46,7 +46,7 @@ export const BubbleWrapper = styled.p`
   margin: 5px 0;
 `;
 
-export const Bubble = styled.span`
+const BubbleStyles = css`
   margin: 5px;
   padding: 5px;
   font-size: 12px;
@@ -57,8 +57,16 @@ export const Bubble = styled.span`
   ${props => props.small ? 'font-size: 10px;' : ''}
 `;
 
+export const BubbleInline = styled.span`
+  ${BubbleStyles}
+`;
+
+export const BubbleBlock = styled.p`
+  ${BubbleStyles}
+`;
+
 const Event = ({
- invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent, translate: __
+ invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent, militaryTime, translate: __
 }) => {
   const {
     id,
@@ -69,13 +77,15 @@ const Event = ({
     end_time,
     latitude,
     longitude,
+    placeName,
+    address,
     is_full_day,
     organizer: eventOrganizer,
   } = eventData;
   const { username: organizer } = eventOrganizer || {};
   const [completedLocal, setCompletedLocal] = useState(!!completed);
 
-  const dateString = formatEventTime(start_time, end_time, is_full_day);
+  const dateString = formatEventTime(start_time, end_time, is_full_day, militaryTime);
 
   return (
     <EventCard
@@ -117,23 +127,21 @@ const Event = ({
         {description && <EventDescription>{description}</EventDescription>}
         {dateString && (
           <BubbleWrapper>
-            <Bubble>
+            <BubbleInline>
               <ScheduleIcon fontSize="inherit" /> {dateString}
-            </Bubble>
+            </BubbleInline>
           </BubbleWrapper>
         )}
         {latitude && longitude && (
-          <BubbleWrapper>
-            <Bubble>
-              <LocationOnIcon fontSize="inherit" /> {latitude}, {longitude}
-            </Bubble>
-          </BubbleWrapper>
+          <BubbleBlock>
+            <LocationOnIcon fontSize="inherit" /> {latitude}, {longitude} <br/> {placeName} <br/> {address}
+          </BubbleBlock>
         )}
         {invited && organizer && (
           <BubbleWrapper>
-            <Bubble>
+            <BubbleInline>
               <AccountCircleIcon fontSize="inherit" /> {__('organizer')}: {organizer}
-            </Bubble>
+            </BubbleInline>
           </BubbleWrapper>
         )}
       </EventInfo>

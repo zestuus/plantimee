@@ -57,7 +57,7 @@ const DateArrow = styled(IconButton)`
   padding: 0;
 `;
 
-const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, translate: __, language }) => {
+const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, militaryTime, translate: __, language }) => {
   const dateNow = new Date();
   const [now, setNow] = useState({
     hour: dateNow.getHours(), minute: dateNow.getMinutes()
@@ -117,21 +117,24 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, tr
             <HourLabel>00</HourLabel>
             <HourLine />
           </Grid>
-          {ownEvents.map(event => (
+          {ownEvents && ownEvents.map(event => (
             <TimelineEventBar
               key={event.id}
               eventData={event}
               chosenDate={chosenDate}
+              militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
               setColumnShown={setColumnShown} />
           ))}
-          {invitedEvents.map(event => (
+          {invitedEvents && invitedEvents.map(event => (
             <TimelineEventBar
               key={event.id}
               eventData={event}
               chosenDate={chosenDate}
+              militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
-              setColumnShown={setColumnShown} />
+              setColumnShown={setColumnShown}
+            />
           ))}
           <ClockArrow
             minute={now.hour*60+now.minute}

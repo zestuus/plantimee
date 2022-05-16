@@ -264,7 +264,16 @@ const DICTIONARY = {
   },
   'Cannot find user with given username or user is already invited': {
     [LANGUAGE.UK]: 'Не вдалось знайти користувача з вказаним нікнеймом або користувач вже запрошений на подію',
-  }
+  },
+  'Choose location you are looking for': {
+    [LANGUAGE.UK]: 'Виберіть місце яке ви шукаєте',
+  },
+  'Place name': {
+    [LANGUAGE.UK]: 'Назва місця',
+  },
+  'Address': {
+    [LANGUAGE.UK]: 'Адреса',
+  },
 };
 
 export default DICTIONARY;

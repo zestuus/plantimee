@@ -22,7 +22,10 @@ import SettingsIcon from '@material-ui/icons/Settings';
 
 import Logo from "./Logo";
 import { PRIMARY_COLOR } from "../constants/config";
-import * as settingsActions from '../actions/settingsAction';
+import {
+  changeLanguage,
+  switchTimeFormat
+} from '../actions/settingsAction';
 import { LANGUAGE } from '../constants/enums';
 import withSettings from './HOCs/withSettings';
 
@@ -206,7 +209,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
   actions: bindActionCreators({
-    ...settingsActions
+    changeLanguage,
+    switchTimeFormat,
   }, dispatch),
 });
 

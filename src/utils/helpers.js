@@ -8,7 +8,16 @@ export const getWindowSize = () => {
   };
 }
 
-export const formatEventTime = (start_time, end_time, is_full_day) => {
+export const to12HourFormat = (hours, militaryTime = true) => {
+  if (militaryTime) {
+    return [hours, ''];
+  } else {
+    const suffix = hours >= 12 ? 'pm' : 'am';
+    return [hours % 12 || 12, suffix];
+  }
+};
+
+export const formatEventTime = (start_time, end_time, is_full_day, militaryTime = true) => {
   if (!start_time || !end_time) return '';
 
   const startTime = new Date(start_time);
@@ -24,13 +33,16 @@ export const formatEventTime = (start_time, end_time, is_full_day) => {
   const endYear = endTime.getFullYear() !== new Date().getFullYear() ? `, ${year}` : '';
   const endDateString = `${day}, ${dayNumber} ${month} ${endYear}`;
 
-  const startHour = startTime.getHours().toString().padStart(2, '0');
+  const [startHours, startSuffix] = to12HourFormat(startTime.getHours(), militaryTime);
+  const [endHours, endSuffix] = to12HourFormat(endTime.getHours(), militaryTime);
+
+  const startHour = startHours.toString().padStart(2, '0');
   const startMinute = startTime.getMinutes().toString().padStart(2, '0');
-  const endHour = endTime.getHours().toString().padStart(2, '0');
+  const endHour = endHours.toString().padStart(2, '0');
   const endMinute = endTime.getMinutes().toString().padStart(2, '0');
 
-  const startTimeString = `${startHour}:${startMinute}`;
-  const endTimeString = `${endHour}:${endMinute}`;
+  const startTimeString = `${startHour}:${startMinute}${!militaryTime ? ' ' + startSuffix : ''}`;
+  const endTimeString = `${endHour}:${endMinute}${!militaryTime ? ' ' + endSuffix : ''}`;
 
   if (startDate === endDate) {
     if (is_full_day) {
@@ -51,3 +63,5 @@ export const formatDateString = (dateString) => {
   const date = new Date(dateString);
   return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}T${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
 };
+
+export const roundFloat = (number, digits= 0) => Math.round(number * 10 ** digits) / 10 ** digits;

@@ -1,10 +1,10 @@
 import { CHANGE_LANGUAGE, SWITCH_TIME_FORMAT } from '../constants/actionTypes';
 import { LANGUAGE } from "../constants/enums";
-import { loadStorageItem, saveItemInStorage, deleteStorageItem } from '../utils/localStorage'
+import { loadStorageItem, saveItemInStorage } from '../utils/localStorage'
 
 const initialState = {
   language: loadStorageItem('language') || LANGUAGE.EN,
-  militaryTime: !!loadStorageItem('militaryTime')
+  militaryTime: loadStorageItem('militaryTime') === 'false' ? 0 === 1 : true,
 };
 
 const settingsReducer = (state= initialState, action) => {
@@ -16,9 +16,7 @@ const settingsReducer = (state= initialState, action) => {
         language: action.data,
       }
     case SWITCH_TIME_FORMAT:
-      state.militaryTime
-        ? deleteStorageItem('militaryTime')
-        : saveItemInStorage('militaryTime', true);
+      saveItemInStorage('militaryTime', !state.militaryTime);
       return {
         ...state,
         militaryTime: !state.militaryTime,
