@@ -64,7 +64,6 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
     height = (endTime - startTime) / OneHour * HourHeight;
   }
 
-  console.log(militaryTime);
   const dateString = formatEventTime(start_time, end_time, is_full_day, militaryTime);
 
   return (

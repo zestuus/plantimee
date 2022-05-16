@@ -5,10 +5,6 @@ const {GOOGLE_MAPS_API_URL, GOOGLE_MAPS_API_KEY} = require("../constants/config"
 
 const router = express.Router();
 
-router.get('/api-key', privateRoute, async (req, res) => {
-  return res.send(GOOGLE_MAPS_API_KEY);
-});
-
 router.get('/nearbysearch', privateRoute,  async (req, res) => {
   console.log(req.query);
   try {

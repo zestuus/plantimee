@@ -26,7 +26,7 @@ import {
 import Participant from './Participant';
 import AutoFindModal from '../dialogs/AutoFindModal';
 import withSettings from '../HOCs/withSettings';
-import {findNearbyLocation, getGoogleMapsApiKey} from "../../api/maps";
+import {findNearbyLocation} from "../../api/maps";
 import ChooseLocationDialog from "../dialogs/ChooseLocationDialog";
 
 const Input = styled(TextField)`
@@ -89,10 +89,10 @@ const Settings = ({
   const [autoFindError, setAutoFindError] = useState('');
   const [attendeeFindError, setAttendeeFindError] = useState('');
   const [usernameToLookFor, setUsernameToLookFor] = useState('');
-  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
   const [placesToChoose, setPlacesToChoose] = useState([]);
   const [showMap, setShowMap] = useState(true);
 
+  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
   const isInvitedEvent = !!(eventData && eventData.organizer);
   const readOnly = isInvitedEvent ? { InputProps: { readOnly: true }} : {};
 
@@ -161,14 +161,6 @@ const Settings = ({
       onSaveChangesOwnEvent(eventData);
     }
   }
-
-  useEffect(() => {
-    (async () => {
-      const apiKey = await getGoogleMapsApiKey();
-
-      setGoogleMapsApiKey(apiKey);
-    })()
-  }, [])
 
   useEffect(() => {
     setShowMap(false);
