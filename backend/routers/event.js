@@ -3,8 +3,36 @@ const _ = require('lodash');
 
 const db = require('../../db/models');
 const { privateRoute } = require('../utils/middlewares');
+const { AVAILABILITY_STATUS } = require("../constants/enums");
 
 const router = express.Router();
+
+const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_STATUS.CAN_ATTEND) => {
+  return events.reduce((prevStatus, event) => {
+    const [ownStart, ownEnd] = [new Date(event.start_time), new Date(event.end_time)];
+
+    if (prevStatus === AVAILABILITY_STATUS.CANNOT_ATTEND) return AVAILABILITY_STATUS.CANNOT_ATTEND;
+    if (event.completed === true) return prevStatus;
+    if (ownStart < start && end < ownEnd) return AVAILABILITY_STATUS.CANNOT_ATTEND;
+
+    if (end < ownStart || ownEnd < start) {
+      if (prevStatus === AVAILABILITY_STATUS.CAN_ATTEND) {
+        return AVAILABILITY_STATUS.CAN_ATTEND;
+      }
+    } else if (ownStart < start && ownEnd < end) {
+      if (prevStatus === AVAILABILITY_STATUS.LEAVE_EARLY) {
+        return AVAILABILITY_STATUS.CANNOT_ATTEND;
+      }
+      return AVAILABILITY_STATUS.BE_LATE;
+    } else if (start < ownStart && end < ownEnd) {
+      if (prevStatus === AVAILABILITY_STATUS.BE_LATE) {
+        return AVAILABILITY_STATUS.CANNOT_ATTEND;
+      }
+      return AVAILABILITY_STATUS.LEAVE_EARLY;
+    }
+    return prevStatus
+  }, defaultStatus)
+};
 
 router.get('/list-own', privateRoute, async (req, res) => {
   const { id } = req.user;
@@ -47,7 +75,14 @@ router.get('/list-invited', privateRoute, async (req, res) => {
         model: db.User,
         as: 'organizer',
         attributes: ['username']
+      }, {
+        model: db.User,
+        as: 'attendees',
+        attributes: ['id', 'username', 'full_name', 'email']
       }]
+    }, {
+      model: db.Event,
+      as: "own_events",
     }],
     order: [
       ['events', 'id', 'asc'],
@@ -58,8 +93,19 @@ router.get('/list-invited', privateRoute, async (req, res) => {
     return res.status(403).send("Invalid token!");
   }
 
-  const { events } = user;
-  res.send(events);
+  const { events, own_events } = user;
+
+  const eventsWithStatuses = events.map((event, index) => {
+    const [start, end] = [new Date(event.start_time), new Date(event.end_time)];
+
+    const midStatus = getAvailabilityStatus(own_events, start, end);
+    const otherInvitedEvents = events.filter((_, i) => index !== i);
+    event.setDataValue('availability', getAvailabilityStatus(otherInvitedEvents, start, end, midStatus));
+
+    return event;
+  })
+
+  res.send(eventsWithStatuses);
 });
 
 router.delete('/invited', privateRoute, async (req, res) => {
@@ -139,6 +185,7 @@ router.put('/', privateRoute, async (req, res) => {
     await event.save();
     res.send(event);
   } catch (e) {
+    console.error(e);
     res.status(400).send("Error  during update!");
   }
 });
@@ -157,6 +204,7 @@ router.delete('/', privateRoute, async (req, res) => {
     await event.destroy();
     res.send(event);
   } catch (e) {
+    console.error(e);
     res.status(400).send("Error during delete!");
   }
 });
@@ -186,6 +234,7 @@ router.post('/invite', privateRoute, async (req, res) => {
 
       res.send(user);
     } catch (e) {
+      console.error(e);
       res.status(400).send("Error during invite!");
     }
   } else {

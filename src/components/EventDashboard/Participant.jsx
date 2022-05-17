@@ -37,7 +37,7 @@ const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, trans
             <ParticipantInfo>{userInfo.full_name}</ParticipantInfo>
             <ParticipantInfo>{userInfo.email}</ParticipantInfo>
           </ParticipantInfoBlock>
-          {!noAttendees && (
+          {!noAttendees && onDeleteInvitation && (
             <IconButton onClick={() => {
               onDeleteInvitation({ userId: userInfo.id, eventId})
             }}>

@@ -110,7 +110,7 @@ const DICTIONARY = {
     [LANGUAGE.UK]: "Завдання",
   },
   'There are no participants in the event. Do you want to add some?': {
-    [LANGUAGE.UK]: "В події немає жодного учаснка. Хочете додати когось?",
+    [LANGUAGE.UK]: "В події немає жодного учасника. Хочете додати когось?",
   },
   'Reject invite': {
     [LANGUAGE.UK]: "Відхилити запрошення",
@@ -273,6 +273,18 @@ const DICTIONARY = {
   },
   'Address': {
     [LANGUAGE.UK]: 'Адреса',
+  },
+  'You are free': {
+    [LANGUAGE.UK]: 'Ви вільні',
+  },
+  'You may be late!': {
+    [LANGUAGE.UK]: 'Ви можливо запізнитесь!',
+  },
+  'You may need to leave early!': {
+    [LANGUAGE.UK]: 'Вам можливо прийдеться піти з події раніше!',
+  },
+  'You are busy!': {
+    [LANGUAGE.UK]: 'Ви зайняті',
   },
 };
 

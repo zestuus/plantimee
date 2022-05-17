@@ -11,6 +11,7 @@ import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 
 import { formatEventTime } from '../../utils/helpers';
 import withSettings from '../HOCs/withSettings';
+import {AVAILABILITY_COLOR, AVAILABILITY_LABEL} from "../../constants/enums";
 
 export const EventCard = styled(Grid)`
   border-radius: 10px;
@@ -40,6 +41,7 @@ const EventDescription = styled.p`
   font-size: 13px;
   max-height: 45px;
   overflow: hidden;
+  ${props => props.color ? `color: ${props.color};` : ''}
 `;
 
 export const BubbleWrapper = styled.p`
@@ -66,7 +68,7 @@ export const BubbleBlock = styled.p`
 `;
 
 const Event = ({
- invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent, militaryTime, translate: __
+ invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent, militaryTime, language, translate: __
 }) => {
   const {
     id,
@@ -80,12 +82,13 @@ const Event = ({
     placeName,
     address,
     is_full_day,
+    availability,
     organizer: eventOrganizer,
   } = eventData;
   const { username: organizer } = eventOrganizer || {};
   const [completedLocal, setCompletedLocal] = useState(!!completed);
 
-  const dateString = formatEventTime(start_time, end_time, is_full_day, militaryTime);
+  const dateString = formatEventTime(start_time, end_time, is_full_day, language, militaryTime);
 
   return (
     <EventCard
@@ -124,20 +127,21 @@ const Event = ({
         completed={completed ? 'true' : undefined}
       >
         <EventTitle>{name}</EventTitle>
-        {description && <EventDescription>{description}</EventDescription>}
-        {dateString && (
+        {!!description && <EventDescription>{description}</EventDescription>}
+        {!!availability && <EventDescription color={AVAILABILITY_COLOR[availability]}>{__(AVAILABILITY_LABEL[availability])}</EventDescription>}
+        {!!dateString && (
           <BubbleWrapper>
             <BubbleInline>
               <ScheduleIcon fontSize="inherit" /> {dateString}
             </BubbleInline>
           </BubbleWrapper>
         )}
-        {latitude && longitude && (
+        {!!(latitude && longitude) && (
           <BubbleBlock>
             <LocationOnIcon fontSize="inherit" /> {latitude}, {longitude} <br/> {placeName} <br/> {address}
           </BubbleBlock>
         )}
-        {invited && organizer && (
+        {!!(invited && organizer) && (
           <BubbleWrapper>
             <BubbleInline>
               <AccountCircleIcon fontSize="inherit" /> {__('organizer')}: {organizer}

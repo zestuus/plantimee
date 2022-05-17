@@ -1,3 +1,6 @@
+import {EnglishDays, EnglishMonths, UkrainianDays, UkrainianMonths} from "../constants/config";
+import {LANGUAGE} from "../constants/enums";
+
 export const getAuthHeader = () => ({ headers: { authorization: 'Bearer ' + localStorage.getItem('user') }});
 
 export const getWindowSize = () => {
@@ -17,7 +20,19 @@ export const to12HourFormat = (hours, militaryTime = true) => {
   }
 };
 
-export const formatEventTime = (start_time, end_time, is_full_day, militaryTime = true) => {
+export const translateMonth = (month, slice=true) => {
+  const index = EnglishMonths.findIndex(m => m.slice(0, slice ? 3 : month.length) === month);
+
+  return UkrainianMonths[index] ? UkrainianMonths[index].slice(0, slice ? 3 : month.length) : month;
+};
+
+export const translateDay = (day, slice=true) => {
+  const index = EnglishDays.findIndex(d => d.slice(0, slice ? 3 : day.length) === day);
+
+  return UkrainianDays[index] ? UkrainianDays[index][0] + UkrainianDays[index][(index === 1 || index === 4) ? 3 : 2] : day;
+};
+
+export const formatEventTime = (start_time, end_time, is_full_day, language, militaryTime = true) => {
   if (!start_time || !end_time) return '';
 
   const startTime = new Date(start_time);
@@ -25,13 +40,21 @@ export const formatEventTime = (start_time, end_time, is_full_day, militaryTime 
   const startDate = startTime.toDateString();
   const endDate = endTime.toDateString();
 
-  let [day, dayNumber, month, year] = startDate.split(' ');
+  let [day, month, dayNumber, year] = startDate.split(' ');
   const startYear = startTime.getFullYear() !== new Date().getFullYear() ? `, ${year}` : '';
-  const startDateString = `${day}, ${dayNumber} ${month} ${startYear}`;
+  let ukrMonth = translateMonth(month);
+  let ukrDay = translateDay(day);
+  const startDateString = language === LANGUAGE.EN ?
+    `${day}, ${month} ${dayNumber} ${startYear}`
+    : `${ukrDay}, ${dayNumber} ${ukrMonth} ${startYear}`;
 
-  [day, dayNumber, month, year] = endDate.split(' ');
+  [day, month, dayNumber, year] = endDate.split(' ');
   const endYear = endTime.getFullYear() !== new Date().getFullYear() ? `, ${year}` : '';
-  const endDateString = `${day}, ${dayNumber} ${month} ${endYear}`;
+  ukrMonth = translateMonth(month);
+  ukrDay = translateDay(day);
+  const endDateString = language === LANGUAGE.EN ?
+    `${day}, ${month} ${dayNumber} ${endYear}`
+    : `${ukrDay}, ${dayNumber} ${ukrMonth} ${endYear}`;
 
   const [startHours, startSuffix] = to12HourFormat(startTime.getHours(), militaryTime);
   const [endHours, endSuffix] = to12HourFormat(endTime.getHours(), militaryTime);

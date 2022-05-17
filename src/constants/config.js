@@ -21,4 +21,37 @@ export const UkrainianMonths = [
   'Жовтень',
   'Листопад',
   'Грудень'
-]
+];
+export const EnglishMonths = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];
+
+export const UkrainianDays = [
+  'Понеділок',
+  'Вівторок',
+  'Середа',
+  'Четвер',
+  'П\'ятниця',
+  'Субота',
+  'Неділя'
+];
+export const EnglishDays = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday'
+];

@@ -30,6 +30,7 @@ import {findNearbyLocation} from "../../api/maps";
 import ChooseLocationDialog from "../dialogs/ChooseLocationDialog";
 
 import {KeyboardDateTimePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
+import {LANGUAGE, LOCALE} from "../../constants/enums";
 import DateFnsUtils from "@date-io/date-fns";
 
 const Input = styled(TextField)`
@@ -45,7 +46,7 @@ const DateTimePicker = styled(KeyboardDateTimePicker)`
 `;
 
 const ParticipantsTitle = styled.p`
-  margin: 10px 0 5px 0;
+  margin: 10px 0;
 `;
 
 const DurationPicker = styled(Input)`
@@ -162,8 +163,9 @@ const Settings = ({
       case 5:
         const ampm = value.slice(...selectionRanges[selectedRange]);
 
-        date.setHours(date.getHours() + (ampm === 'AM' ? 12 : -12));
+        date.setHours(date.getHours() + ((ampm === 'AM' || ampm === 'ДП') ? 12 : -12));
         break;
+      default: break;
     }
 
     if (key === 'start_time' && eventData.end_time) {
@@ -200,7 +202,7 @@ const Settings = ({
     }
   };
 
-  const handleKeyDown = (event, key) => {
+  const handleKeyDown = (event, key, readOnly = false) => {
     const { code } = event;
 
     if ( code === 'Tab') {
@@ -216,6 +218,8 @@ const Settings = ({
       handleArrowPressed(event, key, 1);
     } else if ( code === 'ArrowDown') {
       handleArrowPressed(event, key, -1);
+    } else if (readOnly) {
+      event.preventDefault();
     }
   };
 
@@ -337,55 +341,57 @@ const Settings = ({
                 )}
               </div>
             )}
-            {!isInvitedEvent && (
-              <ParticipantsBlock
-                container
-                direction="column"
-                alignItems="stretch"
-              >
-                <ParticipantsTitle>{__('Participants')}</ParticipantsTitle>
-                {eventData && eventData.attendees
-                  && eventData.attendees.length ?
-                    eventData.attendees.map(attendee => (
-                      <Participant
-                        key={attendee.id}
-                        userInfo={attendee}
-                        eventId={eventData.id}
-                        onDeleteInvitation={onDeleteInvitation}/>
-                    )) : <Participant noAttendees />
-                }
-                <Input
-                  label={__('Input username')}
-                  value={usernameToLookFor || ''}
-                  onChange={(event) => {
-                    setUsernameToLookFor(event.target.value);
-                  }}
-                />
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  onClick={async () => {
-                    const result = await onInviteAttendee({
-                      usernameToLookFor, eventId: eventData.id
-                    });
+            <ParticipantsBlock
+              container
+              direction="column"
+              alignItems="stretch"
+            >
+              <ParticipantsTitle>{__('Participants')}</ParticipantsTitle>
+              {eventData && eventData.attendees
+                && eventData.attendees.length ?
+                  eventData.attendees.map(attendee => (
+                    <Participant
+                      key={attendee.id}
+                      userInfo={attendee}
+                      eventId={eventData.id}
+                      onDeleteInvitation={!isInvitedEvent && onDeleteInvitation}/>
+                  )) : <Participant noAttendees />
+              }
+              {!isInvitedEvent && (
+                <React.Fragment>
+                  <Input
+                    label={__('Input username')}
+                    value={usernameToLookFor || ''}
+                    onChange={(event) => {
+                      setUsernameToLookFor(event.target.value);
+                    }}
+                  />
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    onClick={async () => {
+                      const result = await onInviteAttendee({
+                        usernameToLookFor, eventId: eventData.id
+                      });
 
-                    if (!result) {
-                      setAttendeeFindError(__("Cannot find user with given username or user is already invited"))
-                    } else {
-                      setAttendeeFindError('');
-                    }
-                  }}
-                >
-                  <AddIcon /> {__('Add participant')}
-                </Button>
-                {attendeeFindError && (
-                  <Alert severity="error" style={{ margin: '10px 0'}} onClose={() => setAttendeeFindError('')}>
-                    {attendeeFindError}
-                  </Alert>
-                )}
-              </ParticipantsBlock>
-            )}
+                      if (!result) {
+                        setAttendeeFindError(__("Cannot find user with given username or user is already invited"))
+                      } else {
+                        setAttendeeFindError('');
+                      }
+                    }}
+                  >
+                    <AddIcon /> {__('Add participant')}
+                  </Button>
+                  {attendeeFindError && (
+                    <Alert severity="error" style={{ margin: '10px 0'}} onClose={() => setAttendeeFindError('')}>
+                      {attendeeFindError}
+                    </Alert>
+                  )}
+                </React.Fragment>
+              )}
+            </ParticipantsBlock>
             <FormControlLabel
               control={
                 <Checkbox
@@ -426,7 +432,7 @@ const Settings = ({
               }
               label={__('Full day event')}
             />
-            <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils}>
+            <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
               {(!isInvitedEvent || (isInvitedEvent && eventData.start_time)) && (
                 <DateTimePicker
                   variant="inline"
@@ -435,14 +441,18 @@ const Settings = ({
                   value={new Date(eventData.start_time)}
                   format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
                   onBlur={() => handleBlur('start_time')}
+                  onClose={() => handleBlur('start_time')}
                   onClick={handleDateTimeClick}
-                  onKeyDown={(event) => handleKeyDown(event, 'start_time')}
+                  onKeyDown={(event) => handleKeyDown(event, 'start_time', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
                   onChange={(value) => {
                     if (eventData.end_time) {
-                      const startDate = new Date(value);
-                      startDate.setDate(startDate.getDate() + daysLong);
-                      startDate.setHours(startDate.getHours() + hoursLong);
-                      startDate.setMinutes(startDate.getMinutes() + minutesLong);
+                      let startDate = new Date(eventData.end_time);
+                      if (value && !(value instanceof Date)) {
+                        startDate = new Date(value);
+                        startDate.setDate(startDate.getDate() + daysLong);
+                        startDate.setHours(startDate.getHours() + hoursLong);
+                        startDate.setMinutes(startDate.getMinutes() + minutesLong);
+                      }
 
                       onChangeOwnEventLocally({
                         ...eventData,
@@ -467,8 +477,9 @@ const Settings = ({
                   value={new Date(eventData.end_time)}
                   format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
                   onBlur={() => handleBlur('end_time')}
+                  onClose={() => handleBlur('end_time')}
                   onClick={handleDateTimeClick}
-                  onKeyDown={(event) => handleKeyDown(event, 'end_time')}
+                  onKeyDown={(event) => handleKeyDown(event, 'end_time', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
                   onChange={(value) => {
                     const formatedValue = formatDateString(value);
 
@@ -529,7 +540,6 @@ const Settings = ({
                         end_time: formatDateString(startDate),
                       });
                     }
-
                   }} />
                 <DurationPicker
                   type="number"
@@ -593,54 +603,60 @@ const Settings = ({
                   setAutoFindProps={setAutoFindProps} />
               </Grid>
             )}
-            <Grid container direction="row" justifyContent="space-between">
-              <HalfWidthInput
+            {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && (
+              <Grid container direction="row" justifyContent="space-between">
+                <HalfWidthInput
+                  {...readOnly}
+                  label={__('Latitude')}
+                  type="number"
+                  value={eventData.latitude || ''}
+                  onBlur={() => handleBlur('latitude')}
+                  onChange={(event) => {
+                    onChangeOwnEventLocally({
+                      ...eventData, latitude: event.target.value || null,
+                    });
+                  }}
+                />
+                <HalfWidthInput
+                  {...readOnly}
+                  label={__('Longitude')}
+                  type="number"
+                  value={eventData.longitude || ''}
+                  onBlur={() => handleBlur('longitude')}
+                  onChange={(event) => {
+                    onChangeOwnEventLocally({
+                      ...eventData, longitude: event.target.value || null,
+                    });
+                  }}
+                />
+              </Grid>
+            )}
+            {(!isInvitedEvent || eventData.placeName) && (
+              <Input
                 {...readOnly}
-                label={__('Latitude')}
-                type="number"
-                value={eventData.latitude || ''}
-                onBlur={() => handleBlur('latitude')}
+                label={__('Place name')}
+                value={eventData.placeName || ''}
+                onBlur={() => handleBlur('placeName')}
                 onChange={(event) => {
                   onChangeOwnEventLocally({
-                    ...eventData, latitude: event.target.value,
+                    ...eventData, placeName: event.target.value,
                   });
                 }}
               />
-              <HalfWidthInput
+            )}
+            {(!isInvitedEvent || eventData.address) && (
+              <Input
                 {...readOnly}
-                label={__('Longitude')}
-                type="number"
-                value={eventData.longitude || ''}
-                onBlur={() => handleBlur('longitude')}
+                label={__('Address')}
+                value={eventData.address || ''}
+                onBlur={() => handleBlur('address')}
                 onChange={(event) => {
                   onChangeOwnEventLocally({
-                    ...eventData, longitude: event.target.value,
+                    ...eventData, address: event.target.value,
                   });
                 }}
               />
-            </Grid>
-            <Input
-              {...readOnly}
-              label={__('Place name')}
-              value={eventData.placeName || ''}
-              onBlur={() => handleBlur('placeName')}
-              onChange={(event) => {
-                onChangeOwnEventLocally({
-                  ...eventData, placeName: event.target.value,
-                });
-              }}
-            />
-            <Input
-              {...readOnly}
-              label={__('Address')}
-              value={eventData.address || ''}
-              onBlur={() => handleBlur('address')}
-              onChange={(event) => {
-                onChangeOwnEventLocally({
-                  ...eventData, address: event.target.value,
-                });
-              }}
-            />
+            )}
             {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && googleMapsApiKey && showMap
               && (
                 <MapWrapper readOnly={isInvitedEvent}>

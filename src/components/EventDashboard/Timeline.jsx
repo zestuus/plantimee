@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import styled from "styled-components";
 
-import {Grid} from "@material-ui/core";
+import {Grid, Popover} from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton";
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
@@ -12,7 +12,11 @@ import {
 import TimelineEventBar from "./TimelineEventBar";
 import { HourHeight, UkrainianMonths } from '../../constants/config';
 import withSettings from '../HOCs/withSettings';
-import { LANGUAGE } from '../../constants/enums';
+import {LANGUAGE, LOCALE} from '../../constants/enums';
+import Button from "@material-ui/core/Button";
+
+import {DatePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
+import DateFnsUtils from "@date-io/date-fns";
 
 export const ColumnTitle = styled.h3`
   margin: 7.5px;
@@ -47,9 +51,10 @@ const ClockArrow = styled.div`
   top: ${props => props.minute*0.7+19}px;
 `;
 
-const TimelineDateLabel = styled.h3`
+const TimelineDateLabel = styled(Button)`
   margin: 0;
   font-size: 15px;
+  padding: 0 5px;
 `;
 
 const DateArrow = styled(IconButton)`
@@ -64,6 +69,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
   });
 
   const [chosenDate, setChosenDate] = useState(dateNow);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(()=>{
@@ -81,6 +87,17 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
     ? `${month} ${dayNumber}, ${year}`
     : `${dayNumber} ${ukrMonth} ${year}`;
 
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? "simple-popover" : undefined;
+
   return (
     <Container container direction="column" justifyContent="flex-start">
       <ColumnHeader container direction="row" justifyContent="space-between" alignItems="center">
@@ -93,7 +110,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
         }}>
           <ChevronLeftIcon />
         </DateArrow>
-        <TimelineDateLabel>{chosenDateString}</TimelineDateLabel>
+        <TimelineDateLabel onClick={handleClick}>{chosenDateString}</TimelineDateLabel>
         <DateArrow
           onClick={() => {
             const date = new Date(chosenDate);
@@ -141,6 +158,25 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
             hidden={chosenDate.toDateString() !== new Date().toDateString()} />
         </ScrollContentWrapper>
       </ScrollArea>
+      <MuiPickersUtilsProvider utils={DateFnsUtils} locale={LOCALE[language]}>
+        <Popover
+          id={id}
+          open={open}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "left"
+          }}
+        >
+          <DatePicker
+            autoOk
+            variant="static"
+            value={chosenDate}
+            onChange={setChosenDate}
+          />
+        </Popover>
+      </MuiPickersUtilsProvider>
     </Container>
   );
 };
