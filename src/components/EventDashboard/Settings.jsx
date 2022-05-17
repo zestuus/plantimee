@@ -438,7 +438,7 @@ const Settings = ({
                   variant="inline"
                   ampm={!militaryTime}
                   readOnly={isInvitedEvent}
-                  value={new Date(eventData.start_time)}
+                  value={eventData.start_time ? new Date(eventData.start_time) : new Date()}
                   format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
                   onBlur={() => handleBlur('start_time')}
                   onClose={() => handleBlur('start_time')}
@@ -474,7 +474,7 @@ const Settings = ({
                   variant="inline"
                   readOnly={isInvitedEvent}
                   ampm={!militaryTime}
-                  value={new Date(eventData.end_time)}
+                  value={eventData.end_time ? new Date(eventData.end_time) : new Date()}
                   format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
                   onBlur={() => handleBlur('end_time')}
                   onClose={() => handleBlur('end_time')}

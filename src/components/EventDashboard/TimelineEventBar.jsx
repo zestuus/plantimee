@@ -5,18 +5,21 @@ import {formatEventTime} from "../../utils/helpers";
 import ScheduleIcon from "@material-ui/icons/Schedule";
 import { BubbleInline } from "./Event";
 import Tooltip from "@material-ui/core/Tooltip";
+import {AVAILABILITY_STATUS} from "../../constants/enums";
 
 const EventBar = styled.div`
   position: absolute;
+  border: 2px solid white;
   border-radius: 5px;
-  width: calc(100% - 57px);
+  width: calc(${props => props.$width ? props.$width : '100%' } - 55px);
+  left: calc(${props => props.$left ? props.$left : 0} - 15px);
   margin: 0 26px;
   box-sizing: border-box;
   box-shadow: white 1px 1px;
-  background-color: #ffa500;
+  background-color: ${props => props.bgColor ? props.bgColor : '#ffa500'};
   font-weight: bold;
   font-size: 10px;
-  color: white;
+  color: ${props => props.bgColor && props.bgColor.length === 9 && props.bgColor.slice(-2) !== 'ff' ? '#484848' : 'white'};
   overflow: hidden;
   ${props => `
     top: ${props.$top + 21}px;
@@ -26,7 +29,7 @@ const EventBar = styled.div`
   `};
 `;
 
-const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShown, militaryTime}) => {
+const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent, setColumnShown, militaryTime}) => {
   const { start_time, end_time, is_full_day, completed } = eventData || {};
 
   const dayStart = new Date(chosenDate);
@@ -66,6 +69,22 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
 
   const dateString = formatEventTime(start_time, end_time, is_full_day, militaryTime);
 
+  let bgColor = '#ffa500';
+  if (eventData.availability) {
+    bgColor = '#0095ff'
+  }
+  if (completed || eventData.availability === AVAILABILITY_STATUS.CANNOT_ATTEND) {
+    bgColor += 'aa';
+  }
+
+  const collisionList = collisionMap[eventData.id] || [];
+  const rowLength = collisionList.length + 1;
+  const index = collisionList.length && collisionList.findIndex(id => eventData.id < id);
+  const indexInRow = index === -1 ? collisionList.length : index;
+
+  const left = indexInRow*((100-6) / rowLength) - ((indexInRow === 0) ? -6 : 6);
+  const width = ((100-6) / rowLength) + 6;
+
   return (
     <Tooltip
       title={
@@ -81,6 +100,9 @@ const TimelineEventBar = ({ eventData, chosenDate, setChosenEvent, setColumnShow
         $height={height}
         $top={top}
         $completed={completed}
+        $left={`${left}%${(rowLength !== 1 && indexInRow === collisionList.length) ? ' - 12px' : ''}`}
+        $width={`${width}%${rowLength !== 1 ? ' + 55px' : ''}`}
+        bgColor={bgColor}
         onClick={() => {
           setChosenEvent(eventData.id);
           setColumnShown('settings')

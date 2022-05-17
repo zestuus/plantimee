@@ -25,7 +25,18 @@ const ParticipantInfoBlock = styled(Grid)`
 const ParticipantInfo = styled.p`
   margin: 5px 3px;
   font-size: 12px;
-  ${props => props.color ? `color: ${props.color};` : ''}
+`;
+
+const AvailabilityInfo = styled.p`
+  padding: 5px;
+  border-radius: 5px;
+  background-color: ${PRIMARY_COLOR}ed;
+  margin: 5px 3px;
+  font-size: 12px;
+  ${props => props.color ? `
+    color: ${props.color};
+    font-weight: bold;
+  ` : ''}
 `;
 
 const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, translate: __ }) => {
@@ -38,9 +49,11 @@ const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, trans
             <ParticipantInfo>{userInfo.username}</ParticipantInfo>
             <ParticipantInfo>{userInfo.full_name}</ParticipantInfo>
             <ParticipantInfo>{userInfo.email}</ParticipantInfo>
-            <ParticipantInfo color={AVAILABILITY_COLOR[userInfo.availability]}>
-              {__(AVAILABILITY_ATTENDEE_LABEL[userInfo.availability])}
-            </ParticipantInfo>
+            {!!userInfo.availability && (
+              <AvailabilityInfo color={AVAILABILITY_COLOR[userInfo.availability]}>
+                {__(AVAILABILITY_ATTENDEE_LABEL[userInfo.availability])}
+              </AvailabilityInfo>
+            )}
           </ParticipantInfoBlock>
           {!noAttendees && onDeleteInvitation && (
             <IconButton onClick={() => {

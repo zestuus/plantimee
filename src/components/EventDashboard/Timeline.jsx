@@ -17,6 +17,7 @@ import Button from "@material-ui/core/Button";
 
 import {DatePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
 import DateFnsUtils from "@date-io/date-fns";
+import {extendCollisionList} from "../../utils/helpers";
 
 export const ColumnTitle = styled.h3`
   margin: 7.5px;
@@ -98,6 +99,26 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
   const open = Boolean(anchorEl);
   const id = open ? "simple-popover" : undefined;
 
+  const collisionMap = {};
+
+  if (ownEvents) {
+    ownEvents.forEach((eventToLookFor, index) => {
+      extendCollisionList(eventToLookFor, ownEvents.filter((_, i) => i !== index), collisionMap);
+      if (invitedEvents) {
+        extendCollisionList(eventToLookFor, invitedEvents, collisionMap);
+      }
+    });
+  }
+  if (invitedEvents) {
+    invitedEvents.forEach((eventToLookFor, index) => {
+      extendCollisionList(eventToLookFor, invitedEvents.filter((_, i) => i !== index), collisionMap);
+      if (ownEvents) {
+        extendCollisionList(eventToLookFor, ownEvents, collisionMap);
+      }
+    });
+  }
+  Object.values(collisionMap).forEach(list => list.sort());
+
   return (
     <Container container direction="column" justifyContent="flex-start">
       <ColumnHeader container direction="row" justifyContent="space-between" alignItems="center">
@@ -139,6 +160,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
               key={event.id}
               eventData={event}
               chosenDate={chosenDate}
+              collisionMap={collisionMap}
               militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
               setColumnShown={setColumnShown} />
@@ -148,6 +170,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
               key={event.id}
               eventData={event}
               chosenDate={chosenDate}
+              collisionMap={collisionMap}
               militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
               setColumnShown={setColumnShown}

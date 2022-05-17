@@ -9,13 +9,14 @@ const router = express.Router();
 
 const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_STATUS.CAN_ATTEND) => {
   return events.reduce((prevStatus, event) => {
-    const [ownStart, ownEnd] = [new Date(event.start_time), new Date(event.end_time)];
-
     if (prevStatus === AVAILABILITY_STATUS.CANNOT_ATTEND) return AVAILABILITY_STATUS.CANNOT_ATTEND;
     if (event.completed === true) return prevStatus;
-    if (ownStart < start && end < ownEnd) return AVAILABILITY_STATUS.CANNOT_ATTEND;
 
-    if (end < ownStart || ownEnd < start) {
+    const [ownStart, ownEnd] = [new Date(event.start_time), new Date(event.end_time)];
+
+    if ((ownStart < start && end < ownEnd) || (start < ownStart && ownEnd < end)) {
+      return AVAILABILITY_STATUS.CANNOT_ATTEND;
+    } else if (end < ownStart || ownEnd < start) {
       if (prevStatus === AVAILABILITY_STATUS.CAN_ATTEND) {
         return AVAILABILITY_STATUS.CAN_ATTEND;
       }
@@ -29,9 +30,8 @@ const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_
         return AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY;
       }
       return AVAILABILITY_STATUS.LEAVE_EARLY;
-    } else if (start < ownStart && ownEnd < end ) {
-      return AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY;
     }
+
     return prevStatus
   }, defaultStatus)
 };

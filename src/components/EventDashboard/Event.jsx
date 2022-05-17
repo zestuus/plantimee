@@ -41,7 +41,10 @@ const EventDescription = styled.p`
   font-size: 13px;
   max-height: 45px;
   overflow: hidden;
-  ${props => props.color ? `color: ${props.color};` : ''}
+  ${props => props.color ? `
+    color: ${props.color};
+    font-weight: bold;
+  ` : ''}
 `;
 
 export const BubbleWrapper = styled.p`

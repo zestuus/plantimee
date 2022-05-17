@@ -88,3 +88,21 @@ export const formatDateString = (dateString) => {
 };
 
 export const roundFloat = (number, digits= 0) => Math.round(number * 10 ** digits) / 10 ** digits;
+
+export const extendCollisionList = (eventToLookFor, events, collisionMap) => {
+  events.forEach((event) => {
+    const [ownStart, ownEnd] = [new Date(event.start_time), new Date(event.end_time)];
+    const [start, end] = [new Date(eventToLookFor.start_time), new Date(eventToLookFor.end_time)];
+
+    if (!(end < ownStart) && !(ownEnd < start) && ((ownStart <= start && end <= ownEnd)
+      || (start <= ownStart && ownEnd <= end)
+      || (ownStart <= start && ownEnd <= end)
+      || (start <= ownStart && end <= ownEnd))) {
+      if (eventToLookFor.id in collisionMap) {
+        collisionMap[eventToLookFor.id].push(event.id);
+      } else {
+        collisionMap[eventToLookFor.id] = [event.id];
+      }
+    }
+  })
+};
