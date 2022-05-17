@@ -25,19 +25,19 @@ export const AVAILABILITY_STATUS = Object.freeze({
 });
 
 export const AVAILABILITY_LABEL = Object.freeze({
-  [AVAILABILITY_STATUS.CAN_ATTEND]: 'You are free',
+  [AVAILABILITY_STATUS.CAN_ATTEND]: 'You are free that time',
   [AVAILABILITY_STATUS.BE_LATE]: 'You may be late!',
   [AVAILABILITY_STATUS.LEAVE_EARLY]: 'You may need to leave early!',
   [AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY]: 'You may be late and need to leave early!',
-  [AVAILABILITY_STATUS.CANNOT_ATTEND]: 'You are busy!',
+  [AVAILABILITY_STATUS.CANNOT_ATTEND]: 'You are busy that time!',
 });
 
 export const AVAILABILITY_ATTENDEE_LABEL = Object.freeze({
-  [AVAILABILITY_STATUS.CAN_ATTEND]: 'User is free',
+  [AVAILABILITY_STATUS.CAN_ATTEND]: 'User is free that time',
   [AVAILABILITY_STATUS.BE_LATE]: 'User may be late!',
   [AVAILABILITY_STATUS.LEAVE_EARLY]: 'User may need to leave early!',
   [AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY]: 'User may be late and need to leave early!',
-  [AVAILABILITY_STATUS.CANNOT_ATTEND]: 'User is busy!',
+  [AVAILABILITY_STATUS.CANNOT_ATTEND]: 'User is busy that time!',
 });
 
 export const AVAILABILITY_COLOR = Object.freeze({

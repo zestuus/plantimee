@@ -274,8 +274,8 @@ const DICTIONARY = {
   'Address': {
     [LANGUAGE.UK]: 'Адреса',
   },
-  'You are free': {
-    [LANGUAGE.UK]: 'Ви вільні',
+  'You are free that time': {
+    [LANGUAGE.UK]: 'Ви вільні в цей час',
   },
   'You may be late!': {
     [LANGUAGE.UK]: 'Ви можливо запізнитесь!',
@@ -286,11 +286,11 @@ const DICTIONARY = {
   'You may be late and need to leave early!': {
     [LANGUAGE.UK]: 'Вам можливо прийдеться запізнитись і піти з події раніше!',
   },
-  'You are busy!': {
-    [LANGUAGE.UK]: 'Ви зайняті',
+  'You are busy that time!': {
+    [LANGUAGE.UK]: 'Ви зайняті в цей час!',
   },
-  'User is free': {
-    [LANGUAGE.UK]: 'Користувач вільний',
+  'User is free that time': {
+    [LANGUAGE.UK]: 'Користувач вільний в цей час',
   },
   'User may be late!': {
     [LANGUAGE.UK]: 'Користувач можливо запізниться!',
@@ -301,8 +301,8 @@ const DICTIONARY = {
   'User may be late and need to leave early!': {
     [LANGUAGE.UK]: 'Користувачу можливо прийдеться запізнитись і піти з події раніше!',
   },
-  'User is busy!': {
-    [LANGUAGE.UK]: 'Користувач зайнятий',
+  'User is busy that time!': {
+    [LANGUAGE.UK]: 'Користувач зайнятий в цей час!',
   },
 };
 
