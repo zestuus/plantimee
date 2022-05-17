@@ -21,14 +21,16 @@ const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_
       }
     } else if (ownStart < start && ownEnd < end) {
       if (prevStatus === AVAILABILITY_STATUS.LEAVE_EARLY) {
-        return AVAILABILITY_STATUS.CANNOT_ATTEND;
+        return AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY;
       }
       return AVAILABILITY_STATUS.BE_LATE;
     } else if (start < ownStart && end < ownEnd) {
       if (prevStatus === AVAILABILITY_STATUS.BE_LATE) {
-        return AVAILABILITY_STATUS.CANNOT_ATTEND;
+        return AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY;
       }
       return AVAILABILITY_STATUS.LEAVE_EARLY;
+    } else if (start < ownStart && ownEnd < end ) {
+      return AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY;
     }
     return prevStatus
   }, defaultStatus)
@@ -58,8 +60,43 @@ router.get('/list-own', privateRoute, async (req, res) => {
     }
 
     const {own_events} = user;
-    res.send(own_events);
+    const attendeeIds = own_events.reduce((user_ids, event) => ([
+      ...user_ids,
+      ...event.attendees.map(attendee => attendee.id),
+    ]), []);
+
+    const users = await db.User.findAll({
+      where: {id: attendeeIds},
+      include: [{
+        model: db.Event,
+        as: "own_events",
+      }, {
+        model: db.Event,
+        as: "events",
+      }],
+      order: [
+        ['own_events', 'id', 'asc'],
+        ['events', 'id', 'asc'],
+      ],
+    });
+
+    const eventsWithAttendeesStatuses = own_events.map(event => {
+      event.attendees = event.attendees.map(attendee => {
+        const user = users.find(user => user.id === attendee.id);
+        const [start, end] = [new Date(event.start_time), new Date(event.end_time)];
+
+        const midStatus = getAvailabilityStatus(user.own_events, start, end);
+        attendee.setDataValue('availability', getAvailabilityStatus(user.events, start, end, midStatus));
+
+        return attendee;
+      });
+      return event;
+    });
+
+    res.send(eventsWithAttendeesStatuses);
   } catch (e) {
+    console.error(e);
+
     return res.status(400).send(e);
   }
 });

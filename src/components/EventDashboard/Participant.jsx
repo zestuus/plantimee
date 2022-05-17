@@ -8,6 +8,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import {PRIMARY_COLOR} from "../../constants/config";
 import IconButton from "@material-ui/core/IconButton";
 import withSettings from '../HOCs/withSettings';
+import {AVAILABILITY_ATTENDEE_LABEL, AVAILABILITY_COLOR} from "../../constants/enums";
 
 const ParticipantContainer = styled.div`
   margin: 5px 0;
@@ -24,6 +25,7 @@ const ParticipantInfoBlock = styled(Grid)`
 const ParticipantInfo = styled.p`
   margin: 5px 3px;
   font-size: 12px;
+  ${props => props.color ? `color: ${props.color};` : ''}
 `;
 
 const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, translate: __ }) => {
@@ -36,6 +38,9 @@ const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, trans
             <ParticipantInfo>{userInfo.username}</ParticipantInfo>
             <ParticipantInfo>{userInfo.full_name}</ParticipantInfo>
             <ParticipantInfo>{userInfo.email}</ParticipantInfo>
+            <ParticipantInfo color={AVAILABILITY_COLOR[userInfo.availability]}>
+              {__(AVAILABILITY_ATTENDEE_LABEL[userInfo.availability])}
+            </ParticipantInfo>
           </ParticipantInfoBlock>
           {!noAttendees && onDeleteInvitation && (
             <IconButton onClick={() => {

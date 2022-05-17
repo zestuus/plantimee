@@ -283,8 +283,26 @@ const DICTIONARY = {
   'You may need to leave early!': {
     [LANGUAGE.UK]: 'Вам можливо прийдеться піти з події раніше!',
   },
+  'You may be late and need to leave early!': {
+    [LANGUAGE.UK]: 'Вам можливо прийдеться запізнитись і піти з події раніше!',
+  },
   'You are busy!': {
     [LANGUAGE.UK]: 'Ви зайняті',
+  },
+  'User is free': {
+    [LANGUAGE.UK]: 'Користувач вільний',
+  },
+  'User may be late!': {
+    [LANGUAGE.UK]: 'Користувач можливо запізниться!',
+  },
+  'User may need to leave early!': {
+    [LANGUAGE.UK]: 'Користувачу можливо прийдеться піти з події раніше!',
+  },
+  'User may be late and need to leave early!': {
+    [LANGUAGE.UK]: 'Користувачу можливо прийдеться запізнитись і піти з події раніше!',
+  },
+  'User is busy!': {
+    [LANGUAGE.UK]: 'Користувач зайнятий',
   },
 };
 
