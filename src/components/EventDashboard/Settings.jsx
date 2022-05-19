@@ -141,8 +141,10 @@ const Settings = ({
 
   const handleArrowPressed = (event, key, addValue = 0) => {
     event.preventDefault();
-    let date = new Date(eventData[key]);
-    const { value } = event.target;
+    let { value } = event.target;
+    const ampm = value.slice(-2);
+    if (ampm === 'ДП' || ampm === 'ПП') value = value.replace('ДП', 'AM').replace('ПП', 'PM');
+    let date = new Date(value);
 
     switch (selectedRange) {
       case 0:
@@ -161,24 +163,30 @@ const Settings = ({
         date.setMinutes(date.getMinutes() + addValue);
         break;
       case 5:
-        const ampm = value.slice(...selectionRanges[selectedRange]);
-
         date.setHours(date.getHours() + ((ampm === 'AM' || ampm === 'ДП') ? 12 : -12));
         break;
       default: break;
     }
 
-    if (key === 'start_time' && eventData.end_time) {
-      const startDate = new Date(date.getTime());
-      startDate.setDate(startDate.getDate() + daysLong);
-      startDate.setHours(startDate.getHours() + hoursLong);
-      startDate.setMinutes(startDate.getMinutes() + minutesLong);
+    if (key === 'start_time') {
+      if (eventData.end_time) {
+        const startDate = new Date(date.getTime());
+        startDate.setDate(startDate.getDate() + daysLong);
+        startDate.setHours(startDate.getHours() + hoursLong);
+        startDate.setMinutes(startDate.getMinutes() + minutesLong);
 
-      onChangeOwnEventLocally({
-        ...eventData,
-        start_time: formatDateString(date),
-        end_time: formatDateString(startDate),
-      });
+        onChangeOwnEventLocally({
+          ...eventData,
+          start_time: formatDateString(date),
+          end_time: formatDateString(startDate),
+        });
+      } else {
+        onChangeOwnEventLocally({
+          ...eventData,
+          start_time: formatDateString(date),
+          end_time: formatDateString(date),
+        });
+      }
     } else {
       onChangeOwnEventLocally({ ...eventData, [key]: formatDateString(date) });
     }

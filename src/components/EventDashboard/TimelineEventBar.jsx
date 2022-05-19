@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from "styled-components";
-import { HourHeight, OneHour } from "../../constants/config";
-import {formatEventTime} from "../../utils/helpers";
+import {HourHeight, OneHour, OneMinute} from "../../constants/config";
+import {formatEventTime, getDayBounds, getOtherEventHasSeparateCollisionsBefore} from "../../utils/helpers";
 import ScheduleIcon from "@material-ui/icons/Schedule";
 import { BubbleInline } from "./Event";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -13,6 +13,7 @@ const EventBar = styled.div`
   border-radius: 5px;
   width: calc(${props => props.$width ? props.$width : '100%' } - 55px);
   left: calc(${props => props.$left ? props.$left : 0} - 15px);
+  z-index: ${props => props.$zIndex ? props.$zIndex : 0};
   margin: 0 26px;
   box-sizing: border-box;
   box-shadow: white 1px 1px;
@@ -32,16 +33,7 @@ const EventBar = styled.div`
 const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent, setColumnShown, militaryTime}) => {
   const { start_time, end_time, is_full_day, completed } = eventData || {};
 
-  const dayStart = new Date(chosenDate);
-  dayStart.setHours(0)
-  dayStart.setMinutes(0)
-  dayStart.setSeconds(0)
-  dayStart.setMilliseconds(0)
-  const dayEnd = new Date(chosenDate);
-  dayEnd.setHours(23)
-  dayEnd.setMinutes(59)
-  dayEnd.setSeconds(0)
-  dayEnd.setMilliseconds(0)
+  const [dayStart, dayEnd] = getDayBounds(chosenDate);
 
   const startTime = eventData && new Date(eventData.start_time);
   startTime.setSeconds(0)
@@ -50,12 +42,10 @@ const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent,
   endTime.setSeconds(0)
   endTime.setMilliseconds(0)
 
-  let height = 0;
+  let height;
   let top = 0;
 
-  if (!eventData || !eventData.start_time || !eventData.end_time || startTime > dayEnd || endTime < dayStart) {
-    return null;
-  } else if(startTime <= dayStart && dayEnd <= endTime ) {
+  if (startTime <= dayStart && dayEnd <= endTime) {
     height = HourHeight*24;
   } else if(startTime < dayStart) {
     height = (endTime - dayStart) / OneHour * HourHeight;
@@ -66,6 +56,8 @@ const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent,
     top = (startTime - dayStart) / OneHour * HourHeight;
     height = (endTime - startTime) / OneHour * HourHeight;
   }
+
+  const zIndex = Math.round((startTime - dayStart) / OneMinute);
 
   const dateString = formatEventTime(start_time, end_time, is_full_day, militaryTime);
 
@@ -79,8 +71,32 @@ const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent,
 
   const collisionList = collisionMap[eventData.id] || [];
   const rowLength = collisionList.length + 1;
-  const index = collisionList.length && collisionList.findIndex(id => eventData.id < id);
-  const indexInRow = index === -1 ? collisionList.length : index;
+  let trigger = false;
+  const index = collisionList.length && collisionList.findIndex(otherEvent => {
+    otherEvent.startTime.setSeconds(0)
+    otherEvent.startTime.setMilliseconds(0)
+    const otherEventHasSeparateCollisionBefore = getOtherEventHasSeparateCollisionsBefore(otherEvent, collisionList);
+    if (otherEventHasSeparateCollisionBefore) trigger = true;
+    return otherEventHasSeparateCollisionBefore || (startTime.getTime() === otherEvent.startTime.getTime() ? (
+      eventData.id < otherEvent.id
+    ) : (
+      startTime < otherEvent.startTime
+    ));
+  });
+  let secondIndex = -1;
+  if (trigger && index !== -1) {
+    const concurrentEvents = collisionList[index].collisions.filter(event => !!collisionList.find(e => e.id === event.id));
+
+    concurrentEvents.sort((a,b) => a.startTime - b.startTime);
+    secondIndex = concurrentEvents.findIndex(otherEvent => (
+      startTime.getTime() === otherEvent.startTime.getTime() ? (
+        eventData.id < otherEvent.id
+      ) : (
+        startTime < otherEvent.startTime
+      )
+    ))
+  }
+  const indexInRow = index === -1 ? collisionList.length : (secondIndex !== -1 ? secondIndex + 1 : index);
 
   const left = indexInRow*((100-6) / rowLength) - ((indexInRow === 0) ? -6 : 6);
   const width = ((100-6) / rowLength) + 6;
@@ -102,6 +118,7 @@ const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent,
         $completed={completed}
         $left={`${left}%${(rowLength !== 1 && indexInRow === collisionList.length) ? ' - 12px' : ''}`}
         $width={`${width}%${rowLength !== 1 ? ' + 55px' : ''}`}
+        $zIndex={Math.max(zIndex, 0)}
         bgColor={bgColor}
         onClick={() => {
           setChosenEvent(eventData.id);

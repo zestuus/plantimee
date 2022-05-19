@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import styled from "styled-components";
 
 import {Grid, Popover} from "@material-ui/core";
@@ -17,7 +17,7 @@ import Button from "@material-ui/core/Button";
 
 import {DatePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
 import DateFnsUtils from "@date-io/date-fns";
-import {extendCollisionList} from "../../utils/helpers";
+import {extendCollisionList, filterEventsByDate} from "../../utils/helpers";
 
 export const ColumnTitle = styled.h3`
   margin: 7.5px;
@@ -99,25 +99,45 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
   const open = Boolean(anchorEl);
   const id = open ? "simple-popover" : undefined;
 
-  const collisionMap = {};
+  const [collisionMap, ownEventsToday, invitedEventsToday] = useMemo(() => {
+    const ownEventsToday = filterEventsByDate(ownEvents, chosenDate);
+    const invitedEventsToday = filterEventsByDate(invitedEvents, chosenDate);
 
-  if (ownEvents) {
-    ownEvents.forEach((eventToLookFor, index) => {
-      extendCollisionList(eventToLookFor, ownEvents.filter((_, i) => i !== index), collisionMap);
-      if (invitedEvents) {
-        extendCollisionList(eventToLookFor, invitedEvents, collisionMap);
-      }
+    const collisionMap = {};
+
+    if (ownEventsToday) {
+      ownEventsToday.forEach((eventToLookFor, index) => {
+        extendCollisionList(eventToLookFor, ownEventsToday.filter((_, i) => i !== index), collisionMap);
+        if (invitedEventsToday) {
+          extendCollisionList(eventToLookFor, invitedEventsToday, collisionMap);
+        }
+      });
+    }
+    if (invitedEventsToday) {
+      invitedEventsToday.forEach((eventToLookFor, index) => {
+        extendCollisionList(eventToLookFor, invitedEventsToday.filter((_, i) => i !== index), collisionMap);
+        if (ownEventsToday) {
+          extendCollisionList(eventToLookFor, ownEventsToday, collisionMap);
+        }
+      });
+    }
+    Object.values(collisionMap).forEach(list => list.sort((a, b) => a.startTime - b.startTime));
+    Object.entries(collisionMap).forEach(([id, list]) => {
+      list.forEach(event => {
+        event.collisions = collisionMap[event.id]
+          .filter(e => parseInt(id, 10) !== e.id);
+      });
     });
-  }
-  if (invitedEvents) {
-    invitedEvents.forEach((eventToLookFor, index) => {
-      extendCollisionList(eventToLookFor, invitedEvents.filter((_, i) => i !== index), collisionMap);
-      if (ownEvents) {
-        extendCollisionList(eventToLookFor, ownEvents, collisionMap);
-      }
+    Object.entries(collisionMap).forEach(([id, list]) => {
+      collisionMap[id] = list.filter((value, index, self) => (
+        index === self.findIndex((t) => (
+          !t.collisions.find(e => e.id === value.id)
+        ))
+      ));
     });
-  }
-  Object.values(collisionMap).forEach(list => list.sort());
+
+    return [collisionMap, ownEventsToday, invitedEventsToday];
+  },[ownEvents, invitedEvents, chosenDate]);
 
   return (
     <Container container direction="column" justifyContent="flex-start">
@@ -155,7 +175,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
             <HourLabel>00</HourLabel>
             <HourLine />
           </Grid>
-          {ownEvents && ownEvents.map(event => (
+          {ownEventsToday && ownEventsToday.map(event => (
             <TimelineEventBar
               key={event.id}
               eventData={event}
@@ -165,7 +185,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
               setChosenEvent={setChosenEvent}
               setColumnShown={setColumnShown} />
           ))}
-          {invitedEvents && invitedEvents.map(event => (
+          {invitedEventsToday && invitedEventsToday.map(event => (
             <TimelineEventBar
               key={event.id}
               eventData={event}

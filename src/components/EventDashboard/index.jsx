@@ -6,12 +6,13 @@ import Hidden from "@material-ui/core/Hidden";
 import Switch from "@material-ui/core/Switch";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import CachedIcon from '@material-ui/icons/Cached';
 
 import {Container} from "../SignIn";
 import {PRIMARY_COLOR} from "../../constants/config";
 import {getWindowSize} from "../../utils/helpers";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
 import Timeline from "./Timeline";
 import Events from "./Events";
 import Settings from "./Settings";
@@ -25,6 +26,7 @@ import {
   updateEvent
 } from "../../api/event";
 import withSettings from '../HOCs/withSettings';
+import IconButton from "@material-ui/core/IconButton";
 
 const Title = styled.h1`
   @media (max-width: 600px) {
@@ -66,6 +68,7 @@ const EventDashboard = ({ translate: __ }) => {
   const [screenWidth, setScreenWidth] = useState(getWindowSize().width);
   const [columnShown, setColumnShown] = useState('timeline');
   const [anchorEl, setAnchorEl] = useState(null);
+  const [reloadSwitch, setReloadSwitch] = useState(false);
 
   const columnsVisibility = {
     timeline: true,
@@ -85,7 +88,9 @@ const EventDashboard = ({ translate: __ }) => {
         setOwnEvents(null);
       }
     })();
+  }, [reloadSwitch]);
 
+  useEffect(() => {
     const handleResize = () => {
       setScreenWidth(getWindowSize().width);
     }
@@ -206,10 +211,16 @@ const EventDashboard = ({ translate: __ }) => {
   return (
     <Grid container justifyContent="center">
       <Container item md={11} xs={11}>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Title>{__('Event Dashboard')}</Title>
+        <Grid container alignItems="center">
+          <Title>
+            {__('Event Dashboard')}
+          </Title>
+          <IconButton onClick={() => setReloadSwitch(!reloadSwitch)} style={{ marginLeft: 5 }}>
+            <CachedIcon/>
+          </IconButton>
           <Hidden xsDown mdUp>
             <FormControlLabel
+              style={{ marginLeft: 'auto' }}
               control={
                 <Switch
                   checked={columnShown === 'settings'}
@@ -224,6 +235,7 @@ const EventDashboard = ({ translate: __ }) => {
           </Hidden>
           <Hidden smUp>
             <ColumnSwitch
+              style={{ marginLeft: 'auto' }}
               aria-controls="simple-menu"
               aria-haspopup="true"
               variant="contained"

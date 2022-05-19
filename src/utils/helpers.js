@@ -89,6 +89,36 @@ export const formatDateString = (dateString) => {
 
 export const roundFloat = (number, digits= 0) => Math.round(number * 10 ** digits) / 10 ** digits;
 
+export const getDayBounds = (date) => {
+  const dayStart = new Date(date);
+  dayStart.setHours(0)
+  dayStart.setMinutes(0)
+  dayStart.setSeconds(0)
+  dayStart.setMilliseconds(0)
+  const dayEnd = new Date(date);
+  dayEnd.setHours(23)
+  dayEnd.setMinutes(59)
+  dayEnd.setSeconds(0)
+  dayEnd.setMilliseconds(0)
+
+  return [dayStart, dayEnd];
+}
+
+export const filterEventsByDate = (events, date) => {
+  const [dayStart, dayEnd] = getDayBounds(date);
+
+  return events.filter(eventData => {
+    const startTime = eventData && new Date(eventData.start_time);
+    startTime.setSeconds(0)
+    startTime.setMilliseconds(0)
+    const endTime = eventData && new Date(eventData.end_time);
+    endTime.setSeconds(0)
+    endTime.setMilliseconds(0)
+
+    return eventData && eventData.start_time && eventData.end_time && startTime <= dayEnd && endTime >= dayStart;
+  });
+};
+
 export const extendCollisionList = (eventToLookFor, events, collisionMap) => {
   events.forEach((event) => {
     const [ownStart, ownEnd] = [new Date(event.start_time), new Date(event.end_time)];
@@ -99,10 +129,22 @@ export const extendCollisionList = (eventToLookFor, events, collisionMap) => {
       || (ownStart <= start && ownEnd <= end)
       || (start <= ownStart && end <= ownEnd))) {
       if (eventToLookFor.id in collisionMap) {
-        collisionMap[eventToLookFor.id].push(event.id);
+        collisionMap[eventToLookFor.id].push({ id: event.id, name: event.name, startTime: ownStart });
       } else {
-        collisionMap[eventToLookFor.id] = [event.id];
+        collisionMap[eventToLookFor.id] = [{ id: event.id, name: event.name, startTime: ownStart }];
       }
     }
   })
 };
+
+export const getOtherEventHasSeparateCollisionsBefore = (otherEvent, collisionList) => (
+  otherEvent.collisions.some(collision => (
+     !collisionList.some(e=> (
+       e.id === collision.id
+     ))) && (
+       collision.startTime < otherEvent.startTime
+     ) && (
+      !getOtherEventHasSeparateCollisionsBefore(collision, otherEvent.collisions)
+    )
+  )
+);
