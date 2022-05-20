@@ -45,8 +45,9 @@ const DateTimePicker = styled(KeyboardDateTimePicker)`
   margin: 10px 0;
 `;
 
-const ParticipantsTitle = styled.p`
+const SettingsBlockTitle = styled.p`
   margin: 10px 0;
+  font-weight: bold;
 `;
 
 const DurationPicker = styled(Input)`
@@ -96,7 +97,7 @@ const Settings = ({
    onRejectInvitation,
    onInviteAttendee,
    onDeleteInvitation,
-   onFindAutomatically
+   onFindAutomatically,
  }) => {
   const [zoom, setZoom] = useState(DefaultZoom);
   const [open, setOpen] = useState(false);
@@ -236,7 +237,7 @@ const Settings = ({
     const longitude = roundFloat(lng,7);
 
     const { results } = await findNearbyLocation({ location: `${latitude},${longitude}`, language });
-    const placesFound = results.filter(place => place.business_status === 'OPERATIONAL');
+    const placesFound = results.filter(place => place.business_status);
     const updatedEventData = {...eventData, latitude, longitude };
 
     setPlacesToChoose(placesFound);
@@ -354,7 +355,7 @@ const Settings = ({
               direction="column"
               alignItems="stretch"
             >
-              <ParticipantsTitle>{__('Participants')}</ParticipantsTitle>
+              <SettingsBlockTitle>{__('Participants')}</SettingsBlockTitle>
               {eventData && eventData.attendees
                 && eventData.attendees.length ?
                   eventData.attendees.map(attendee => (
@@ -400,6 +401,7 @@ const Settings = ({
                 </React.Fragment>
               )}
             </ParticipantsBlock>
+            <SettingsBlockTitle>{__('Date and time')}</SettingsBlockTitle>
             <FormControlLabel
               control={
                 <Checkbox
@@ -570,7 +572,7 @@ const Settings = ({
               </Row>
             )}
             {!isInvitedEvent && (
-              <Grid container direction="row">
+              <Grid container direction="row" style={{ marginBottom: 5 }}>
                 <Button
                   style={{ flex: 1 }}
                   color="primary"
@@ -611,6 +613,7 @@ const Settings = ({
                   setAutoFindProps={setAutoFindProps} />
               </Grid>
             )}
+            <SettingsBlockTitle>{__('Venue')}</SettingsBlockTitle>
             {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && (
               <Grid container direction="row" justifyContent="space-between">
                 <HalfWidthInput

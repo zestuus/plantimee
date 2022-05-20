@@ -20,7 +20,7 @@ import DateFnsUtils from "@date-io/date-fns";
 import {extendCollisionList, filterEventsByDate} from "../../utils/helpers";
 
 export const ColumnTitle = styled.h3`
-  margin: 7.5px;
+  margin: 5px 7.5px 7.5px 7.5px;
   text-align: center;
   font-size: 15px;
 `;
@@ -95,9 +95,6 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
   const handleClose = () => {
     setAnchorEl(null);
   };
-
-  const open = Boolean(anchorEl);
-  const id = open ? "simple-popover" : undefined;
 
   const [collisionMap, ownEventsToday, invitedEventsToday] = useMemo(() => {
     const ownEventsToday = filterEventsByDate(ownEvents, chosenDate);
@@ -203,8 +200,8 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
       </ScrollArea>
       <MuiPickersUtilsProvider utils={DateFnsUtils} locale={LOCALE[language]}>
         <Popover
-          id={id}
-          open={open}
+          id={anchorEl ? "simple-popover" : undefined}
+          open={!!anchorEl}
           anchorEl={anchorEl}
           onClose={handleClose}
           anchorOrigin={{

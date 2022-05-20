@@ -246,6 +246,26 @@ router.delete('/', privateRoute, async (req, res) => {
   }
 });
 
+router.post('/import', privateRoute, async (req, res) => {
+  const { id: UserId } = req.user;
+  const { events } = req.body;
+
+  const eventsToCreate = events.map(event => ({
+    ...event,
+    UserId,
+    completed: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }))
+
+  try {
+    const savedEvents = await db.Event.bulkCreate(eventsToCreate);
+    res.send({ imported: savedEvents.length });
+  } catch (e) {
+    res.status(400).send("Error during import!");
+  }
+});
+
 router.post('/invite', privateRoute, async (req, res) => {
   const { usernameToLookFor, eventId: EventId } = req.body;
 

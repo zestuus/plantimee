@@ -1,5 +1,8 @@
 export const APP_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
+export const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+export const GOOGLE_API_URL = 'https://www.googleapis.com';
+
 export const PRIMARY_COLOR = '#2354b6';
 
 export const OneMinute = 60 * 1000

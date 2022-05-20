@@ -28,6 +28,9 @@ const DICTIONARY = {
   'Sign In': {
     [LANGUAGE.UK]: 'Увійти',
   },
+  'Signed in as:': {
+    [LANGUAGE.UK]: 'Ви ввійшли як:',
+  },
   'Event Dashboard': {
     [LANGUAGE.UK]: 'Керування подіями',
   },
@@ -303,6 +306,27 @@ const DICTIONARY = {
   },
   'User is busy that time!': {
     [LANGUAGE.UK]: 'Користувач зайнятий в цей час!',
+  },
+  'You are not logged in with Google': {
+    [LANGUAGE.UK]: 'Ви не увійшли за допомогою Google',
+  },
+  'Please, open settings on the top bar to log in': {
+    [LANGUAGE.UK]: 'Будь ласка, відкрийте налаштування в шапці сайту щоб залогуватись',
+  },
+  'Failed to fetch list of you calendars': {
+    [LANGUAGE.UK]: 'Не вдалось отримати список ваших календарів',
+  },
+  'Please try again later': {
+    [LANGUAGE.UK]: 'Будь ласка, спробуйте пізніше',
+  },
+  'Choose a calendar:': {
+    [LANGUAGE.UK]: 'Виберіть календар:',
+  },
+  'Venue': {
+    [LANGUAGE.UK]: 'Місце проведення',
+  },
+  'Date and time': {
+    [LANGUAGE.UK]: 'Дата і час',
   },
 };
 

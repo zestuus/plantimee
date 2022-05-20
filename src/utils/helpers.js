@@ -1,7 +1,11 @@
 import {EnglishDays, EnglishMonths, UkrainianDays, UkrainianMonths} from "../constants/config";
 import {LANGUAGE} from "../constants/enums";
+import { loadStorageItem } from "./localStorage";
+import { findLocationByAddress } from "../api/maps";
 
-export const getAuthHeader = () => ({ headers: { authorization: 'Bearer ' + localStorage.getItem('user') }});
+export const getAuthHeader = () => ({ headers: { authorization: `Bearer ${loadStorageItem('user')}` }});
+
+export const getGoogleAuthHeader = () => ({ headers: { Authorization: `Bearer ${loadStorageItem('googleOAuthToken')}` }});
 
 export const getWindowSize = () => {
   const { innerWidth: width, innerHeight: height } = window;
@@ -107,7 +111,7 @@ export const getDayBounds = (date) => {
 export const filterEventsByDate = (events, date) => {
   const [dayStart, dayEnd] = getDayBounds(date);
 
-  return events.filter(eventData => {
+  return events ? events.filter(eventData => {
     const startTime = eventData && new Date(eventData.start_time);
     startTime.setSeconds(0)
     startTime.setMilliseconds(0)
@@ -116,7 +120,7 @@ export const filterEventsByDate = (events, date) => {
     endTime.setMilliseconds(0)
 
     return eventData && eventData.start_time && eventData.end_time && startTime <= dayEnd && endTime >= dayStart;
-  });
+  }) : [];
 };
 
 export const extendCollisionList = (eventToLookFor, events, collisionMap) => {
@@ -148,3 +152,44 @@ export const getOtherEventHasSeparateCollisionsBefore = (otherEvent, collisionLi
     )
   )
 );
+
+export const getGoogleTokenExpired = (googleOAuthToken, googleOAuthTokenExpireDate) => (
+  !googleOAuthToken || (googleOAuthTokenExpireDate < new Date())
+);
+
+export const googleCalendarEventToPlantimeeEvent = async(event) => {
+  const {
+    description,
+    summary: name,
+    start: { dateTime: startTime, date: startDate },
+    end: { dateTime: endTime, date: endDate },
+    hangoutLink: url,
+    creator: { email },
+    attendees,
+    location
+  } = event;
+
+  const geocodeResult = await findLocationByAddress({
+    address: location,
+    language: loadStorageItem('language'),
+  })
+
+  let venue = {};
+  if (geocodeResult) {
+    const { results } = geocodeResult;
+    const { formatted_address: address, placeName, geometry: { location: { lat: latitude, lng: longitude } } } = results[0];
+
+    venue = { address, placeName, latitude, longitude };
+  }
+
+  return {
+    ...venue,
+    name,
+    description,
+    url,
+    start_time: startTime || startDate,
+    end_time: endTime || endDate,
+    is_full_day: !startTime && !endTime,
+    attendees: attendees.filter(attendee => attendee.email !== email),
+  }
+};

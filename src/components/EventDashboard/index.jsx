@@ -195,6 +195,8 @@ const EventDashboard = ({ translate: __ }) => {
     }
   }
 
+  const handleReload = () => setReloadSwitch(!reloadSwitch);
+
   if (600 < screenWidth && screenWidth < 960) {
     columnsVisibility.settings = columnShown === 'settings';
     columnsVisibility.timeline = !columnsVisibility.settings;
@@ -215,7 +217,7 @@ const EventDashboard = ({ translate: __ }) => {
           <Title>
             {__('Event Dashboard')}
           </Title>
-          <IconButton onClick={() => setReloadSwitch(!reloadSwitch)} style={{ marginLeft: 5 }}>
+          <IconButton onClick={handleReload} style={{ marginLeft: 5 }}>
             <CachedIcon/>
           </IconButton>
           <Hidden xsDown mdUp>
@@ -297,6 +299,7 @@ const EventDashboard = ({ translate: __ }) => {
                 invitedEvents={invitedEvents}
                 chosenEvent={chosenEvent}
                 setChosenEvent={setChosenEvent}
+                handleReload={handleReload}
                 openColumn={openColumn}
                 onCreateNewEvent={handleCreateNewEvent}
                 onChangeOwnEvent={handleChangeOwnEvent}

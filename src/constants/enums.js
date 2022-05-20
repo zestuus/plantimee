@@ -1,5 +1,6 @@
 import enLocale from "date-fns/locale/en-US";
 import ukLocale from "date-fns/locale/uk";
+import { GOOGLE_API_URL } from "./config";
 
 export const LANGUAGE = Object.freeze({
   EN: 'en',
@@ -46,4 +47,11 @@ export const AVAILABILITY_COLOR = Object.freeze({
   [AVAILABILITY_STATUS.LEAVE_EARLY]: '#ff0',
   [AVAILABILITY_STATUS.BE_LATE_LEAVE_EARLY]: '#f90',
   [AVAILABILITY_STATUS.CANNOT_ATTEND]: '#f00',
+});
+
+export const GOOGLE_API_USER_SCOPE = Object.freeze({
+  CALENDAR_READONLY: `${GOOGLE_API_URL}/auth/calendar.readonly`,
+  CALENDAR_CALENDARS: `${GOOGLE_API_URL}/auth/calendar.calendars`,
+  CALENDAR_EVENTS: `${GOOGLE_API_URL}/auth/calendar.events`,
+  CALENDAR_EVENTS_OWNED: `${GOOGLE_API_URL}/auth/calendar.events.owned`,
 });

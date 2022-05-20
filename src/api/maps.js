@@ -12,3 +12,12 @@ export const findNearbyLocation = async (params) => {
     return null;
   }
 };
+
+export const findLocationByAddress = async (params) => {
+  try {
+    const response = await axios.get(`${url}/geocode`, { ...getAuthHeader(), params });
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};

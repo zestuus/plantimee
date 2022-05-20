@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from "styled-components";
 import { useHistory } from "react-router-dom";
 import { connect } from 'react-redux';
 import { bindActionCreators, compose } from 'redux';
+import { useGoogleLogin } from '@react-oauth/google';
 
 import { Grid } from "@material-ui/core";
 import Menu from "@material-ui/core/Menu";
@@ -19,15 +20,21 @@ import LogoutIcon from '@material-ui/icons/ExitToApp';
 import ProfileIcon from '@material-ui/icons/AccountCircle';
 import EventIcon from '@material-ui/icons/Event';
 import SettingsIcon from '@material-ui/icons/Settings';
+import Button from "@material-ui/core/Button";
 
-import Logo from "./Logo";
 import { PRIMARY_COLOR } from "../constants/config";
 import {
   changeLanguage,
+  googleOAuthLogin,
+  googleOAuthLogout,
   switchTimeFormat
 } from '../actions/settingsAction';
-import { LANGUAGE } from '../constants/enums';
+import { GOOGLE_API_USER_SCOPE, LANGUAGE } from '../constants/enums';
 import withSettings from './HOCs/withSettings';
+import Logo from "./Logo";
+import googleIcon from '../images/google.svg';
+import { getGoogleTokenExpired } from "../utils/helpers";
+import { getUserInfo } from "../api/google_calendar";
 
 const Container = styled(Grid)`
   max-width: 1280px; 
@@ -60,7 +67,7 @@ const Border = styled.hr`
   margin: 0;
 `;
 
-const Control = styled(FormControl)`
+export const Control = styled(FormControl)`
   margin: 15px;
 `;
 
@@ -68,9 +75,19 @@ const Label = styled(FormLabel)`
   margin: 10px 0;
 `;
 
-const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, militaryTime }) => {
+const ProfilePicture = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+`;
+
+const Header = ({
+  translate: __, actions, isLoggedIn, onLogout, language, militaryTime, googleOAuthToken, googleOAuthTokenExpireDate,
+}) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
+
   const history = useHistory();
 
   const handleClick = (event) => {
@@ -80,6 +97,20 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
   const handleClose = () => {
     setMenuAnchorEl(null);
   };
+
+  const handleGoogleSignIn = useGoogleLogin({
+    onSuccess: codeResponse => {
+      if (codeResponse) {
+        const { access_token: accessToken } = codeResponse;
+        const expireDate = new Date();
+
+        expireDate.setSeconds(expireDate.getSeconds() + parseInt(codeResponse.expires_in, 10))
+
+        actions.googleOAuthLogin(accessToken, expireDate);
+      }
+    },
+    scope: Object.values(GOOGLE_API_USER_SCOPE).join(' '),
+  });
 
   const commonMenuItems = [
     { key: 'Settings', event: (event) => setSettingsAnchorEl(event.currentTarget), title: (
@@ -118,6 +149,21 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
     )}
   ];
 
+
+  const googleTokenExpired = getGoogleTokenExpired(googleOAuthToken, googleOAuthTokenExpireDate);
+
+  useEffect(() => {
+    (async () => {
+      if (!googleTokenExpired) {
+        const userInfo = await getUserInfo(googleOAuthToken);
+
+        if (userInfo) {
+          setUserInfo(userInfo);
+        }
+      }
+    })()
+  }, [googleOAuthToken])
+
   return (
     <React.Fragment>
       <Grid container justifyContent="center">
@@ -149,15 +195,25 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
                   onClose={handleClose}
                 >
                   {isLoggedIn ? privateMenuItems.map(item => (
-                    <DropdownMenuItem key={item.key} onClick={event => {
-                      item.event(event);
-                      handleClose();
-                    }}>{item.title}</DropdownMenuItem>
+                    <DropdownMenuItem
+                      key={item.key}
+                      onClick={event => {
+                        item.event(event);
+                        handleClose();
+                      }}
+                    >
+                      {item.title}
+                    </DropdownMenuItem>
                   )) : publicMenuItems.map(item => (
-                    <DropdownMenuItem key={item.title} onClick={event => {
-                      item.event(event);
-                      handleClose();
-                    }}>{item.title}</DropdownMenuItem>
+                    <DropdownMenuItem
+                      key={item.title}
+                      onClick={event => {
+                        item.event(event);
+                        handleClose();
+                      }}
+                    >
+                      {item.title}
+                    </DropdownMenuItem>
                   ))}
                 </Menu>
               </Hidden>
@@ -182,16 +238,44 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
                     <ToggleButton value={LANGUAGE.EN}>EN</ToggleButton>
                     <ToggleButton value={LANGUAGE.UK}>UK</ToggleButton>
                   </ToggleButtonGroup>
-                  <Label component="legend">{__('Time format')}</Label>
-                  <ToggleButtonGroup
-                    color="primary"
-                    value={militaryTime}
-                    exclusive
-                    onChange={actions.switchTimeFormat}
-                  >
-                    <ToggleButton value={false}>12 {__('hours')}</ToggleButton>
-                    <ToggleButton value={true}>24 {__('hours')}</ToggleButton>
-                  </ToggleButtonGroup>
+                  {isLoggedIn && (
+                    <React.Fragment>
+                      <Label component="legend">{__('Time format')}</Label>
+                      <ToggleButtonGroup
+                        color="primary"
+                        value={militaryTime}
+                        exclusive
+                        onChange={actions.switchTimeFormat}
+                      >
+                        <ToggleButton value={false}>12 {__('hours')}</ToggleButton>
+                        <ToggleButton value={true}>24 {__('hours')}</ToggleButton>
+                      </ToggleButtonGroup>
+                      <Label component="legend">Google</Label>
+                      {!googleTokenExpired && !!userInfo && (
+                        <Grid container alignItems="center" justifyContent="space-between" style={{ padding: '0 10px' }}>
+                          <ProfilePicture src={userInfo.picture || ''} alt={userInfo.name}/>
+                          <p style={{ margin: 5, textAlign: 'center' }}>
+                            {__('Signed in as:')}
+                            <br/>
+                            <span style={{ fontWeight: 'bold' }}>{userInfo.name}</span>
+                          </p>
+                          <IconButton onClick={actions.googleOAuthLogout}>
+                            <LogoutIcon />
+                          </IconButton>
+                        </Grid>
+                      )}
+                      {googleTokenExpired && (
+                        <Button
+                          onClick={() => {
+                            handleGoogleSignIn();
+                          }}
+                        >
+                          <img src={googleIcon} alt="google sign in" style={{width: 30, marginRight: 5}}/>
+                          {__('Sign in')}
+                        </Button>
+                      )}
+                    </React.Fragment>
+                  )}
                 </Control>
               </Menu>
             </Grid>
@@ -203,18 +287,16 @@ const Header = ({ translate: __, actions, isLoggedIn, onLogout, language, milita
   );
 };
 
-const mapStateToProps = (state) => ({
-  ...state.settings,
-});
-
 const mapDispatchToProps = (dispatch) => ({
   actions: bindActionCreators({
     changeLanguage,
     switchTimeFormat,
+    googleOAuthLogin,
+    googleOAuthLogout,
   }, dispatch),
 });
 
 export default compose(
   withSettings,
-  connect(mapStateToProps, mapDispatchToProps)
+  connect(null, mapDispatchToProps)
 )(Header);

@@ -73,6 +73,15 @@ export const createEvent = async () => {
   }
 }
 
+export const importEvents = async (events) => {
+  try {
+    const response = await axios.post(`${url}/import`, { events }, getAuthHeader());
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};
+
 export const inviteParticipant = async data => {
   try {
     const { usernameToLookFor, eventId } = data;
