@@ -12,7 +12,7 @@ const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_
     if (prevStatus === AVAILABILITY_STATUS.CANNOT_ATTEND) return AVAILABILITY_STATUS.CANNOT_ATTEND;
     if (event.completed === true) return prevStatus;
 
-    const [ownStart, ownEnd] = [new Date(event.start_time), new Date(event.end_time)];
+    const [ownStart, ownEnd] = [new Date(event.startTime), new Date(event.endTime)];
 
     if ((ownStart < start && end < ownEnd) || (start < ownStart && ownEnd < end)) {
       return AVAILABILITY_STATUS.CANNOT_ATTEND;
@@ -35,6 +35,38 @@ const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_
     return prevStatus
   }, defaultStatus)
 };
+
+const editEvent = async (eventData, UserId, keys=['id']) => {
+  const {
+    name, description, completed, startTime, endTime, isFullDay, latitude, longitude, placeName, address, url, googleId, googleCalendarId
+  } = eventData;
+
+  const where = keys.reduce((acc, key) => ({ ...acc, [key]: eventData[key] }), {});
+
+  const event = await db.Event.findOne({ where: { ...where, UserId }});
+
+  console.log('event.description', event.description);
+
+  if (event) {
+    event.name = name || null;
+    event.description = description || null;
+    event.completed = completed;
+    event.isFullDay = isFullDay;
+    event.startTime = startTime;
+    event.endTime = endTime;
+    event.latitude = latitude;
+    event.longitude = longitude;
+    event.placeName = placeName || null;
+    event.address = address || null;
+    event.url = url || null;
+    event.googleId = googleId;
+    event.googleCalendarId = googleCalendarId;
+    event.updatedAt = new Date();
+
+    return event;
+  }
+  return eventData;
+}
 
 router.get('/list-own', privateRoute, async (req, res) => {
   const { id } = req.user;
@@ -83,7 +115,7 @@ router.get('/list-own', privateRoute, async (req, res) => {
     const eventsWithAttendeesStatuses = own_events.map(event => {
       event.attendees = event.attendees.map(attendee => {
         const user = users.find(user => user.id === attendee.id);
-        const [start, end] = [new Date(event.start_time), new Date(event.end_time)];
+        const [start, end] = [new Date(event.startTime), new Date(event.endTime)];
 
         const midStatus = getAvailabilityStatus(user.own_events, start, end);
         attendee.setDataValue('availability', getAvailabilityStatus(user.events, start, end, midStatus));
@@ -133,7 +165,7 @@ router.get('/list-invited', privateRoute, async (req, res) => {
   const { events, own_events } = user;
 
   const eventsWithStatuses = events.map((event, index) => {
-    const [start, end] = [new Date(event.start_time), new Date(event.end_time)];
+    const [start, end] = [new Date(event.startTime), new Date(event.endTime)];
 
     const midStatus = getAvailabilityStatus(own_events, start, end);
     const otherInvitedEvents = events.filter((_, i) => index !== i);
@@ -182,7 +214,7 @@ router.delete('/invite', privateRoute, async (req, res) => {
 router.post('/', privateRoute, async (req, res) => {
   const { id: UserId } = req.user;
 
-  const eventData = { UserId, completed: false, is_full_day: false, createdAt: new Date(), updatedAt: new Date(), }
+  const eventData = { UserId, completed: false, isFullDay: false, createdAt: new Date(), updatedAt: new Date(), }
   const event = await db.Event.build(eventData);
 
   try {
@@ -196,27 +228,11 @@ router.post('/', privateRoute, async (req, res) => {
 router.put('/', privateRoute, async (req, res) => {
   const { id: UserId } = req.user;
 
-  const {
-    id, name, description, completed, start_time, end_time, is_full_day, latitude, longitude, placeName, address, url,
-  } = req.body;
-  const event = await db.Event.findOne({ where: { id, UserId }});
+  const event = await editEvent(req.body, UserId);
 
   if (!event) {
     res.status(400).send("Event doesn't exists or you aren't the event's organizer!");
   }
-
-  event.name = name;
-  event.description = description;
-  event.completed = completed;
-  event.is_full_day = is_full_day;
-  event.start_time = start_time;
-  event.end_time = end_time;
-  event.latitude = latitude;
-  event.longitude = longitude;
-  event.placeName = placeName;
-  event.address = address;
-  event.url = url;
-  event.updatedAt = new Date();
 
   try {
     await event.save();
@@ -250,18 +266,23 @@ router.post('/import', privateRoute, async (req, res) => {
   const { id: UserId } = req.user;
   const { events } = req.body;
 
-  const eventsToCreate = events.map(event => ({
-    ...event,
-    UserId,
-    completed: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }))
-
   try {
-    const savedEvents = await db.Event.bulkCreate(eventsToCreate);
-    res.send({ imported: savedEvents.length });
+    const eventsToEdit = await Promise.all(
+      events.map(async (event) => {
+        const eventToEdit = await editEvent({ ...event, UserId }, UserId, ['googleId', 'googleCalendarId']);
+
+        if (eventToEdit.id) {
+          await eventToEdit.save();
+        }
+        return eventToEdit;
+      })
+    );
+    const eventsToCreate = eventsToEdit.filter(event => !event.id);
+
+    const createdEvents = await db.Event.bulkCreate(eventsToCreate);
+    res.send({ edited: eventsToEdit.length - createdEvents.length, created: createdEvents.length });
   } catch (e) {
+    console.error(e);
     res.status(400).send("Error during import!");
   }
 });
@@ -362,11 +383,11 @@ router.get('/hours', privateRoute, async (req, res) => {
   let raw_tasks = [];
 
   const collectTasks = (eventData) => {
-    const startDate = new Date(eventData.start_time);
-    const endDate = new Date(eventData.end_time);
+    const startDate = new Date(eventData.startTime);
+    const endDate = new Date(eventData.endTime);
     const now = new Date();
 
-    if (eventData.start_time && eventData.end_time && now < startDate && startDate < endDate) {
+    if (eventData.startTime && eventData.endTime && now < startDate && startDate < endDate) {
       raw_tasks.push([startDate.getTime(), endDate.getTime()]);
     }
   }
@@ -412,8 +433,8 @@ router.get('/hours', privateRoute, async (req, res) => {
 
   const segmentToInsertIn = sortedSegments.find(seg => msDuration < (seg[1] - seg[0]+0.05));
   if (segmentToInsertIn) {
-    event.start_time = new Date(segmentToInsertIn[0])
-    event.end_time = new Date(segmentToInsertIn[0] + msDuration)
+    event.startTime = new Date(segmentToInsertIn[0])
+    event.endTime = new Date(segmentToInsertIn[0] + msDuration)
 
     const savedEvent = await event.save();
 

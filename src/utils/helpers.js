@@ -36,16 +36,16 @@ export const translateDay = (day, slice=true) => {
   return UkrainianDays[index] ? UkrainianDays[index][0] + UkrainianDays[index][(index === 1 || index === 4) ? 3 : 2] : day;
 };
 
-export const formatEventTime = (start_time, end_time, is_full_day, language, militaryTime = true) => {
-  if (!start_time || !end_time) return '';
+export const formatEventTime = (startTime, endTime, isFullDay, language, militaryTime = true) => {
+  if (!startTime || !endTime) return '';
 
-  const startTime = new Date(start_time);
-  const endTime = new Date(end_time);
-  const startDate = startTime.toDateString();
-  const endDate = endTime.toDateString();
+  const startDateTime = new Date(startTime);
+  const endDateTime = new Date(endTime);
+  const startDate = startDateTime.toDateString();
+  const endDate = endDateTime.toDateString();
 
   let [day, month, dayNumber, year] = startDate.split(' ');
-  const startYear = startTime.getFullYear() !== new Date().getFullYear() ? `, ${year}` : '';
+  const startYear = startDateTime.getFullYear() !== new Date().getFullYear() ? `, ${year}` : '';
   let ukrMonth = translateMonth(month);
   let ukrDay = translateDay(day);
   const startDateString = language === LANGUAGE.EN ?
@@ -53,35 +53,35 @@ export const formatEventTime = (start_time, end_time, is_full_day, language, mil
     : `${ukrDay}, ${dayNumber} ${ukrMonth} ${startYear}`;
 
   [day, month, dayNumber, year] = endDate.split(' ');
-  const endYear = endTime.getFullYear() !== new Date().getFullYear() ? `, ${year}` : '';
+  const endYear = endDateTime.getFullYear() !== new Date().getFullYear() ? `, ${year}` : '';
   ukrMonth = translateMonth(month);
   ukrDay = translateDay(day);
   const endDateString = language === LANGUAGE.EN ?
     `${day}, ${month} ${dayNumber} ${endYear}`
     : `${ukrDay}, ${dayNumber} ${ukrMonth} ${endYear}`;
 
-  const [startHours, startSuffix] = to12HourFormat(startTime.getHours(), militaryTime);
-  const [endHours, endSuffix] = to12HourFormat(endTime.getHours(), militaryTime);
+  const [startHours, startSuffix] = to12HourFormat(startDateTime.getHours(), militaryTime);
+  const [endHours, endSuffix] = to12HourFormat(endDateTime.getHours(), militaryTime);
 
   const startHour = startHours.toString().padStart(2, '0');
-  const startMinute = startTime.getMinutes().toString().padStart(2, '0');
+  const startMinute = startDateTime.getMinutes().toString().padStart(2, '0');
   const endHour = endHours.toString().padStart(2, '0');
-  const endMinute = endTime.getMinutes().toString().padStart(2, '0');
+  const endMinute = endDateTime.getMinutes().toString().padStart(2, '0');
 
-  const startTimeString = `${startHour}:${startMinute}${!militaryTime ? ' ' + startSuffix : ''}`;
-  const endTimeString = `${endHour}:${endMinute}${!militaryTime ? ' ' + endSuffix : ''}`;
+  const startDateTimeString = `${startHour}:${startMinute}${!militaryTime ? ' ' + startSuffix : ''}`;
+  const endDateTimeString = `${endHour}:${endMinute}${!militaryTime ? ' ' + endSuffix : ''}`;
 
   if (startDate === endDate) {
-    if (is_full_day) {
+    if (isFullDay) {
       return startDateString;
     } else {
-      return `${startDateString} ${startTimeString} - ${endTimeString}`;
+      return `${startDateString} ${startDateTimeString} - ${endDateTimeString}`;
     }
   } else {
-    if (is_full_day) {
+    if (isFullDay) {
       return `${startDateString} - ${endDateString}`;
     } else {
-      return `${startDateString} ${startTimeString} - ${endDateString} ${endTimeString}`;
+      return `${startDateString} ${startDateTimeString} - ${endDateString} ${endDateTimeString}`;
     }
   }
 }
@@ -93,7 +93,7 @@ export const formatDateString = (dateString) => {
 
 export const roundFloat = (number, digits= 0) => Math.round(number * 10 ** digits) / 10 ** digits;
 
-export const getDayBounds = (date) => {
+export const getDayBounds = (date = new Date()) => {
   const dayStart = new Date(date);
   dayStart.setHours(0)
   dayStart.setMinutes(0)
@@ -105,37 +105,37 @@ export const getDayBounds = (date) => {
   dayEnd.setSeconds(0)
   dayEnd.setMilliseconds(0)
 
-  return [dayStart, dayEnd];
+  return { dayStart, dayEnd };
 }
 
 export const filterEventsByDate = (events, date) => {
-  const [dayStart, dayEnd] = getDayBounds(date);
+  const { dayStart, dayEnd } = getDayBounds(date);
 
   return events ? events.filter(eventData => {
-    const startTime = eventData && new Date(eventData.start_time);
-    startTime.setSeconds(0)
-    startTime.setMilliseconds(0)
-    const endTime = eventData && new Date(eventData.end_time);
-    endTime.setSeconds(0)
-    endTime.setMilliseconds(0)
+    const startDateTime = eventData && new Date(eventData.startTime);
+    startDateTime.setSeconds(0)
+    startDateTime.setMilliseconds(0)
+    const endDateTime = eventData && new Date(eventData.endTime);
+    endDateTime.setSeconds(0)
+    endDateTime.setMilliseconds(0)
 
-    return eventData && eventData.start_time && eventData.end_time && startTime <= dayEnd && endTime >= dayStart;
+    return eventData && eventData.startTime && eventData.endTime && startDateTime <= dayEnd && endDateTime >= dayStart;
   }) : [];
 };
 
 export const extendCollisionList = (eventToLookFor, events, collisionMap) => {
   events.forEach((event) => {
-    const [ownStart, ownEnd] = [new Date(event.start_time), new Date(event.end_time)];
-    const [start, end] = [new Date(eventToLookFor.start_time), new Date(eventToLookFor.end_time)];
+    const [ownStart, ownEnd] = [new Date(event.startTime), new Date(event.endTime)];
+    const [start, end] = [new Date(eventToLookFor.startTime), new Date(eventToLookFor.endTime)];
 
     if (!(end < ownStart) && !(ownEnd < start) && ((ownStart <= start && end <= ownEnd)
       || (start <= ownStart && ownEnd <= end)
       || (ownStart <= start && ownEnd <= end)
       || (start <= ownStart && end <= ownEnd))) {
       if (eventToLookFor.id in collisionMap) {
-        collisionMap[eventToLookFor.id].push({ id: event.id, name: event.name, startTime: ownStart });
+        collisionMap[eventToLookFor.id].push({ id: event.id, name: event.name, startDateTime: ownStart });
       } else {
-        collisionMap[eventToLookFor.id] = [{ id: event.id, name: event.name, startTime: ownStart }];
+        collisionMap[eventToLookFor.id] = [{ id: event.id, name: event.name, startDateTime: ownStart }];
       }
     }
   })
@@ -146,40 +146,44 @@ export const getOtherEventHasSeparateCollisionsBefore = (otherEvent, collisionLi
      !collisionList.some(e=> (
        e.id === collision.id
      ))) && (
-       collision.startTime < otherEvent.startTime
+       collision.startDateTime < otherEvent.startDateTime
      ) && (
       !getOtherEventHasSeparateCollisionsBefore(collision, otherEvent.collisions)
     )
   )
 );
 
-export const getGoogleTokenExpired = (googleOAuthToken, googleOAuthTokenExpireDate) => (
-  !googleOAuthToken || (googleOAuthTokenExpireDate < new Date())
+export const getGoogleTokenExpired = () => (
+  !loadStorageItem('googleOAuthToken') || (new Date(loadStorageItem('googleOAuthTokenExpireDate')) < new Date())
 );
 
 export const googleCalendarEventToPlantimeeEvent = async(event) => {
   const {
+    id: googleId,
     description,
     summary: name,
-    start: { dateTime: startTime, date: startDate },
-    end: { dateTime: endTime, date: endDate },
+    start: { dateTime: startDateTime, date: startDate },
+    end: { dateTime: endDateTime, date: endDate },
     hangoutLink: url,
     creator: { email },
+    organizer: { email: googleCalendarId },
     attendees,
     location
   } = event;
 
-  const geocodeResult = await findLocationByAddress({
-    address: location,
-    language: loadStorageItem('language'),
-  })
-
   let venue = {};
-  if (geocodeResult) {
-    const { results } = geocodeResult;
-    const { formatted_address: address, placeName, geometry: { location: { lat: latitude, lng: longitude } } } = results[0];
+  if (location) {
+    const geocodeResult = await findLocationByAddress({
+      address: location,
+      language: loadStorageItem('language'),
+    });
 
-    venue = { address, placeName, latitude, longitude };
+    if (geocodeResult) {
+      const { results } = geocodeResult;
+      const { formatted_address: address, placeName, geometry: { location: { lat: latitude, lng: longitude } } } = results[0];
+
+      venue = { address, placeName, latitude, longitude };
+    }
   }
 
   return {
@@ -187,9 +191,11 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     name,
     description,
     url,
-    start_time: startTime || startDate,
-    end_time: endTime || endDate,
-    is_full_day: !startTime && !endTime,
-    attendees: attendees.filter(attendee => attendee.email !== email),
+    googleId,
+    googleCalendarId,
+    startTime: startDateTime || startDate,
+    endTime: endDateTime || endDate,
+    isFullDay: !startDateTime && !endDateTime,
+    attendees: attendees && attendees.filter(attendee => attendee.email !== email) ,
   }
 };

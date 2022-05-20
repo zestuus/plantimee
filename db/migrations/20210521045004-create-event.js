@@ -16,7 +16,7 @@ module.exports = {
         defaultValue: false,
         type: Sequelize.BOOLEAN
       },
-      is_full_day: {
+      isFullDay: {
         defaultValue: false,
         type: Sequelize.BOOLEAN
       },
@@ -26,10 +26,10 @@ module.exports = {
       description: {
         type: Sequelize.STRING
       },
-      start_time: {
+      startTime: {
         type: Sequelize.DATE
       },
-      end_time: {
+      endTime: {
         type: Sequelize.DATE
       },
       latitude: {
@@ -45,6 +45,12 @@ module.exports = {
         type: Sequelize.STRING
       },
       url: {
+        type: Sequelize.STRING
+      },
+      googleId: {
+        type: Sequelize.STRING
+      },
+      googleCalendarId: {
         type: Sequelize.STRING
       },
       createdAt: {

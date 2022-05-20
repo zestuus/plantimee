@@ -9,17 +9,20 @@ import AddIcon from '@material-ui/icons/Add';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import PublishIcon from '@material-ui/icons/Publish';
 import { Popover, Radio, RadioGroup } from "@material-ui/core";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import FormLabel from "@material-ui/core/FormLabel";
+import { KeyboardDatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 
 import {ColumnTitle} from "./Timeline";
 import Event, { EventCard } from "./Event";
 import withSettings from '../HOCs/withSettings';
 import googleIcon from "../../images/google.svg";
-import { getGoogleTokenExpired, googleCalendarEventToPlantimeeEvent } from "../../utils/helpers";
+import { getDayBounds, getGoogleTokenExpired, googleCalendarEventToPlantimeeEvent } from "../../utils/helpers";
 import { Control } from "../Header";
-import { importEventsFromGoogleCalendar, listUserCalendars } from "../../api/google_calendar";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormLabel from "@material-ui/core/FormLabel";
+import { importEventsFromGoogleCalendar } from "../../api/google_calendar";
 import { importEvents } from "../../api/event";
+import DateFnsUtils from "@date-io/date-fns";
+import { LOCALE } from "../../constants/enums";
 
 export const Container = styled(Grid)`
   height: 100%;
@@ -61,7 +64,18 @@ const Label = styled(FormLabel)`
   margin: 10px 0;
 `;
 
+const SyncBlockTitle = styled.p`
+  margin: 5px 0;
+  font-weight: bold;
+`;
+
+const DatePicker = styled(KeyboardDatePicker)`
+  margin: 10px 0;
+`;
+
+
 const Events = ({
+  language,
   ownEvents,
   invitedEvents,
   chosenEvent,
@@ -71,15 +85,15 @@ const Events = ({
   onCreateNewEvent,
   onChangeOwnEvent,
   googleOAuthToken,
-  googleOAuthTokenExpireDate,
+  userCalendars,
   translate: __
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [showInvitedEvents, setShowInvitedEvents] = useState(true);
   const [showActiveEvents, setShowActiveEvents] = useState(true);
   const [showCompletedEvents, setShowCompletedEvents] = useState(true);
-  const [userCalendars, setUserCalendars] = useState([]);
   const [chosenCalendar, setChosenCalendar] = useState(null);
+  const [chosenDayStart, setChosenDayStart] = useState(new Date());
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -91,21 +105,24 @@ const Events = ({
 
   const handleImport = async () => {
     if (googleOAuthToken && chosenCalendar) {
-      const timeMin = new Date().toISOString();
-      const result = await importEventsFromGoogleCalendar(chosenCalendar, timeMin);
+      const { dayStart } = getDayBounds(chosenDayStart);
+      const result = await importEventsFromGoogleCalendar(chosenCalendar, dayStart.toISOString());
 
       if (result) {
         const { items } = result;
-        const filterReccurentEventsTemporary = items.filter(event => !event.recurrence);
-        const plantimeeEvents = await Promise.all(filterReccurentEventsTemporary.map(googleCalendarEventToPlantimeeEvent));
+        // TODO: implement event reccurence and allow to import such events
+        const filterReccurentEventsTemporary = items.filter(event => !event.recurrence && event.status !== 'canceled');
+        const filterCanceledEvents = filterReccurentEventsTemporary.filter(event => event.status !== 'cancelled');
+        const plantimeeEvents = await Promise.all(filterCanceledEvents.map(googleCalendarEventToPlantimeeEvent));
 
         const importResult = await importEvents(plantimeeEvents);
 
         if (importResult) {
-          const { imported } = importResult;
+          const { edited, created } = importResult;
 
           handleReload();
-          alert(`${imported} events are successfully imported!`);
+          // TODO: replace alert with snackbar
+          alert(`${__('Events are successfully synchronized')} (${__('edited')}: ${edited}, ${__('created')}: ${created})! \n\n ${__('If some events are missing on aren\'t updated')} \n ${__('try to choose another calendar')}`);
         }
       }
     }
@@ -129,24 +146,19 @@ const Events = ({
     return grouped;
   }, [[],[]]);
 
-  const googleTokenExpired = getGoogleTokenExpired(googleOAuthToken, googleOAuthTokenExpireDate);
+  const googleTokenExpired = getGoogleTokenExpired();
 
   useEffect(() => {
     (async() => {
-      if (!googleTokenExpired) {
-        const calendars = await listUserCalendars(googleOAuthToken);
+      if (userCalendars) {
+        const primaryCalendar = userCalendars.find(calendar => calendar.primary);
 
-        if (calendars) {
-          const { items } = calendars;
-          const primaryCalendar = items.find(calendar => calendar.primary);
-
-          setUserCalendars(items);
+        if (primaryCalendar) {
           setChosenCalendar(primaryCalendar.id);
         }
       }
-
     })()
-  }, [googleOAuthToken])
+  }, [JSON.stringify(userCalendars)])
 
   return (
     <Container container direction="column" justifyContent="flex-start">
@@ -157,7 +169,7 @@ const Events = ({
           style={{ marginLeft: 'auto' }}
         >
           {__('Sync with')}
-          <img src={googleIcon} alt="google sync" style={{ width: 20, marginLeft: 5 }}/>
+          <img src={googleIcon} alt="google sync" style={{ width: 20, marginLeft: 5 }} draggable={false} />
         </Button>
         <Button
           style={{ paddingLeft: 0 }}
@@ -177,7 +189,7 @@ const Events = ({
             {showInvitedEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
             {__("Events you're invited to")}
           </GroupSwitch>
-          {showInvitedEvents && ( invitedEvents.length ? (
+          {showInvitedEvents && (invitedEvents && invitedEvents.length ? (
             <Grid container direction="column">
               {invitedEvents.map(event => (
                 <Event
@@ -248,7 +260,8 @@ const Events = ({
           </Grid>
         ) : (
           <Control component="fieldset" variant="standard">
-            <RadioGroup aria-label="gender" name="gender1" value={chosenCalendar} onChange={handleChangeCalendar}>
+            <SyncBlockTitle>{__('Synchronization with Google Calendar')}</SyncBlockTitle>
+            <RadioGroup aria-label="calendar" name="calendar" value={chosenCalendar} onChange={handleChangeCalendar}>
               <Label component="legend">{__('Choose a calendar:')}</Label>
               {userCalendars.length ? (
                 userCalendars.map(calendar => (
@@ -261,6 +274,15 @@ const Events = ({
                 </React.Fragment>
               )}
             </RadioGroup>
+            <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
+              <DatePicker
+                variant="inline"
+                label={__('Sync events starting from:')}
+                format="yyyy/MM/dd"
+                value={chosenDayStart}
+                onChange={setChosenDayStart}
+              />
+            </MuiPickersUtilsProvider>
             <Grid container>
               <Button
                 disabled={!chosenCalendar}

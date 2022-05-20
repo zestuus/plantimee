@@ -28,7 +28,7 @@ const LogoHeader = styled.h2`
 const Logo = () => (
   <LogoBlock to="/">
     <Grid container alignItems="center">
-      <LogoImage src={logo} alt=""/>
+      <LogoImage src={logo} alt="plantimee logo" draggable={false}/>
       <LogoHeader>plantimee</LogoHeader>
     </Grid>
   </LogoBlock>

@@ -78,20 +78,20 @@ const Event = ({
     name,
     description,
     completed,
-    start_time,
-    end_time,
+    startTime,
+    endTime,
     latitude,
     longitude,
     placeName,
     address,
-    is_full_day,
+    isFullDay,
     availability,
     organizer: eventOrganizer,
   } = eventData;
   const { username: organizer } = eventOrganizer || {};
   const [completedLocal, setCompletedLocal] = useState(!!completed);
 
-  const dateString = formatEventTime(start_time, end_time, is_full_day, language, militaryTime);
+  const dateString = formatEventTime(startTime, endTime, isFullDay, language, militaryTime);
 
   return (
     <EventCard

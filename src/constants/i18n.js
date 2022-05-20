@@ -308,10 +308,10 @@ const DICTIONARY = {
     [LANGUAGE.UK]: 'Користувач зайнятий в цей час!',
   },
   'You are not logged in with Google': {
-    [LANGUAGE.UK]: 'Ви не увійшли за допомогою Google',
+    [LANGUAGE.UK]: 'Ви не ввійшли за допомогою Google',
   },
   'Please, open settings on the top bar to log in': {
-    [LANGUAGE.UK]: 'Будь ласка, відкрийте налаштування в шапці сайту щоб залогуватись',
+    [LANGUAGE.UK]: 'Будь ласка, відкрийте налаштування в шапці сайту щоб увійти',
   },
   'Failed to fetch list of you calendars': {
     [LANGUAGE.UK]: 'Не вдалось отримати список ваших календарів',
@@ -327,6 +327,42 @@ const DICTIONARY = {
   },
   'Date and time': {
     [LANGUAGE.UK]: 'Дата і час',
+  },
+  'General info': {
+    [LANGUAGE.UK]: 'Загальна інформація',
+  },
+  'Events are successfully synchronized': {
+    [LANGUAGE.UK]: 'Події успішно синхронізовані',
+  },
+  'If some events are missing on aren\'t updated': {
+    [LANGUAGE.UK]: 'Якщо деяких подій бракує або вони не оновилися',
+  },
+  'try to choose another calendar': {
+    [LANGUAGE.UK]: 'спробуйте вибрати інший календар',
+  },
+  'Sync with': {
+    [LANGUAGE.UK]: 'Синхр. з',
+  },
+  'Import events': {
+    [LANGUAGE.UK]: 'Імпортувати події',
+  },
+  'Export events': {
+    [LANGUAGE.UK]: 'Експортувати події',
+  },
+  'edited': {
+    [LANGUAGE.UK]: 'оновлено',
+  },
+  'created': {
+    [LANGUAGE.UK]: 'створено',
+  },
+  'Synchronization with Google Calendar': {
+    [LANGUAGE.UK]: 'Синхронізація з Google Календарем',
+  },
+  'Your event is linked to another Google account or calendar which doesn\'t not exist anymore. Please, login with other Google account or unlink this event to sync data': {
+    [LANGUAGE.UK]: 'Ваша подія  прив\'язана до іншого Google акаунту або календаря який більше не існує. Будь ласка, ввійдіть з іншого Google акаунту або відв\'яжіть цю подію щоб синхронізувати дані',
+  },
+  'Sync events starting from:': {
+    [LANGUAGE.UK]: 'Синхронізувати події починаючи з:',
   },
 };
 

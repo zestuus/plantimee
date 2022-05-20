@@ -31,35 +31,35 @@ const EventBar = styled.div`
 `;
 
 const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent, setColumnShown, militaryTime}) => {
-  const { start_time, end_time, is_full_day, completed } = eventData || {};
+  const { startTime, endTime, isFullDay, completed } = eventData || {};
 
-  const [dayStart, dayEnd] = getDayBounds(chosenDate);
+  const { dayStart, dayEnd } = getDayBounds(chosenDate);
 
-  const startTime = eventData && new Date(eventData.start_time);
-  startTime.setSeconds(0)
-  startTime.setMilliseconds(0)
-  const endTime = eventData && new Date(eventData.end_time);
-  endTime.setSeconds(0)
-  endTime.setMilliseconds(0)
+  const startDateTime = eventData && new Date(eventData.startTime);
+  startDateTime.setSeconds(0)
+  startDateTime.setMilliseconds(0)
+  const endDateTime = eventData && new Date(eventData.endTime);
+  endDateTime.setSeconds(0)
+  endDateTime.setMilliseconds(0)
 
   let height;
   let top = 0;
 
-  if (startTime <= dayStart && dayEnd <= endTime) {
+  if (startDateTime <= dayStart && dayEnd <= endDateTime) {
     height = HourHeight*24;
-  } else if(startTime < dayStart) {
-    height = (endTime - dayStart) / OneHour * HourHeight;
-  } else if(dayEnd < endTime ) {
-    top = (startTime - dayStart) / OneHour * HourHeight;
-    height = (dayEnd - startTime) / OneHour * HourHeight;
+  } else if(startDateTime < dayStart) {
+    height = (endDateTime - dayStart) / OneHour * HourHeight;
+  } else if(dayEnd < endDateTime ) {
+    top = (startDateTime - dayStart) / OneHour * HourHeight;
+    height = (dayEnd - startDateTime) / OneHour * HourHeight;
   } else {
-    top = (startTime - dayStart) / OneHour * HourHeight;
-    height = (endTime - startTime) / OneHour * HourHeight;
+    top = (startDateTime - dayStart) / OneHour * HourHeight;
+    height = (endDateTime - startDateTime) / OneHour * HourHeight;
   }
 
-  const zIndex = Math.round((startTime - dayStart) / OneMinute);
+  const zIndex = Math.round((startDateTime - dayStart) / OneMinute);
 
-  const dateString = formatEventTime(start_time, end_time, is_full_day, militaryTime);
+  const dateString = formatEventTime(startTime, endTime, isFullDay, militaryTime);
 
   let bgColor = '#ffa500';
   if (eventData.availability) {
@@ -73,26 +73,26 @@ const TimelineEventBar = ({ eventData, collisionMap, chosenDate, setChosenEvent,
   const rowLength = collisionList.length + 1;
   let trigger = false;
   const index = collisionList.length && collisionList.findIndex(otherEvent => {
-    otherEvent.startTime.setSeconds(0)
-    otherEvent.startTime.setMilliseconds(0)
+    otherEvent.startDateTime.setSeconds(0)
+    otherEvent.startDateTime.setMilliseconds(0)
     const otherEventHasSeparateCollisionBefore = getOtherEventHasSeparateCollisionsBefore(otherEvent, collisionList);
     if (otherEventHasSeparateCollisionBefore) trigger = true;
-    return otherEventHasSeparateCollisionBefore || (startTime.getTime() === otherEvent.startTime.getTime() ? (
+    return otherEventHasSeparateCollisionBefore || (startDateTime.getTime() === otherEvent.startDateTime.getTime() ? (
       eventData.id < otherEvent.id
     ) : (
-      startTime < otherEvent.startTime
+      startDateTime < otherEvent.startDateTime
     ));
   });
   let secondIndex = -1;
   if (trigger && index !== -1) {
     const concurrentEvents = collisionList[index].collisions.filter(event => !!collisionList.find(e => e.id === event.id));
 
-    concurrentEvents.sort((a,b) => a.startTime - b.startTime);
+    concurrentEvents.sort((a,b) => a.startDateTime - b.startDateTime);
     secondIndex = concurrentEvents.findIndex(otherEvent => (
-      startTime.getTime() === otherEvent.startTime.getTime() ? (
+      startDateTime.getTime() === otherEvent.startDateTime.getTime() ? (
         eventData.id < otherEvent.id
       ) : (
-        startTime < otherEvent.startTime
+        startDateTime < otherEvent.startDateTime
       )
     ))
   }

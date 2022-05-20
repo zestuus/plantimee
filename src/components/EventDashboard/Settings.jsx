@@ -19,7 +19,7 @@ import {ColumnTitle} from './Timeline';
 import {
   ColumnHeader, Container, ScrollArea, ScrollContentWrapper
 } from './Events';
-import {formatDateString, roundFloat} from '../../utils/helpers';
+import { formatDateString, getGoogleTokenExpired, roundFloat } from '../../utils/helpers';
 import {
   OneDay, OneHour, OneMinute
 } from '../../constants/config';
@@ -32,6 +32,9 @@ import ChooseLocationDialog from "../dialogs/ChooseLocationDialog";
 import {KeyboardDateTimePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
 import {LANGUAGE, LOCALE} from "../../constants/enums";
 import DateFnsUtils from "@date-io/date-fns";
+import googleIcon from "../../images/google.svg";
+import Tooltip from "@material-ui/core/Tooltip";
+import { LinkOff } from "@material-ui/icons";
 
 const Input = styled(TextField)`
     margin: 10px 0;
@@ -48,6 +51,10 @@ const DateTimePicker = styled(KeyboardDateTimePicker)`
 const SettingsBlockTitle = styled.p`
   margin: 10px 0;
   font-weight: bold;
+`;
+
+const TooltipText = styled.p`
+  font-size: 14px;
 `;
 
 const DurationPicker = styled(Input)`
@@ -86,18 +93,19 @@ const DefaultLocation = { lat: 49.843625, lng: 24.026442};
 const DefaultZoom = 10;
 
 const Settings = ({
-   translate: __,
-   language,
-   militaryTime,
-   eventData,
-   eventDataBackup,
-   onChangeOwnEventLocally,
-   onSaveChangesOwnEvent,
-   onDeleteOwnEvent,
-   onRejectInvitation,
-   onInviteAttendee,
-   onDeleteInvitation,
-   onFindAutomatically,
+  translate: __,
+  language,
+  militaryTime,
+  eventData,
+  eventDataBackup,
+  userCalendars,
+  onChangeOwnEventLocally,
+  onSaveChangesOwnEvent,
+  onDeleteOwnEvent,
+  onRejectInvitation,
+  onInviteAttendee,
+  onDeleteInvitation,
+  onFindAutomatically,
  }) => {
   const [zoom, setZoom] = useState(DefaultZoom);
   const [open, setOpen] = useState(false);
@@ -118,17 +126,17 @@ const Settings = ({
 
   now.setMinutes(now.getMinutes() + 1);
 
-  const startTime = eventData && new Date(eventData.start_time);
-  const endTime = eventData && new Date(eventData.end_time);
+  const startDateTime = eventData && new Date(eventData.startTime);
+  const endDateTime = eventData && new Date(eventData.endTime);
 
-  const datesAreValid = eventData && startTime <= endTime;
+  const datesAreValid = eventData && startDateTime <= endDateTime;
 
   const location = eventData && eventData.latitude && eventData.longitude ? {
     lat: parseFloat(eventData.latitude),
     lng: parseFloat(eventData.longitude)
   } : DefaultLocation;
 
-  const timedelta = endTime - startTime;
+  const timedelta = endDateTime - startDateTime;
 
   let daysLong = Math.trunc( timedelta / OneDay);
   let hoursLong = Math.trunc( (timedelta - daysLong * OneDay) / OneHour);
@@ -139,6 +147,9 @@ const Settings = ({
     hoursLong = 0;
     minutesLong = 0;
   }
+
+  const linkedToExistingCalendar = userCalendars && eventData && userCalendars.find(calendar => calendar.id === eventData.googleCalendarId);
+  const googleTokenExpired = getGoogleTokenExpired();
 
   const handleArrowPressed = (event, key, addValue = 0) => {
     event.preventDefault();
@@ -169,8 +180,8 @@ const Settings = ({
       default: break;
     }
 
-    if (key === 'start_time') {
-      if (eventData.end_time) {
+    if (key === 'startTime') {
+      if (eventData.endTime) {
         const startDate = new Date(date.getTime());
         startDate.setDate(startDate.getDate() + daysLong);
         startDate.setHours(startDate.getHours() + hoursLong);
@@ -178,14 +189,14 @@ const Settings = ({
 
         onChangeOwnEventLocally({
           ...eventData,
-          start_time: formatDateString(date),
-          end_time: formatDateString(startDate),
+          startTime: formatDateString(date),
+          endTime: formatDateString(startDate),
         });
       } else {
         onChangeOwnEventLocally({
           ...eventData,
-          start_time: formatDateString(date),
-          end_time: formatDateString(date),
+          startTime: formatDateString(date),
+          endTime: formatDateString(date),
         });
       }
     } else {
@@ -264,6 +275,13 @@ const Settings = ({
     }
   }
 
+  const handleUnlinkEvent = () => {
+    const updatedEventData = { ...eventData, googleId: null, googleCalendarId: null };
+
+    onChangeOwnEventLocally(updatedEventData);
+    onSaveChangesOwnEvent(updatedEventData);
+  };
+
   useEffect(() => {
     setShowMap(false);
   }, [language])
@@ -307,6 +325,54 @@ const Settings = ({
             direction="column"
             alignItems="stretch"
           >
+            <Grid container alignItems="center">
+              <SettingsBlockTitle>{__('General info')}</SettingsBlockTitle>
+              {!!eventData.googleId && (
+                  <Grid
+                    item
+                    container
+                    alignItems="center"
+                    justifyContent="flex-end"
+                    style={{ flex: 1 }}
+                  >
+                    <Tooltip
+                      disableFocusListener={!!linkedToExistingCalendar}
+                      disableHoverListener={!!linkedToExistingCalendar}
+                      disableTouchListener={!!linkedToExistingCalendar}
+                      title={googleTokenExpired ? (
+                        <TooltipText>
+                          {__('You are not logged in with Google')}
+                          <br />
+                          {__('Please, open settings on the top bar to log in')}
+                        </TooltipText>
+                      ) : (!linkedToExistingCalendar && (
+                        <TooltipText>
+                          {__('Your event is linked to another Google account or calendar which doesn\'t not exist anymore. Please, login with other Google account or unlink this event to sync data')}
+                        </TooltipText>
+                      ))}
+                    >
+                      <Grid
+                        item
+                        container
+                        alignItems="center"
+                        justifyContent="flex-end"
+                        style={{ flex: 1, opacity: linkedToExistingCalendar ? 1 : 0.26, userSelect: 'none' }}
+                      >
+                        <span>{__('Linked to')}</span>
+                        <img
+                          src={googleIcon}
+                          alt="google sync"
+                          style={{ width: 20, marginLeft: 5 }}
+                          draggable={false}
+                        />
+                      </Grid>
+                    </Tooltip>
+                    <IconButton disabled={googleTokenExpired} onClick={handleUnlinkEvent}>
+                      <LinkOff />
+                    </IconButton>
+                  </Grid>
+              )}
+            </Grid>
             <Input
               {...readOnly}
               label={__('Title')}
@@ -406,8 +472,8 @@ const Settings = ({
               control={
                 <Checkbox
                   color="primary"
-                  checked={!!eventData.is_full_day}
-                  onBlur={() => handleBlur('is_full_day')}
+                  checked={!!eventData.isFullDay}
+                  onBlur={() => handleBlur('isFullDay')}
                   onChange={(event) => {
                     if (!isInvitedEvent) {
                       const date = new Date();
@@ -415,25 +481,25 @@ const Settings = ({
                         `${(date.getMonth() + 1).toString().padStart(2, '0')}-` +
                         `${date.getDate().toString().padStart(2, '0')}`;
 
-                      if (!eventDataBackup.is_full_day && eventData.is_full_day && !event.target.checked) {
+                      if (!eventDataBackup.isFullDay && eventData.isFullDay && !event.target.checked) {
                         onChangeOwnEventLocally({
                           ...eventData,
-                          is_full_day: false,
-                          start_time: eventDataBackup.start_time,
-                          end_time: eventDataBackup.end_time,
+                          isFullDay: false,
+                          startTime: eventDataBackup.startTime,
+                          endTime: eventDataBackup.endTime,
                         });
                       } else {
-                        const start_time =
-                          (eventData.start_time || dateString)
+                        const startTime =
+                          (eventData.startTime || dateString)
                             .split('T')[0] + 'T00:00';
-                        const end_time =
-                          (eventData.end_time || dateString)
+                        const endTime =
+                          (eventData.endTime || dateString)
                             .split('T')[0] + 'T23:59';
                         onChangeOwnEventLocally({
                           ...eventData,
-                          is_full_day: event.target.checked,
-                          start_time,
-                          end_time,
+                          isFullDay: event.target.checked,
+                          startTime,
+                          endTime,
                         });
                       }
                     }
@@ -443,20 +509,20 @@ const Settings = ({
               label={__('Full day event')}
             />
             <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
-              {(!isInvitedEvent || (isInvitedEvent && eventData.start_time)) && (
+              {(!isInvitedEvent || (isInvitedEvent && eventData.startTime)) && (
                 <DateTimePicker
                   variant="inline"
                   ampm={!militaryTime}
                   readOnly={isInvitedEvent}
-                  value={eventData.start_time ? new Date(eventData.start_time) : new Date()}
+                  value={eventData.startTime ? new Date(eventData.startTime) : new Date()}
                   format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
-                  onBlur={() => handleBlur('start_time')}
-                  onClose={() => handleBlur('start_time')}
+                  onBlur={() => handleBlur('startTime')}
+                  onClose={() => handleBlur('startTime')}
                   onClick={handleDateTimeClick}
-                  onKeyDown={(event) => handleKeyDown(event, 'start_time', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
+                  onKeyDown={(event) => handleKeyDown(event, 'startTime', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
                   onChange={(value) => {
-                    if (eventData.end_time) {
-                      let startDate = new Date(eventData.end_time);
+                    if (eventData.endTime) {
+                      let startDate = new Date(eventData.endTime);
                       if (value && !(value instanceof Date)) {
                         startDate = new Date(value);
                         startDate.setDate(startDate.getDate() + daysLong);
@@ -466,37 +532,37 @@ const Settings = ({
 
                       onChangeOwnEventLocally({
                         ...eventData,
-                        start_time: formatDateString(value),
-                        end_time: formatDateString(startDate),
+                        startTime: formatDateString(value),
+                        endTime: formatDateString(startDate),
                       });
                     } else {
                       onChangeOwnEventLocally({
                         ...eventData,
-                        start_time: value,
-                        end_time: value,
+                        startTime: value,
+                        endTime: value,
                       });
                     }
                   }}
                 />
               )}
-              {(!isInvitedEvent || (isInvitedEvent && eventData.end_time)) && (
+              {(!isInvitedEvent || (isInvitedEvent && eventData.endTime)) && (
                 <DateTimePicker
                   variant="inline"
                   readOnly={isInvitedEvent}
                   ampm={!militaryTime}
-                  value={eventData.end_time ? new Date(eventData.end_time) : new Date()}
+                  value={eventData.endTime ? new Date(eventData.endTime) : new Date()}
                   format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
-                  onBlur={() => handleBlur('end_time')}
-                  onClose={() => handleBlur('end_time')}
+                  onBlur={() => handleBlur('endTime')}
+                  onClose={() => handleBlur('endTime')}
                   onClick={handleDateTimeClick}
-                  onKeyDown={(event) => handleKeyDown(event, 'end_time', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
+                  onKeyDown={(event) => handleKeyDown(event, 'endTime', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
                   onChange={(value) => {
                     const formatedValue = formatDateString(value);
 
                     onChangeOwnEventLocally({
                       ...eventData,
-                      end_time: formatedValue,
-                      start_time: eventData.start_time || formatedValue,
+                      endTime: formatedValue,
+                      startTime: eventData.startTime || formatedValue,
                     });
                   }}
                 />
@@ -520,16 +586,16 @@ const Settings = ({
                   label={__('Days')}
                   value={daysLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
-                  onBlur={() => handleBlur('end_time')}
+                  onBlur={() => handleBlur('endTime')}
                   onChange={(event) => {
                     if (event.target.value) {
-                      const startDate = new Date(eventData.start_time)
+                      const startDate = new Date(eventData.startTime)
                       startDate.setDate(startDate.getDate() + parseInt(event.target.value, 10));
                       startDate.setHours(startDate.getHours() + hoursLong);
                       startDate.setMinutes(startDate.getMinutes() + minutesLong);
                       onChangeOwnEventLocally({
                         ...eventData,
-                        end_time: formatDateString(startDate),
+                        endTime: formatDateString(startDate),
                       });
                     }
                   }} />
@@ -538,16 +604,16 @@ const Settings = ({
                   label={__('Hours')}
                   value={hoursLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
-                  onBlur={() => handleBlur('end_time')}
+                  onBlur={() => handleBlur('endTime')}
                   onChange={(event) => {
                     if (event.target.value) {
-                      const startDate = new Date(eventData.start_time);
+                      const startDate = new Date(eventData.startTime);
                       startDate.setDate(startDate.getDate() + daysLong);
                       startDate.setHours(startDate.getHours() + parseInt(event.target.value, 10));
                       startDate.setMinutes(startDate.getMinutes() + minutesLong);
                       onChangeOwnEventLocally({
                         ...eventData,
-                        end_time: formatDateString(startDate),
+                        endTime: formatDateString(startDate),
                       });
                     }
                   }} />
@@ -556,16 +622,16 @@ const Settings = ({
                   label={__('Minutes')}
                   value={minutesLong}
                   InputProps={{ inputProps: { min: 0, max: 9999 } }}
-                  onBlur={() => handleBlur('end_time')}
+                  onBlur={() => handleBlur('endTime')}
                   onChange={(event) => {
                     if (event.target.value) {
-                      const startDate = new Date(eventData.start_time)
+                      const startDate = new Date(eventData.startTime)
                       startDate.setDate(startDate.getDate() + daysLong)
                       startDate.setHours(startDate.getHours() + hoursLong);
                       startDate.setMinutes(startDate.getMinutes() + parseInt(event.target.value, 10));
                       onChangeOwnEventLocally({
                         ...eventData,
-                        end_time: formatDateString(startDate)
+                        endTime: formatDateString(startDate)
                       });
                     }
                   }} />
@@ -589,7 +655,7 @@ const Settings = ({
                     } else {
                       setAutoFindError('')
                     }
-                    handleBlur('start_time');
+                    handleBlur('startTime');
                   }}
                 >
                   <SearchIcon /> {__('Auto find free time')}

@@ -134,7 +134,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
     });
 
     return [collisionMap, ownEventsToday, invitedEventsToday];
-  },[ownEvents, invitedEvents, chosenDate]);
+  }, [ownEvents, invitedEvents, chosenDate]);
 
   return (
     <Container container direction="column" justifyContent="flex-start">

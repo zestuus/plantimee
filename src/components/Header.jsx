@@ -82,7 +82,7 @@ const ProfilePicture = styled.img`
 `;
 
 const Header = ({
-  translate: __, actions, isLoggedIn, onLogout, language, militaryTime, googleOAuthToken, googleOAuthTokenExpireDate,
+  translate: __, actions, isLoggedIn, onLogout, language, militaryTime, googleOAuthToken,
 }) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState(null);
@@ -150,7 +150,7 @@ const Header = ({
   ];
 
 
-  const googleTokenExpired = getGoogleTokenExpired(googleOAuthToken, googleOAuthTokenExpireDate);
+  const googleTokenExpired = getGoogleTokenExpired();
 
   useEffect(() => {
     (async () => {

@@ -12,7 +12,7 @@ import CachedIcon from '@material-ui/icons/Cached';
 
 import {Container} from "../SignIn";
 import {PRIMARY_COLOR} from "../../constants/config";
-import {getWindowSize} from "../../utils/helpers";
+import { getGoogleTokenExpired, getWindowSize } from "../../utils/helpers";
 import Timeline from "./Timeline";
 import Events from "./Events";
 import Settings from "./Settings";
@@ -27,6 +27,7 @@ import {
 } from "../../api/event";
 import withSettings from '../HOCs/withSettings';
 import IconButton from "@material-ui/core/IconButton";
+import { listUserCalendars } from "../../api/google_calendar";
 
 const Title = styled.h1`
   @media (max-width: 600px) {
@@ -58,12 +59,13 @@ const ColumnSwitch = styled(Button)`
   width: 118px;
 `;
 
-const EventDashboard = ({ translate: __ }) => {
+const EventDashboard = ({ translate: __, googleOAuthToken }) => {
   // external state
   const [chosenEvent, setChosenEvent] = useState(null);
   const [ownEvents, setOwnEvents] = useState([]);
   const [ownEventsBackup, setOwnEventsBackup] = useState([]);
   const [invitedEvents, setInvitedEvents] = useState([]);
+  const [userCalendars, setUserCalendars] = useState([]);
   // internal state
   const [screenWidth, setScreenWidth] = useState(getWindowSize().width);
   const [columnShown, setColumnShown] = useState('timeline');
@@ -75,6 +77,8 @@ const EventDashboard = ({ translate: __ }) => {
     events: true,
     settings: true,
   }
+
+  const googleTokenExpired = getGoogleTokenExpired();
 
   useEffect(() => {
     (async () => {
@@ -89,6 +93,20 @@ const EventDashboard = ({ translate: __ }) => {
       }
     })();
   }, [reloadSwitch]);
+
+  useEffect(() => {
+    (async() => {
+      if (!googleTokenExpired) {
+        const calendars = await listUserCalendars(googleOAuthToken);
+
+        if (calendars) {
+          const { items } = calendars;
+          setUserCalendars(items);
+        }
+      }
+
+    })()
+  }, [googleOAuthToken, reloadSwitch])
 
   useEffect(() => {
     const handleResize = () => {
@@ -208,7 +226,7 @@ const EventDashboard = ({ translate: __ }) => {
 
   const chosenEventData = (ownEvents && ownEvents.find(event => event.id === chosenEvent))
     || (invitedEvents && invitedEvents.find(event => event.id === chosenEvent));
-  const chosenEventDataBackup = ownEventsBackup.find(event => event.id === chosenEvent);
+  const chosenEventDataBackup = ownEventsBackup && ownEventsBackup.find(event => event.id === chosenEvent);
 
   return (
     <Grid container justifyContent="center">
@@ -299,6 +317,7 @@ const EventDashboard = ({ translate: __ }) => {
                 invitedEvents={invitedEvents}
                 chosenEvent={chosenEvent}
                 setChosenEvent={setChosenEvent}
+                userCalendars={userCalendars}
                 handleReload={handleReload}
                 openColumn={openColumn}
                 onCreateNewEvent={handleCreateNewEvent}
@@ -311,6 +330,7 @@ const EventDashboard = ({ translate: __ }) => {
               <Settings
                 eventData={chosenEventData}
                 eventDataBackup={chosenEventDataBackup}
+                userCalendars={userCalendars}
                 onInviteAttendee={handleInvite}
                 onChangeOwnEventLocally={handleChangeOwnEventLocally}
                 onSaveChangesOwnEvent={handleSaveChangesOwnEvent}
