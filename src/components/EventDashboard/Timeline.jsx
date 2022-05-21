@@ -10,7 +10,7 @@ import {
   ColumnHeader, Container, ScrollArea, ScrollContentWrapper,
 } from "./Events";
 import TimelineEventBar from "./TimelineEventBar";
-import { HourHeight, UkrainianMonths } from '../../constants/config';
+import { HourHeight, OneDay, PRIMARY_COLOR, UkrainianMonths } from '../../constants/config';
 import withSettings from '../HOCs/withSettings';
 import {LANGUAGE, LOCALE} from '../../constants/enums';
 import Button from "@material-ui/core/Button";
@@ -49,13 +49,18 @@ const ClockArrow = styled.div`
   border-radius: 1px;
   width: calc(100% - 37px);
   margin: 0 16px;
-  top: ${props => props.minute*0.7+19}px;
+  top: ${props => props.minute*0.7 + 19 + (props.fullDayEventsTodayCount ? 40 : 0 )}px;
 `;
 
 const TimelineDateLabel = styled(Button)`
   margin: 0;
   font-size: 15px;
   padding: 0 5px;
+  background-color: ${props => props.today === 'yes' ? PRIMARY_COLOR : 'transparent'};
+  color: ${props => props.today === 'yes' ? 'white' : 'black'};
+  :hover {
+    background-color: ${props => props.today === 'yes' ? `${PRIMARY_COLOR}bb` : 'transparent'};
+  }
 `;
 
 const DateArrow = styled(IconButton)`
@@ -71,6 +76,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
 
   const [chosenDate, setChosenDate] = useState(dateNow);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [chosenFullDayEvent, setChosenFullDayEvent] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(()=>{
@@ -96,9 +102,10 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
     setAnchorEl(null);
   };
 
-  const [collisionMap, ownEventsToday, invitedEventsToday] = useMemo(() => {
-    const ownEventsToday = filterEventsByDate(ownEvents, chosenDate);
-    const invitedEventsToday = filterEventsByDate(invitedEvents, chosenDate);
+  const [collisionMap, ownEventsToday, invitedEventsToday, fullDayEventsToday] = useMemo(() => {
+    const [ownEventsToday, ownFullDayEventsToday] = filterEventsByDate(ownEvents, chosenDate);
+    const [invitedEventsToday, invitedFullDayEventsToday] = filterEventsByDate(invitedEvents, chosenDate);
+    const fullDayEventsToday = [...ownFullDayEventsToday, ...invitedFullDayEventsToday];
 
     const collisionMap = {};
 
@@ -118,7 +125,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
         }
       });
     }
-    Object.values(collisionMap).forEach(list => list.sort((a, b) => a.startTime - b.startTime));
+    Object.values(collisionMap).forEach(list => list.sort((a, b) => a.startDateTime - b.startDateTime));
     Object.entries(collisionMap).forEach(([id, list]) => {
       list.forEach(event => {
         event.collisions = collisionMap[event.id]
@@ -128,13 +135,19 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
     Object.entries(collisionMap).forEach(([id, list]) => {
       collisionMap[id] = list.filter((value, index, self) => (
         index === self.findIndex((t) => (
-          !t.collisions.find(e => e.id === value.id)
+          // TODO: check this condition
+          (!t.collisions.length && !value.collisions.length) || !t.collisions.find(e => e.id === value.id)
         ))
       ));
     });
 
-    return [collisionMap, ownEventsToday, invitedEventsToday];
+    console.log(ownEventsToday, invitedEventsToday, fullDayEventsToday);
+
+    return [collisionMap, ownEventsToday, invitedEventsToday, fullDayEventsToday];
   }, [ownEvents, invitedEvents, chosenDate]);
+
+  const today = !Math.floor((new Date().getTime() - chosenDate.getTime()) / OneDay);
+  const fullDayEventsTodayCount = fullDayEventsToday ? fullDayEventsToday.length : 0;
 
   return (
     <Container container direction="column" justifyContent="flex-start">
@@ -148,7 +161,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
         }}>
           <ChevronLeftIcon />
         </DateArrow>
-        <TimelineDateLabel onClick={handleClick}>{chosenDateString}</TimelineDateLabel>
+        <TimelineDateLabel today={today ? 'yes' : 'no'} onClick={handleClick}>{chosenDateString}</TimelineDateLabel>
         <DateArrow
           onClick={() => {
             const date = new Date(chosenDate);
@@ -160,6 +173,35 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
       </ColumnHeader>
       <ScrollArea>
         <ScrollContentWrapper container direction="column" alignItems="stretch">
+          {fullDayEventsTodayCount ? (
+            <Grid container justifyContent="space-between">
+              <DateArrow
+                disabled={chosenFullDayEvent === 0}
+                onClick={() => {
+                  setChosenFullDayEvent(chosenFullDayEvent - 1);
+                }}
+              >
+                <ChevronLeftIcon />
+              </DateArrow>
+              <TimelineEventBar
+                eventData={fullDayEventsToday[chosenFullDayEvent]}
+                chosenDate={chosenDate}
+                fullDayEventsTodayCount={fullDayEventsTodayCount}
+                collisionMap={collisionMap}
+                militaryTime={militaryTime}
+                setChosenEvent={setChosenEvent}
+                setColumnShown={setColumnShown}
+              />
+              <DateArrow
+                disabled={chosenFullDayEvent === (fullDayEventsToday.length - 1)}
+                onClick={() => {
+                  setChosenFullDayEvent(chosenFullDayEvent + 1);
+                }}
+              >
+                <ChevronRightIcon />
+              </DateArrow>
+            </Grid>
+          ) : null}
           {Array.from(Array(24).keys()).map(hour => (
             <HourContainer key={hour}>
               <Grid container direction="row" alignItems="center">
@@ -177,16 +219,19 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
               key={event.id}
               eventData={event}
               chosenDate={chosenDate}
+              fullDayEventsTodayCount={fullDayEventsTodayCount}
               collisionMap={collisionMap}
               militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
-              setColumnShown={setColumnShown} />
+              setColumnShown={setColumnShown}
+            />
           ))}
           {invitedEventsToday && invitedEventsToday.map(event => (
             <TimelineEventBar
               key={event.id}
               eventData={event}
               chosenDate={chosenDate}
+              fullDayEventsTodayCount={fullDayEventsTodayCount}
               collisionMap={collisionMap}
               militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
@@ -195,6 +240,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
           ))}
           <ClockArrow
             minute={now.hour*60+now.minute}
+            fullDayEventsTodayCount={fullDayEventsTodayCount}
             hidden={chosenDate.toDateString() !== new Date().toDateString()} />
         </ScrollContentWrapper>
       </ScrollArea>

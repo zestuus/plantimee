@@ -111,16 +111,28 @@ export const getDayBounds = (date = new Date()) => {
 export const filterEventsByDate = (events, date) => {
   const { dayStart, dayEnd } = getDayBounds(date);
 
-  return events ? events.filter(eventData => {
+  return events ? events.reduce((acc, eventData) => {
     const startDateTime = eventData && new Date(eventData.startTime);
-    startDateTime.setSeconds(0)
-    startDateTime.setMilliseconds(0)
+    if (startDateTime) {
+      startDateTime.setSeconds(0);
+      startDateTime.setMilliseconds(0);
+    }
     const endDateTime = eventData && new Date(eventData.endTime);
-    endDateTime.setSeconds(0)
-    endDateTime.setMilliseconds(0)
+    if (endDateTime) {
+      endDateTime.setSeconds(0);
+      endDateTime.setMilliseconds(0);
+    }
 
-    return eventData && eventData.startTime && eventData.endTime && startDateTime <= dayEnd && endDateTime >= dayStart;
-  }) : [];
+    if (eventData && eventData.startTime && eventData.endTime && startDateTime <= dayEnd && endDateTime >= dayStart) {
+      if (eventData.isFullDay) {
+        acc[1].push(eventData);
+      } else {
+        acc[0].push(eventData);
+      }
+    }
+
+    return acc;
+  }, [[], []]) : [[], []];
 };
 
 export const extendCollisionList = (eventToLookFor, events, collisionMap) => {

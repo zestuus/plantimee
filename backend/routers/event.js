@@ -1,5 +1,6 @@
 const express = require('express');
 const _ = require('lodash');
+const { Op } = require("sequelize");
 
 const db = require('../../db/models');
 const { privateRoute } = require('../utils/middlewares');
@@ -44,8 +45,6 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
   const where = keys.reduce((acc, key) => ({ ...acc, [key]: eventData[key] }), {});
 
   const event = await db.Event.findOne({ where: { ...where, UserId }});
-
-  console.log('event.description', event.description);
 
   if (event) {
     event.name = name || null;
@@ -214,7 +213,11 @@ router.delete('/invite', privateRoute, async (req, res) => {
 router.post('/', privateRoute, async (req, res) => {
   const { id: UserId } = req.user;
 
-  const eventData = { UserId, completed: false, isFullDay: false, createdAt: new Date(), updatedAt: new Date(), }
+  const startTime = new Date();
+  const endTime = new Date();
+  endTime.setHours(endTime.getHours() + 1);
+
+  const eventData = { UserId, startTime: startTime.toISOString(), endTime: endTime.toISOString(), completed: false, isFullDay: false, createdAt: new Date(), updatedAt: new Date(), }
   const event = await db.Event.build(eventData);
 
   try {
@@ -262,25 +265,64 @@ router.delete('/', privateRoute, async (req, res) => {
   }
 });
 
+router.delete('/completed', privateRoute, async (req, res) => {
+  const { id: UserId } = req.user;
+
+  try {
+    await db.Event.destroy({ where: { UserId, completed: true } })
+    res.send('OK');
+  } catch (e) {
+    console.error(e);
+    res.status(400).send("Error during delete!");
+  }
+});
+
 router.post('/import', privateRoute, async (req, res) => {
   const { id: UserId } = req.user;
   const { events } = req.body;
 
   try {
-    const eventsToEdit = await Promise.all(
+    const editedEvents = await Promise.all(
       events.map(async (event) => {
-        const eventToEdit = await editEvent({ ...event, UserId }, UserId, ['googleId', 'googleCalendarId']);
+        const editedEvent = await editEvent({ ...event, UserId }, UserId, ['googleId', 'googleCalendarId']);
 
-        if (eventToEdit.id) {
-          await eventToEdit.save();
+        if (editedEvent.id) {
+          await editedEvent.save();
         }
-        return eventToEdit;
+        return editedEvent;
       })
     );
-    const eventsToCreate = eventsToEdit.filter(event => !event.id);
+    const eventsToCreate = editedEvents.filter(event => !event.id);
 
     const createdEvents = await db.Event.bulkCreate(eventsToCreate);
-    res.send({ edited: eventsToEdit.length - createdEvents.length, created: createdEvents.length });
+
+    events.forEach(event => {
+      if (event.attendees && event.attendees.length) {
+        const savedEvent = (
+          editedEvents.find(e => e.googleId === event.googleId)
+        ) || createdEvents.find(e => e.googleId === event.googleId);
+
+        if (savedEvent) {
+          event.attendees.forEach(async (attendee) => {
+            const { email } = attendee;
+            const user = await db.User.findOne({ where: { email }});
+
+            if (user) {
+              const participation = await db.Participation.build({
+                UserId: user.id,
+                EventId: savedEvent.id,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              });
+
+              await participation.save();
+            }
+          });
+        }
+      }
+    });
+
+    res.send({ edited: editedEvents.length - createdEvents.length, created: createdEvents.length });
   } catch (e) {
     console.error(e);
     res.status(400).send("Error during import!");
@@ -288,9 +330,20 @@ router.post('/import', privateRoute, async (req, res) => {
 });
 
 router.post('/invite', privateRoute, async (req, res) => {
-  const { usernameToLookFor, eventId: EventId } = req.body;
+  const { keywordToLookFor, eventId: EventId } = req.body;
 
-  const user = await db.User.findOne({ where: { username: usernameToLookFor } });
+  const user = await db.User.findOne({
+    where: {
+      [Op.or]: [
+        {
+          username: keywordToLookFor,
+        },
+        {
+          email: keywordToLookFor,
+        }
+      ],
+    }
+  });
   const event = await db.Event.findOne({
     where: { id: EventId },
     include: [{

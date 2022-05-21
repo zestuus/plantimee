@@ -29,7 +29,7 @@ import withSettings from '../HOCs/withSettings';
 import {findNearbyLocation} from "../../api/maps";
 import ChooseLocationDialog from "../dialogs/ChooseLocationDialog";
 
-import {KeyboardDateTimePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
+import { KeyboardDatePicker, KeyboardDateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import {LANGUAGE, LOCALE} from "../../constants/enums";
 import DateFnsUtils from "@date-io/date-fns";
 import googleIcon from "../../images/google.svg";
@@ -45,6 +45,10 @@ const ParticipantsBlock = styled(Grid)`
 `;
 
 const DateTimePicker = styled(KeyboardDateTimePicker)`
+  margin: 10px 0;
+`;
+
+const DatePicker = styled(KeyboardDatePicker)`
   margin: 10px 0;
 `;
 
@@ -112,7 +116,7 @@ const Settings = ({
   const [autoFindProps, setAutoFindProps] = useState({});
   const [autoFindError, setAutoFindError] = useState('');
   const [attendeeFindError, setAttendeeFindError] = useState('');
-  const [usernameToLookFor, setUsernameToLookFor] = useState('');
+  const [keywordToLookFor, setKeywordToLookFor] = useState('');
   const [placesToChoose, setPlacesToChoose] = useState([]);
   const [showMap, setShowMap] = useState(true);
   const [selectedRange, setSelectedRange] = useState(0);
@@ -292,6 +296,8 @@ const Settings = ({
     }
   }, [showMap])
 
+  const EventDateTimePicker = (eventData && eventData.isFullDay) ? DatePicker : DateTimePicker ;
+
   return (
     <Container container direction="column" justifyContent="flex-start">
       <ColumnHeader
@@ -435,10 +441,10 @@ const Settings = ({
               {!isInvitedEvent && (
                 <React.Fragment>
                   <Input
-                    label={__('Input username')}
-                    value={usernameToLookFor || ''}
+                    label={__('Input username or email')}
+                    value={keywordToLookFor || ''}
                     onChange={(event) => {
-                      setUsernameToLookFor(event.target.value);
+                      setKeywordToLookFor(event.target.value);
                     }}
                   />
                   <Button
@@ -447,7 +453,7 @@ const Settings = ({
                     color="primary"
                     onClick={async () => {
                       const result = await onInviteAttendee({
-                        usernameToLookFor, eventId: eventData.id
+                        keywordToLookFor, eventId: eventData.id
                       });
 
                       if (!result) {
@@ -489,17 +495,23 @@ const Settings = ({
                           endTime: eventDataBackup.endTime,
                         });
                       } else {
-                        const startTime =
+                        let startTime =
                           (eventData.startTime || dateString)
                             .split('T')[0] + 'T00:00';
-                        const endTime =
+                        let endTime =
                           (eventData.endTime || dateString)
                             .split('T')[0] + 'T23:59';
+
+                        if (!event.target.checked) {
+                          startTime = new Date();
+                          endTime = new Date();
+                          endTime.setHours(endTime.getHours() + 1);
+                        }
                         onChangeOwnEventLocally({
                           ...eventData,
                           isFullDay: event.target.checked,
-                          startTime,
-                          endTime,
+                          startTime: startTime.toISOString(),
+                          endTime: endTime.toISOString(),
                         });
                       }
                     }
@@ -510,12 +522,12 @@ const Settings = ({
             />
             <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
               {(!isInvitedEvent || (isInvitedEvent && eventData.startTime)) && (
-                <DateTimePicker
+                <EventDateTimePicker
                   variant="inline"
                   ampm={!militaryTime}
                   readOnly={isInvitedEvent}
                   value={eventData.startTime ? new Date(eventData.startTime) : new Date()}
-                  format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
+                  format={`yyyy/MM/dd${eventData.isFullDay ? '' : (militaryTime ? ' HH:mm' : ' hh:mm a')}`}
                   onBlur={() => handleBlur('startTime')}
                   onClose={() => handleBlur('startTime')}
                   onClick={handleDateTimeClick}
@@ -546,12 +558,12 @@ const Settings = ({
                 />
               )}
               {(!isInvitedEvent || (isInvitedEvent && eventData.endTime)) && (
-                <DateTimePicker
+                <EventDateTimePicker
                   variant="inline"
                   readOnly={isInvitedEvent}
                   ampm={!militaryTime}
                   value={eventData.endTime ? new Date(eventData.endTime) : new Date()}
-                  format={`yyyy/MM/dd ${militaryTime ? 'HH:mm' : 'hh:mm a'}`}
+                  format={`yyyy/MM/dd${eventData.isFullDay ? '' : (militaryTime ? ' HH:mm' : ' hh:mm a')}`}
                   onBlur={() => handleBlur('endTime')}
                   onClose={() => handleBlur('endTime')}
                   onClick={handleDateTimeClick}
@@ -600,6 +612,7 @@ const Settings = ({
                     }
                   }} />
                 <DurationPicker
+                  disabled={eventData.isFullDay}
                   type="number"
                   label={__('Hours')}
                   value={hoursLong}
@@ -618,6 +631,7 @@ const Settings = ({
                     }
                   }} />
                 <DurationPicker
+                  disabled={eventData.isFullDay}
                   type="number"
                   label={__('Minutes')}
                   value={minutesLong}
@@ -637,7 +651,7 @@ const Settings = ({
                   }} />
               </Row>
             )}
-            {!isInvitedEvent && (
+            {!isInvitedEvent && !eventData.isFullDay && (
               <Grid container direction="row" style={{ marginBottom: 5 }}>
                 <Button
                   style={{ flex: 1 }}

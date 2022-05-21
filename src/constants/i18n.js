@@ -49,6 +49,9 @@ const DICTIONARY = {
   'hours': {
     [LANGUAGE.UK]: 'годин',
   },
+  ' hours': {
+    [LANGUAGE.UK]: ' години',
+  },
   'Cannot get your profile info': {
     [LANGUAGE.UK]: 'Не вдається отримати дані вашого профілю',
   },
@@ -99,6 +102,12 @@ const DICTIONARY = {
   },
   'You have no own active events': {
     [LANGUAGE.UK]: "У вас немає активних подій",
+  },
+  'Your own full day events': {
+    [LANGUAGE.UK]: 'Видалити всі',
+  },
+  'You have no own full day events': {
+    [LANGUAGE.UK]: 'Видалити всі',
   },
   'Completed events': {
     [LANGUAGE.UK]: "Ваші завершені події",
@@ -262,8 +271,8 @@ const DICTIONARY = {
   'password_repeat is a required field': {
     [LANGUAGE.UK]: 'введіть пароль ще раз',
   },
-  'Input username': {
-    [LANGUAGE.UK]: 'Введіть нікнейм',
+  'Input username or email': {
+    [LANGUAGE.UK]: 'Введіть нікнейм або електронну пошту',
   },
   'Cannot find user with given username or user is already invited': {
     [LANGUAGE.UK]: 'Не вдалось знайти користувача з вказаним нікнеймом або користувач вже запрошений на подію',
@@ -363,6 +372,9 @@ const DICTIONARY = {
   },
   'Sync events starting from:': {
     [LANGUAGE.UK]: 'Синхронізувати події починаючи з:',
+  },
+  'Delete all': {
+    [LANGUAGE.UK]: 'Видалити всі',
   },
 };
 

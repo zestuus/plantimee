@@ -20,9 +20,13 @@ import googleIcon from "../../images/google.svg";
 import { getDayBounds, getGoogleTokenExpired, googleCalendarEventToPlantimeeEvent } from "../../utils/helpers";
 import { Control } from "../Header";
 import { importEventsFromGoogleCalendar } from "../../api/google_calendar";
-import { importEvents } from "../../api/event";
+import { deleteCompletedEvent, importEvents } from "../../api/event";
 import DateFnsUtils from "@date-io/date-fns";
 import { LOCALE } from "../../constants/enums";
+import DeleteIcon from "@material-ui/icons/Delete";
+import { bindActionCreators, compose } from "redux";
+import { connect } from "react-redux";
+import { closeSnackbar, openSnackbar } from "../../actions/settingsAction";
 
 export const Container = styled(Grid)`
   height: 100%;
@@ -75,6 +79,7 @@ const DatePicker = styled(KeyboardDatePicker)`
 
 
 const Events = ({
+  actions,
   language,
   ownEvents,
   invitedEvents,
@@ -91,6 +96,7 @@ const Events = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const [showInvitedEvents, setShowInvitedEvents] = useState(true);
   const [showActiveEvents, setShowActiveEvents] = useState(true);
+  const [showFullDayEvents, setShowFullDayEvents] = useState(true);
   const [showCompletedEvents, setShowCompletedEvents] = useState(true);
   const [chosenCalendar, setChosenCalendar] = useState(null);
   const [chosenDayStart, setChosenDayStart] = useState(new Date());
@@ -121,8 +127,8 @@ const Events = ({
           const { edited, created } = importResult;
 
           handleReload();
-          // TODO: replace alert with snackbar
-          alert(`${__('Events are successfully synchronized')} (${__('edited')}: ${edited}, ${__('created')}: ${created})! \n\n ${__('If some events are missing on aren\'t updated')} \n ${__('try to choose another calendar')}`);
+          actions.openSnackbar(`${__('Events are successfully synchronized')} (${__('edited')}: ${edited}, ${__('created')}: ${created})!`);
+          setTimeout(actions.closeSnackbar, 2000);
         }
       }
     }
@@ -136,15 +142,22 @@ const Events = ({
     setChosenCalendar(event.target.value);
   };
 
-  const [ownActive, ownCompleted] = (ownEvents || []).reduce((grouped, event) => {
+  const handleDeleteAllCompleted = async () => {
+    await deleteCompletedEvent();
+    handleReload();
+  }
+
+  const [ownActive, ownFullDay, ownCompleted] = (ownEvents || []).reduce((grouped, event) => {
     if (event.completed) {
+      grouped[2].push(event);
+    } else if (event.isFullDay) {
       grouped[1].push(event);
     } else {
       grouped[0].push(event);
     }
 
     return grouped;
-  }, [[],[]]);
+  }, [[], [], []]);
 
   const googleTokenExpired = getGoogleTokenExpired();
 
@@ -223,11 +236,39 @@ const Events = ({
             </Grid>
           ) : <EventCard>{__('You have no own active events')}</EventCard>)}
           <GroupSwitch onClick={() => {
-            setShowCompletedEvents(!showCompletedEvents)
+            setShowFullDayEvents(!showFullDayEvents)
           }}>
-            {showCompletedEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
-            {__('Completed events')}
+            {showFullDayEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
+            {__('Your own full day events')}
           </GroupSwitch>
+          {showFullDayEvents && ( ownFullDay.length ? (
+            <Grid container direction="column">
+              {ownFullDay.map(event => (
+                <Event
+                  key={event.id}
+                  eventData={event}
+                  isChosen={chosenEvent === event.id}
+                  setChosenEvent={setChosenEvent}
+                  openColumn={openColumn}
+                  onChangeOwnEvent={onChangeOwnEvent} />
+              ))}
+            </Grid>
+          ) : <EventCard>{__('You have no own full day events')}</EventCard>)}
+          <Grid container alignItems="center" justifyContent="space-between">
+            <GroupSwitch onClick={() => {
+              setShowCompletedEvents(!showCompletedEvents)
+            }}>
+              {showCompletedEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
+              {__('Completed events')}
+            </GroupSwitch>
+            <Button
+              disabled={!ownCompleted.length}
+              onClick={handleDeleteAllCompleted}
+            >
+              <DeleteIcon />
+              {__('Delete all')}
+            </Button>
+          </Grid>
           {showCompletedEvents && ( ownCompleted.length ? (
             <Grid container direction="column">
               {ownCompleted.map(event => (
@@ -292,7 +333,8 @@ const Events = ({
                 {__('Import events')}
               </Button>
               <Button
-                disabled={!chosenCalendar}
+                disabled
+                // disabled={!chosenCalendar}
                 onClick={handleExport}
               >
                 <PublishIcon style={{ marginRight: 'auto' }}/>
@@ -306,4 +348,16 @@ const Events = ({
   );
 };
 
-export default withSettings(Events);
+
+const mapDispatchToProps = (dispatch) => ({
+  actions: bindActionCreators({
+    openSnackbar,
+    closeSnackbar,
+  }, dispatch),
+});
+
+
+export default compose(
+  withSettings,
+  connect(null, mapDispatchToProps)
+)(Events);

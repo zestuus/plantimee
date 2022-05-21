@@ -14,7 +14,8 @@ export const useFormHandler = (type, onLogin, __) => {
   const [formErrors, setFormErrors] = useState({});
 
   const handleChange = async event => {
-    const { name, value } = event.target;
+    const { name } = event.target;
+    const value = event.target.value.trim();
     const newFormData = { ...formData, [name]: value || undefined };
 
     if(formErrors[name]) {

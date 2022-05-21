@@ -64,6 +64,15 @@ export const deleteInvitation = async data => {
   }
 }
 
+export const deleteCompletedEvent = async () => {
+  try {
+    const response = await axios.delete(`${url}/completed`, getAuthHeader());
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+}
+
 export const createEvent = async () => {
   try {
     const response = await axios.post(url, {}, getAuthHeader());
@@ -84,10 +93,10 @@ export const importEvents = async (events) => {
 
 export const inviteParticipant = async data => {
   try {
-    const { usernameToLookFor, eventId } = data;
+    const { keywordToLookFor, eventId } = data;
 
     const response = await axios.post(`${url}/invite`, {
-      usernameToLookFor,
+      keywordToLookFor,
       eventId
     }, getAuthHeader());
     return response.data;

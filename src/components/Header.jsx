@@ -248,7 +248,7 @@ const Header = ({
                         onChange={actions.switchTimeFormat}
                       >
                         <ToggleButton value={false}>12 {__('hours')}</ToggleButton>
-                        <ToggleButton value={true}>24 {__('hours')}</ToggleButton>
+                        <ToggleButton value={true}>24{__(' hours')}</ToggleButton>
                       </ToggleButtonGroup>
                       <Label component="legend">Google</Label>
                       {!googleTokenExpired && !!userInfo && (

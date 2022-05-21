@@ -18,6 +18,7 @@ import { GOOGLE_CLIENT_ID } from "./constants/config";
 import { googleOAuthLogout } from "./actions/settingsAction";
 import { bindActionCreators, compose } from "redux";
 import { connect } from "react-redux";
+import { Snackbar } from "@material-ui/core";
 
 const Footer = styled.div`
   text-align: center;
@@ -25,7 +26,7 @@ const Footer = styled.div`
   margin: 5px;
 `
 
-const App = ({ translate: __, actions }) => {
+const App = ({ translate: __, actions, snackbarMessage }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!loadStorageItem("user"));
 
   const handleLogout = history => {
@@ -54,6 +55,11 @@ const App = ({ translate: __, actions }) => {
         </Switch>
         <Footer>{new Date().getFullYear()} &copy; {__('Andrii Kushka')}</Footer>
       </Router>
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        open={!!snackbarMessage}
+        message={snackbarMessage}
+      />
     </GoogleOAuthProvider>
   );
 }

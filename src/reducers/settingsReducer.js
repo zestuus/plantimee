@@ -1,4 +1,10 @@
-import { CHANGE_LANGUAGE, GOOGLE_OAUTH_LOGIN, GOOGLE_OAUTH_LOGOUT, SWITCH_TIME_FORMAT } from '../constants/actionTypes';
+import {
+  CHANGE_LANGUAGE, CLOSE_SNACKBAR,
+  GOOGLE_OAUTH_LOGIN,
+  GOOGLE_OAUTH_LOGOUT,
+  OPEN_SNACKBAR,
+  SWITCH_TIME_FORMAT
+} from '../constants/actionTypes';
 import { LANGUAGE } from "../constants/enums";
 import {deleteStorageItem, loadStorageItem, saveItemInStorage} from '../utils/localStorage'
 
@@ -7,6 +13,7 @@ const initialState = {
   militaryTime: loadStorageItem('militaryTime') === 'false' ? 0 === 1 : true,
   googleOAuthToken: loadStorageItem('googleOAuthToken'),
   googleOAuthTokenExpireDate: new Date(loadStorageItem('googleOAuthTokenExpireDate')),
+  snackbarMessage: '',
 };
 
 const settingsReducer = (state= initialState, action) => {
@@ -38,6 +45,16 @@ const settingsReducer = (state= initialState, action) => {
         ...state,
         googleOAuthToken: null,
         googleOAuthTokenExpireDate: null,
+      }
+    case OPEN_SNACKBAR:
+      return {
+        ...state,
+        snackbarMessage: action.message,
+      }
+    case CLOSE_SNACKBAR:
+      return {
+        ...state,
+        snackbarMessage: '',
       }
     default: return { ...state }
   }
