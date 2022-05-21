@@ -427,17 +427,40 @@ const Settings = ({
               direction="column"
               alignItems="stretch"
             >
-              <SettingsBlockTitle>{__('Participants')}</SettingsBlockTitle>
+              <Grid container alignItems="center" justifyContent="space-between">
+                <SettingsBlockTitle>{__('Participants')}</SettingsBlockTitle>
+                {!isInvitedEvent && (<FormControlLabel
+                  control={
+                    <Checkbox
+                      color="primary"
+                      checked={!!eventData.isGuestListPublic}
+                      onBlur={() => handleBlur('isGuestListPublic')}
+                      onChange={(event) => {
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          isGuestListPublic: event.target.checked,
+                        });
+                      }}
+                    />
+                  }
+                  label={__('list is visible to others')}
+                />)}
+              </Grid>
               {eventData && eventData.attendees
                 && eventData.attendees.length ?
-                  eventData.attendees.map(attendee => (
+                  eventData.attendees.map((attendee, index) => (
                     <Participant
                       key={attendee.id}
+                      isOrganiser={index === 0}
+                      isYou={isInvitedEvent ? attendee.isYou : index === 0}
                       userInfo={attendee}
                       eventId={eventData.id}
                       onDeleteInvitation={!isInvitedEvent && onDeleteInvitation}/>
                   )) : <Participant noAttendees />
               }
+              {isInvitedEvent && !eventData.isGuestListPublic ? (
+                <Participant listIsHidden />
+              ) : null}
               {!isInvitedEvent && (
                 <React.Fragment>
                   <Input
@@ -460,6 +483,7 @@ const Settings = ({
                         setAttendeeFindError(__("Cannot find user with given username or user is already invited"))
                       } else {
                         setAttendeeFindError('');
+                        setKeywordToLookFor('');
                       }
                     }}
                   >
@@ -495,24 +519,32 @@ const Settings = ({
                           endTime: eventDataBackup.endTime,
                         });
                       } else {
-                        let startTime =
-                          (eventData.startTime || dateString)
-                            .split('T')[0] + 'T00:00';
-                        let endTime =
-                          (eventData.endTime || dateString)
-                            .split('T')[0] + 'T23:59';
-
                         if (!event.target.checked) {
-                          startTime = new Date();
-                          endTime = new Date();
+                          const startTime = new Date();
+                          const endTime = new Date();
                           endTime.setHours(endTime.getHours() + 1);
+
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            isFullDay: event.target.checked,
+                            startTime: startTime.toISOString(),
+                            endTime: endTime.toISOString(),
+                          });
+                        } else {
+                          const startTime =
+                            (eventData.startTime || dateString)
+                              .split('T')[0] + 'T00:00';
+                          const endTime =
+                            (eventData.endTime || dateString)
+                              .split('T')[0] + 'T23:59';
+
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            isFullDay: event.target.checked,
+                            startTime,
+                            endTime,
+                          });
                         }
-                        onChangeOwnEventLocally({
-                          ...eventData,
-                          isFullDay: event.target.checked,
-                          startTime: startTime.toISOString(),
-                          endTime: endTime.toISOString(),
-                        });
                       }
                     }
                   }}

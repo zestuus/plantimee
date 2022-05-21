@@ -11,7 +11,7 @@ const router = express.Router();
 const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_STATUS.CAN_ATTEND) => {
   return events.reduce((prevStatus, event) => {
     if (prevStatus === AVAILABILITY_STATUS.CANNOT_ATTEND) return AVAILABILITY_STATUS.CANNOT_ATTEND;
-    if (event.completed === true) return prevStatus;
+    if (event.completed === true || event.isFullDay) return prevStatus;
 
     const [ownStart, ownEnd] = [new Date(event.startTime), new Date(event.endTime)];
 
@@ -39,7 +39,8 @@ const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_
 
 const editEvent = async (eventData, UserId, keys=['id']) => {
   const {
-    name, description, completed, startTime, endTime, isFullDay, latitude, longitude, placeName, address, url, googleId, googleCalendarId
+    name, description, completed, startTime, endTime, isFullDay, isGuestListPublic,
+    latitude, longitude, placeName, address, url, googleId, googleCalendarId
   } = eventData;
 
   const where = keys.reduce((acc, key) => ({ ...acc, [key]: eventData[key] }), {});
@@ -51,6 +52,7 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
     event.description = description || null;
     event.completed = completed;
     event.isFullDay = isFullDay;
+    event.isGuestListPublic = isGuestListPublic;
     event.startTime = startTime;
     event.endTime = endTime;
     event.latitude = latitude;
@@ -82,7 +84,7 @@ router.get('/list-own', privateRoute, async (req, res) => {
         }]
       }],
       order: [
-        ["own_events", 'id', 'asc'],
+        ["own_events", 'startTime', 'asc'],
       ],
     });
 
@@ -112,7 +114,7 @@ router.get('/list-own', privateRoute, async (req, res) => {
     });
 
     const eventsWithAttendeesStatuses = own_events.map(event => {
-      event.attendees = event.attendees.map(attendee => {
+      const attendees = event.attendees.map(attendee => {
         const user = users.find(user => user.id === attendee.id);
         const [start, end] = [new Date(event.startTime), new Date(event.endTime)];
 
@@ -121,6 +123,12 @@ router.get('/list-own', privateRoute, async (req, res) => {
 
         return attendee;
       });
+      user.setDataValue('own_events', []);
+      user.setDataValue('events', []);
+
+      attendees.unshift(user);
+      event.setDataValue('attendees', attendees);
+
       return event;
     });
 
@@ -142,7 +150,7 @@ router.get('/list-invited', privateRoute, async (req, res) => {
       include: [{
         model: db.User,
         as: 'organizer',
-        attributes: ['username']
+        attributes: ['id', 'username', 'full_name', 'email']
       }, {
         model: db.User,
         as: 'attendees',
@@ -169,6 +177,15 @@ router.get('/list-invited', privateRoute, async (req, res) => {
     const midStatus = getAvailabilityStatus(own_events, start, end);
     const otherInvitedEvents = events.filter((_, i) => index !== i);
     event.setDataValue('availability', getAvailabilityStatus(otherInvitedEvents, start, end, midStatus));
+
+    let attendees = event.attendees;
+    const you = event.attendees.find(attendee => attendee.id === user.id);
+    you.setDataValue('isYou', true);
+    if (!event.isGuestListPublic) {
+      attendees = event.attendees.filter(attendee => attendee.id === user.id);
+    }
+    attendees.unshift(event.organizer);
+    event.setDataValue('attendees', attendees);
 
     return event;
   })
@@ -217,7 +234,16 @@ router.post('/', privateRoute, async (req, res) => {
   const endTime = new Date();
   endTime.setHours(endTime.getHours() + 1);
 
-  const eventData = { UserId, startTime: startTime.toISOString(), endTime: endTime.toISOString(), completed: false, isFullDay: false, createdAt: new Date(), updatedAt: new Date(), }
+  const eventData = {
+    UserId,
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    completed: false,
+    isFullDay: false,
+    isGuestListPublic: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
   const event = await db.Event.build(eventData);
 
   try {

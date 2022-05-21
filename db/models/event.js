@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.STRING,
     completed: DataTypes.BOOLEAN,
     isFullDay: DataTypes.BOOLEAN,
+    isGuestListPublic: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
     latitude: DataTypes.DECIMAL(10, 8),

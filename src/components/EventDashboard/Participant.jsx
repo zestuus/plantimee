@@ -39,14 +39,20 @@ const AvailabilityInfo = styled.p`
   ` : ''}
 `;
 
-const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, translate: __ }) => {
+const Participant = ({ userInfo, noAttendees, listIsHidden, eventId, isYou, isOrganiser, onDeleteInvitation, translate: __ }) => {
+  let message = '';
+  if (noAttendees) {
+    message = __('There are no participants in the event. Do you want to add some?')
+  } else if (listIsHidden) {
+    message = __('List of other guests is hidden')
+  }
   return (
     <ParticipantContainer >
-      {noAttendees ? __('There are no participants in the event. Do you want to add some?') : (
+      {message || (
         <Grid container direction="row" alignItems="center">
           <AccountCircleIcon fontSize="large"/>
           <ParticipantInfoBlock container direction="column">
-            <ParticipantInfo>{userInfo.username}</ParticipantInfo>
+            <ParticipantInfo>{userInfo.username}<span style={{ color: '#555' }}>{isYou ? __(' (You)') : (isOrganiser && __(' (Organizer)'))}</span></ParticipantInfo>
             <ParticipantInfo>{userInfo.full_name}</ParticipantInfo>
             <ParticipantInfo>{userInfo.email}</ParticipantInfo>
             {!!userInfo.availability && (
@@ -55,7 +61,7 @@ const Participant = ({ userInfo, noAttendees, eventId, onDeleteInvitation, trans
               </AvailabilityInfo>
             )}
           </ParticipantInfoBlock>
-          {!noAttendees && onDeleteInvitation && (
+          {!noAttendees && !isOrganiser && onDeleteInvitation && (
             <IconButton onClick={() => {
               onDeleteInvitation({ userId: userInfo.id, eventId})
             }}>

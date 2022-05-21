@@ -49,17 +49,17 @@ const ClockArrow = styled.div`
   border-radius: 1px;
   width: calc(100% - 37px);
   margin: 0 16px;
-  top: ${props => props.minute*0.7 + 19 + (props.fullDayEventsTodayCount ? 40 : 0 )}px;
+  top: ${props => props.minute*0.7 + 19}px;
 `;
 
 const TimelineDateLabel = styled(Button)`
   margin: 0;
   font-size: 15px;
   padding: 0 5px;
-  background-color: ${props => props.today === 'yes' ? PRIMARY_COLOR : 'transparent'};
-  color: ${props => props.today === 'yes' ? 'white' : 'black'};
+  background-color: ${props => props.$today ? PRIMARY_COLOR : 'transparent'};
+  color: ${props => props.$today ? 'white' : 'black'};
   :hover {
-    background-color: ${props => props.today === 'yes' ? `${PRIMARY_COLOR}bb` : 'transparent'};
+    background-color: ${props => props.$today ? `${PRIMARY_COLOR}bb` : 'transparent'};
   }
 `;
 
@@ -141,8 +141,6 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
       ));
     });
 
-    console.log(ownEventsToday, invitedEventsToday, fullDayEventsToday);
-
     return [collisionMap, ownEventsToday, invitedEventsToday, fullDayEventsToday];
   }, [ownEvents, invitedEvents, chosenDate]);
 
@@ -161,7 +159,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
         }}>
           <ChevronLeftIcon />
         </DateArrow>
-        <TimelineDateLabel today={today ? 'yes' : 'no'} onClick={handleClick}>{chosenDateString}</TimelineDateLabel>
+        <TimelineDateLabel $today={today} onClick={handleClick}>{chosenDateString}</TimelineDateLabel>
         <DateArrow
           onClick={() => {
             const date = new Date(chosenDate);
@@ -171,37 +169,37 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
           <ChevronRightIcon />
         </DateArrow>
       </ColumnHeader>
+      {fullDayEventsTodayCount ? (
+        <Grid container justifyContent="space-between" style={{ padding: 10, paddingRight: 20, borderBottom: '1px solid #555', marginBottom: 5 }}>
+          <DateArrow
+            disabled={chosenFullDayEvent === 0}
+            onClick={() => {
+              setChosenFullDayEvent(chosenFullDayEvent - 1);
+            }}
+          >
+            <ChevronLeftIcon />
+          </DateArrow>
+          <TimelineEventBar
+            eventData={fullDayEventsToday[chosenFullDayEvent]}
+            chosenDate={chosenDate}
+            fullDayEventsTodayCount={fullDayEventsTodayCount}
+            collisionMap={collisionMap}
+            militaryTime={militaryTime}
+            setChosenEvent={setChosenEvent}
+            setColumnShown={setColumnShown}
+          />
+          <DateArrow
+            disabled={chosenFullDayEvent === (fullDayEventsToday.length - 1)}
+            onClick={() => {
+              setChosenFullDayEvent(chosenFullDayEvent + 1);
+            }}
+          >
+            <ChevronRightIcon />
+          </DateArrow>
+        </Grid>
+      ) : null}
       <ScrollArea>
         <ScrollContentWrapper container direction="column" alignItems="stretch">
-          {fullDayEventsTodayCount ? (
-            <Grid container justifyContent="space-between">
-              <DateArrow
-                disabled={chosenFullDayEvent === 0}
-                onClick={() => {
-                  setChosenFullDayEvent(chosenFullDayEvent - 1);
-                }}
-              >
-                <ChevronLeftIcon />
-              </DateArrow>
-              <TimelineEventBar
-                eventData={fullDayEventsToday[chosenFullDayEvent]}
-                chosenDate={chosenDate}
-                fullDayEventsTodayCount={fullDayEventsTodayCount}
-                collisionMap={collisionMap}
-                militaryTime={militaryTime}
-                setChosenEvent={setChosenEvent}
-                setColumnShown={setColumnShown}
-              />
-              <DateArrow
-                disabled={chosenFullDayEvent === (fullDayEventsToday.length - 1)}
-                onClick={() => {
-                  setChosenFullDayEvent(chosenFullDayEvent + 1);
-                }}
-              >
-                <ChevronRightIcon />
-              </DateArrow>
-            </Grid>
-          ) : null}
           {Array.from(Array(24).keys()).map(hour => (
             <HourContainer key={hour}>
               <Grid container direction="row" alignItems="center">
@@ -240,7 +238,6 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
           ))}
           <ClockArrow
             minute={now.hour*60+now.minute}
-            fullDayEventsTodayCount={fullDayEventsTodayCount}
             hidden={chosenDate.toDateString() !== new Date().toDateString()} />
         </ScrollContentWrapper>
       </ScrollArea>

@@ -28,6 +28,9 @@ const DICTIONARY = {
   'Sign In': {
     [LANGUAGE.UK]: 'Увійти',
   },
+  'Sign in': {
+    [LANGUAGE.UK]: 'Увійти',
+  },
   'Signed in as:': {
     [LANGUAGE.UK]: 'Ви ввійшли як:',
   },
@@ -104,10 +107,10 @@ const DICTIONARY = {
     [LANGUAGE.UK]: "У вас немає активних подій",
   },
   'Your own full day events': {
-    [LANGUAGE.UK]: 'Видалити всі',
+    [LANGUAGE.UK]: 'Ваші події на весь день',
   },
   'You have no own full day events': {
-    [LANGUAGE.UK]: 'Видалити всі',
+    [LANGUAGE.UK]: 'У вас немає подій на весь день',
   },
   'Completed events': {
     [LANGUAGE.UK]: "Ваші завершені події",
@@ -375,6 +378,24 @@ const DICTIONARY = {
   },
   'Delete all': {
     [LANGUAGE.UK]: 'Видалити всі',
+  },
+  ' (Organizer)': {
+    [LANGUAGE.UK]: ' (Організатор)',
+  },
+  ' (You)': {
+    [LANGUAGE.UK]: ' (Ви)',
+  },
+  'list is visible to others': {
+    [LANGUAGE.UK]: 'список видимий для інших',
+  },
+  'Show events since:': {
+    [LANGUAGE.UK]: 'Показати події з',
+  },
+  'Show events till:': {
+    [LANGUAGE.UK]: 'Показати події до',
+  },
+  'List of other guests is hidden': {
+    [LANGUAGE.UK]: 'Список інших користувачів приховано',
   },
 };
 

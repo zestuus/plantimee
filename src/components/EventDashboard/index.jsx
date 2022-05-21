@@ -155,15 +155,15 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
     const attendee = await inviteParticipant(data);
     if (attendee) {
       const events = ownEvents.map(event => event.id === data.eventId ?
-        {
-          ...event, attendees: [...event.attendees, {
-            id: attendee.id,
-            username: attendee.username,
-            full_name: attendee.full_name,
-            email: attendee.email,
-          }]
-        } :
-        {...event}
+          {
+            ...event, attendees: [...(event.attendees || []), {
+              id: attendee.id,
+              username: attendee.username,
+              full_name: attendee.full_name,
+              email: attendee.email,
+            }]
+          } :
+          { ...event }
       );
       setOwnEvents(events);
       return true;

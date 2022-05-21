@@ -175,7 +175,7 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     description,
     summary: name,
     start: { dateTime: startDateTime, date: startDate },
-    end: { dateTime: endDateTime, date: endDate },
+    end: { dateTime: endDateTime, date: endDateNextDay },
     hangoutLink: url,
     creator: { email },
     organizer: { email: googleCalendarId },
@@ -198,6 +198,12 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     }
   }
 
+  let endDate;
+  if (endDateNextDay) {
+    endDate = endDateNextDay && new Date(endDateNextDay)
+    endDate.setDate(endDate.getDate() - 1);
+  }
+
   return {
     ...venue,
     name,
@@ -206,7 +212,7 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     googleId,
     googleCalendarId,
     startTime: startDateTime || startDate,
-    endTime: endDateTime || endDate,
+    endTime: endDateTime || endDate.toISOString().split('T')[0],
     isFullDay: !startDateTime && !endDateTime,
     attendees: attendees && attendees.filter(attendee => attendee.email !== email) ,
   }

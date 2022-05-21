@@ -8,14 +8,14 @@ import Tooltip from "@material-ui/core/Tooltip";
 import {AVAILABILITY_STATUS} from "../../constants/enums";
 
 const EventBar = styled.div`
-  position: ${props => props.$fullDay === 'yes' ? 'inherit' : 'absolute'};
+  position: ${props => props.$fullDay ? 'inherit' : 'absolute'};
   ${props => props.$fullDay === 'yes' ? 'flex: 1;' : ''}
-  border: 2px solid white;
+  border: 2px solid rgba(255, 255, 255, 0.76);
   border-radius: 5px;
-  width: calc(${props => props.$width ? props.$width : '100%' } - 55px);
+  width: calc(${props => props.$width ? props.$width : '100%'} - 55px);
   left: calc(${props => props.$left ? props.$left : 0} - 15px);
   z-index: ${props => props.$zIndex ? props.$zIndex : 0};
-  margin: 0${props => props.$fullDay === 'yes' ? '' : ' 26px'};
+  margin: 0 ${props => props.$fullDay ? '' : ' 26px'};
   box-sizing: border-box;
   box-shadow: ${props => props.$fullDayEventsTodayCount > 1 ? '#ffa500 3px 3px' : 'white 1px 1px'};
   background-color: ${props => props.bgColor ? props.bgColor : '#ffa500'};
@@ -26,39 +26,44 @@ const EventBar = styled.div`
   ${props => `
     top: ${props.$top + 21}px;
     height: ${props.$height < 5 ? 5 : props.$height}px;
-    ${props.$completed ? 'text-decoration: line-through;' : '' };
-    ${props.$height < 35 ? 'padding: 0;' : 'padding: 10px;' };
+    ${props.$completed ? 'text-decoration: line-through;' : ''};
+    ${props.$height < 35 ? 'padding: 0;' : 'padding: 10px;'};
   `};
 `;
 
 const TimelineEventBar = ({
   eventData, collisionMap, chosenDate, setChosenEvent, setColumnShown, militaryTime, fullDayEventsTodayCount
 }) => {
-  const { startTime, endTime, isFullDay, completed } = eventData || {};
+  if (!eventData) return null;
 
+  const { startTime, endTime, isFullDay, completed } = eventData;
   const { dayStart, dayEnd } = getDayBounds(chosenDate);
 
-  const startDateTime = eventData && new Date(eventData.startTime);
-  startDateTime.setSeconds(0)
-  startDateTime.setMilliseconds(0)
-  const endDateTime = eventData && new Date(eventData.endTime);
-  endDateTime.setSeconds(0)
-  endDateTime.setMilliseconds(0)
+  const startDateTime = new Date(eventData.startTime);
+  if (startDateTime) {
+    startDateTime.setSeconds(0);
+    startDateTime.setMilliseconds(0);
+  }
+  const endDateTime = new Date(eventData.endTime);
+  if (endDateTime) {
+    endDateTime.setSeconds(0);
+    endDateTime.setMilliseconds(0);
+  }
 
   let height;
   let top = 0;
 
   if (isFullDay) {
-    height = 40;
+    height = 38;
   } else if (startDateTime <= dayStart && dayEnd <= endDateTime) {
     height = HourHeight*24;
   } else if (startDateTime < dayStart) {
     height = (endDateTime - dayStart) / OneHour * HourHeight;
   } else if (dayEnd < endDateTime ) {
-    top = (startDateTime - dayStart) / OneHour * HourHeight + (fullDayEventsTodayCount ? 40 : 0);
+    top = (startDateTime - dayStart) / OneHour * HourHeight - 1;
     height = (dayEnd - startDateTime) / OneHour * HourHeight;
   } else {
-    top = (startDateTime - dayStart) / OneHour * HourHeight + (fullDayEventsTodayCount ? 40 : 0);
+    top = (startDateTime - dayStart) / OneHour * HourHeight - 1;
     height = (endDateTime - startDateTime) / OneHour * HourHeight;
   }
 
@@ -70,11 +75,11 @@ const TimelineEventBar = ({
   if (eventData.availability) {
     bgColor = '#0095ff'
   }
-  if (completed || eventData.availability === AVAILABILITY_STATUS.CANNOT_ATTEND) {
+  if (completed || (eventData.availability === AVAILABILITY_STATUS.CANNOT_ATTEND)) {
     bgColor += 'aa';
   }
 
-  const collisionList = collisionMap[eventData.id] || [];
+  const collisionList = (collisionMap[eventData.id]) || [];
   const rowLength = collisionList.length + 1;
   let trigger = false;
   const index = collisionList.length && collisionList.findIndex(otherEvent => {
@@ -118,7 +123,7 @@ const TimelineEventBar = ({
       }
     >
       <EventBar
-        $fullDay={isFullDay ? 'yes' : 'no'}
+        $fullDay={isFullDay}
         $fullDayEventsTodayCount={isFullDay ? fullDayEventsTodayCount : 0}
         $height={height}
         $top={top}

@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { bindActionCreators, compose } from "redux";
+import { connect } from "react-redux";
 import styled from "styled-components";
+
+import DateFnsUtils from "@date-io/date-fns";
 
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
@@ -8,12 +12,14 @@ import KeyboardArrowRightIcon from '@material-ui/icons/KeyboardArrowRight';
 import AddIcon from '@material-ui/icons/Add';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import PublishIcon from '@material-ui/icons/Publish';
-import { Popover, Radio, RadioGroup } from "@material-ui/core";
+import { Popover, Radio, RadioGroup, Checkbox } from "@material-ui/core";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormLabel from "@material-ui/core/FormLabel";
 import { KeyboardDatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import Tooltip from "@material-ui/core/Tooltip";
+import DeleteIcon from "@material-ui/icons/Delete";
 
-import {ColumnTitle} from "./Timeline";
+import { ColumnTitle } from "./Timeline";
 import Event, { EventCard } from "./Event";
 import withSettings from '../HOCs/withSettings';
 import googleIcon from "../../images/google.svg";
@@ -21,11 +27,7 @@ import { getDayBounds, getGoogleTokenExpired, googleCalendarEventToPlantimeeEven
 import { Control } from "../Header";
 import { importEventsFromGoogleCalendar } from "../../api/google_calendar";
 import { deleteCompletedEvent, importEvents } from "../../api/event";
-import DateFnsUtils from "@date-io/date-fns";
 import { LOCALE } from "../../constants/enums";
-import DeleteIcon from "@material-ui/icons/Delete";
-import { bindActionCreators, compose } from "redux";
-import { connect } from "react-redux";
 import { closeSnackbar, openSnackbar } from "../../actions/settingsAction";
 
 export const Container = styled(Grid)`
@@ -38,7 +40,7 @@ export const ColumnHeader = styled(Grid)`
 
 export const ScrollArea = styled.div`
   width: 100%;
-  height: calc(100% - 37px);
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   
@@ -75,8 +77,15 @@ const SyncBlockTitle = styled.p`
 
 const DatePicker = styled(KeyboardDatePicker)`
   margin: 10px 0;
+  ${props => props.$inline ? `
+    flex: 1;
+    margin: 10px 5px;
+  ` : ''};
 `;
 
+const TooltipText = styled.p`
+  font-size: 14px;
+`;
 
 const Events = ({
   actions,
@@ -93,13 +102,23 @@ const Events = ({
   userCalendars,
   translate: __
 }) => {
+  const { dayStart: defaultStartShowDate } = getDayBounds();
+  const { dayEnd: defaultEndShowDate } = getDayBounds();
+  defaultEndShowDate.setDate(defaultEndShowDate.getDate() + 7);
+
   const [anchorEl, setAnchorEl] = useState(null);
+  const [chosenCalendar, setChosenCalendar] = useState(null);
+  const [chosenDayStart, setChosenDayStart] = useState(new Date());
+
   const [showInvitedEvents, setShowInvitedEvents] = useState(true);
   const [showActiveEvents, setShowActiveEvents] = useState(true);
   const [showFullDayEvents, setShowFullDayEvents] = useState(true);
-  const [showCompletedEvents, setShowCompletedEvents] = useState(true);
-  const [chosenCalendar, setChosenCalendar] = useState(null);
-  const [chosenDayStart, setChosenDayStart] = useState(new Date());
+  const [showCompletedEvents, setShowCompletedEvents] = useState(false);
+
+
+  const [filterByDate, setFilterByDate] = useState(true);
+  const [startShowDate, setStartShowDate] = useState(defaultStartShowDate);
+  const [endShowDate, setSndShowDate] = useState(defaultEndShowDate);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -117,7 +136,10 @@ const Events = ({
       if (result) {
         const { items } = result;
         // TODO: implement event reccurence and allow to import such events
-        const filterReccurentEventsTemporary = items.filter(event => !event.recurrence && event.status !== 'canceled');
+        const reccurentEvents = items.filter(event => event.recurrence);
+        console.log(reccurentEvents.map(({ summary, recurrence }) => ({ summary, recurrence })));
+
+        const filterReccurentEventsTemporary = items.filter(event => !event.recurrence);
         const filterCanceledEvents = filterReccurentEventsTemporary.filter(event => event.status !== 'cancelled');
         const plantimeeEvents = await Promise.all(filterCanceledEvents.map(googleCalendarEventToPlantimeeEvent));
 
@@ -147,17 +169,21 @@ const Events = ({
     handleReload();
   }
 
+  const filterEventByDate = (event) => !filterByDate || (startShowDate < new Date(event.endTime) && new Date(event.startTime) < endShowDate)
+  const invitedEventsToShow = invitedEvents ? invitedEvents.filter(filterEventByDate) : [];
   const [ownActive, ownFullDay, ownCompleted] = (ownEvents || []).reduce((grouped, event) => {
     if (event.completed) {
       grouped[2].push(event);
-    } else if (event.isFullDay) {
-      grouped[1].push(event);
-    } else {
-      grouped[0].push(event);
+    } else if (filterEventByDate(event)) {
+      if (event.isFullDay) {
+        grouped[1].push(event);
+      } else {
+        grouped[0].push(event);
+      }
     }
 
     return grouped;
-  }, [[], [], []]);
+    }, [[], [], []]);
 
   const googleTokenExpired = getGoogleTokenExpired();
 
@@ -177,13 +203,28 @@ const Events = ({
     <Container container direction="column" justifyContent="flex-start">
       <ColumnHeader container direction="row" alignItems="center">
         <ColumnTitle>{__('Events')}</ColumnTitle>
-        <Button
-          onClick={handleClick}
-          style={{ marginLeft: 'auto' }}
+        <Tooltip
+          disableFocusListener={!googleTokenExpired}
+          disableHoverListener={!googleTokenExpired}
+          disableTouchListener={!googleTokenExpired}
+          title={googleTokenExpired ? (
+            <TooltipText>
+              {__('You are not logged in with Google')}
+              <br />
+              {__('Please, open settings on the top bar to log in')}
+            </TooltipText>
+          ) : ''}
         >
-          {__('Sync with')}
-          <img src={googleIcon} alt="google sync" style={{ width: 20, marginLeft: 5 }} draggable={false} />
-        </Button>
+          <span style={{ marginLeft: 'auto' }}>
+            <Button
+              disabled={googleTokenExpired}
+              onClick={handleClick}
+            >
+              {__('Sync with')}
+              <img src={googleIcon} alt="google sync" style={{ width: 20, marginLeft: 5 }} draggable={false} />
+            </Button>
+          </span>
+        </Tooltip>
         <Button
           style={{ paddingLeft: 0 }}
           onClick={() => {
@@ -196,15 +237,42 @@ const Events = ({
       </ColumnHeader>
       <ScrollArea>
         <ScrollContentWrapper container direction="column" alignItems="flex-start">
+          <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
+            <Grid container justifyContent="space-around" alignItems="center">
+              <Checkbox
+                color="primary"
+                checked={filterByDate}
+                onChange={(event) => { setFilterByDate(event.target.checked); }}
+              />
+              <DatePicker
+                $inline
+                disabled={!filterByDate}
+                variant="inline"
+                label={__('Show events since:')}
+                format="yyyy/MM/dd"
+                value={startShowDate}
+                onChange={setStartShowDate}
+              />
+              <DatePicker
+                $inline
+                disabled={!filterByDate}
+                variant="inline"
+                label={__('Show events till:')}
+                format="yyyy/MM/dd"
+                value={endShowDate}
+                onChange={setSndShowDate}
+              />
+            </Grid>
+          </MuiPickersUtilsProvider>
           <GroupSwitch onClick={() => {
             setShowInvitedEvents(!showInvitedEvents)
           }}>
             {showInvitedEvents ? <KeyboardArrowRightIcon/> : <ExpandMore/>}
             {__("Events you're invited to")}
           </GroupSwitch>
-          {showInvitedEvents && (invitedEvents && invitedEvents.length ? (
+          {showInvitedEvents && (invitedEventsToShow.length ? (
             <Grid container direction="column">
-              {invitedEvents.map(event => (
+              {invitedEventsToShow.map(event => (
                 <Event
                   invited
                   key={event.id}
@@ -294,55 +362,48 @@ const Events = ({
           horizontal: "left"
         }}
       >
-        {googleTokenExpired ? (
-          <Grid container direction="column" alignItems="center" style={{ padding: 15 }}>
-            <h4 style={{ margin: 5 }}>{__('You are not logged in with Google')}</h4>
-            <p style={{ margin: 5 }}>{__('Please, open settings on the top bar to log in')}</p>
+        <Control component="fieldset" variant="standard">
+          <SyncBlockTitle>{__('Synchronization with Google Calendar')}</SyncBlockTitle>
+          <RadioGroup aria-label="calendar" name="calendar" value={chosenCalendar} onChange={handleChangeCalendar}>
+            <Label component="legend">{__('Choose a calendar:')}</Label>
+            {userCalendars.length ? (
+              userCalendars.map(calendar => (
+                <FormControlLabel key={calendar.id} value={calendar.id} control={<Radio color="primary" />} label={calendar.summary} />
+              ))
+            ) : (
+              <React.Fragment>
+                <h4 style={{ margin: 5 }}>{__('Failed to fetch list of you calendars')}</h4>
+                <p style={{ margin: 5 }}>{__('Please try again later')}</p>
+              </React.Fragment>
+            )}
+          </RadioGroup>
+          <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
+            <DatePicker
+              variant="inline"
+              label={__('Sync events starting from:')}
+              format="yyyy/MM/dd"
+              value={chosenDayStart}
+              onChange={setChosenDayStart}
+            />
+          </MuiPickersUtilsProvider>
+          <Grid container>
+            <Button
+              disabled={!chosenCalendar}
+              onClick={handleImport}
+            >
+              <GetAppIcon style={{ marginRight: 'auto' }}/>
+              {__('Import events')}
+            </Button>
+            <Button
+              disabled
+              // disabled={!chosenCalendar}
+              onClick={handleExport}
+            >
+              <PublishIcon style={{ marginRight: 'auto' }}/>
+              {__('Export events')}
+            </Button>
           </Grid>
-        ) : (
-          <Control component="fieldset" variant="standard">
-            <SyncBlockTitle>{__('Synchronization with Google Calendar')}</SyncBlockTitle>
-            <RadioGroup aria-label="calendar" name="calendar" value={chosenCalendar} onChange={handleChangeCalendar}>
-              <Label component="legend">{__('Choose a calendar:')}</Label>
-              {userCalendars.length ? (
-                userCalendars.map(calendar => (
-                  <FormControlLabel key={calendar.id} value={calendar.id} control={<Radio color="primary" />} label={calendar.summary} />
-                ))
-              ) : (
-                <React.Fragment>
-                  <h4 style={{ margin: 5 }}>{__('Failed to fetch list of you calendars')}</h4>
-                  <p style={{ margin: 5 }}>{__('Please try again later')}</p>
-                </React.Fragment>
-              )}
-            </RadioGroup>
-            <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
-              <DatePicker
-                variant="inline"
-                label={__('Sync events starting from:')}
-                format="yyyy/MM/dd"
-                value={chosenDayStart}
-                onChange={setChosenDayStart}
-              />
-            </MuiPickersUtilsProvider>
-            <Grid container>
-              <Button
-                disabled={!chosenCalendar}
-                onClick={handleImport}
-              >
-                <GetAppIcon style={{ marginRight: 'auto' }}/>
-                {__('Import events')}
-              </Button>
-              <Button
-                disabled
-                // disabled={!chosenCalendar}
-                onClick={handleExport}
-              >
-                <PublishIcon style={{ marginRight: 'auto' }}/>
-                {__('Export events')}
-              </Button>
-            </Grid>
-          </Control>
-        )}
+        </Control>
       </Popover>
     </Container>
   );

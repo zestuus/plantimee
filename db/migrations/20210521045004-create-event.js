@@ -20,6 +20,10 @@ module.exports = {
         defaultValue: false,
         type: Sequelize.BOOLEAN
       },
+      isGuestListPublic: {
+        defaultValue: true,
+        type: Sequelize.BOOLEAN
+      },
       name: {
         type: Sequelize.STRING
       },
