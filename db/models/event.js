@@ -15,6 +15,11 @@ module.exports = (sequelize, DataTypes) => {
         as: 'organizer'
       });
       Event.belongsToMany(models.User, { as: 'attendees', through: 'Participation' });
+      Event.belongsTo(models.Event, {
+        foreignKey: 'recurrentEventId',
+        as: 'recurrentEvent'
+      });
+      Event.hasMany(models.Event, { as: 'recurrentInstances', foreignKey: 'recurrentEventId', });
     }
   }
   Event.init({
@@ -26,6 +31,13 @@ module.exports = (sequelize, DataTypes) => {
     isGuestListPublic: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
+    recurrentEventId: DataTypes.INTEGER,
+    repeatEnabled: DataTypes.BOOLEAN,
+    repeatFreq: DataTypes.STRING,
+    repeatInterval: DataTypes.INTEGER,
+    repeatByDay: DataTypes.STRING,
+    repeatUntil: DataTypes.DATE,
+    repeatCount: DataTypes.STRING,
     latitude: DataTypes.DECIMAL(10, 8),
     longitude: DataTypes.DECIMAL(11, 8),
     placeName: DataTypes.STRING,

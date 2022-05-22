@@ -40,7 +40,8 @@ const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_
 const editEvent = async (eventData, UserId, keys=['id']) => {
   const {
     name, description, completed, startTime, endTime, isFullDay, isGuestListPublic,
-    latitude, longitude, placeName, address, url, googleId, googleCalendarId
+    latitude, longitude, placeName, address, url, googleId, googleCalendarId,
+    repeatEnabled, repeatFreq, repeatInterval, repeatByDay, repeatUntil, repeatCount
   } = eventData;
 
   const where = keys.reduce((acc, key) => ({ ...acc, [key]: eventData[key] }), {});
@@ -55,6 +56,12 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
     event.isGuestListPublic = isGuestListPublic;
     event.startTime = startTime;
     event.endTime = endTime;
+    event.repeatEnabled = repeatEnabled;
+    event.repeatFreq = repeatFreq;
+    event.repeatInterval = repeatInterval;
+    event.repeatByDay = repeatByDay;
+    event.repeatUntil = repeatUntil;
+    event.repeatCount = repeatCount;
     event.latitude = latitude;
     event.longitude = longitude;
     event.placeName = placeName || null;
@@ -135,62 +142,67 @@ router.get('/list-own', privateRoute, async (req, res) => {
     res.send(eventsWithAttendeesStatuses);
   } catch (e) {
     console.error(e);
-
     return res.status(400).send(e);
   }
 });
 
 router.get('/list-invited', privateRoute, async (req, res) => {
   const { id } = req.user;
-  const user = await db.User.findOne({
-    where: { id },
-    include: [{
-      model: db.Event,
-      as: 'events',
+
+  try {
+    const user = await db.User.findOne({
+      where: { id },
       include: [{
-        model: db.User,
-        as: 'organizer',
-        attributes: ['id', 'username', 'full_name', 'email']
+        model: db.Event,
+        as: 'events',
+        include: [{
+          model: db.User,
+          as: 'organizer',
+          attributes: ['id', 'username', 'full_name', 'email']
+        }, {
+          model: db.User,
+          as: 'attendees',
+          attributes: ['id', 'username', 'full_name', 'email']
+        }]
       }, {
-        model: db.User,
-        as: 'attendees',
-        attributes: ['id', 'username', 'full_name', 'email']
-      }]
-    }, {
-      model: db.Event,
-      as: "own_events",
-    }],
-    order: [
-      ['events', 'id', 'asc'],
-    ],
-  });
+        model: db.Event,
+        as: "own_events",
+      }],
+      order: [
+        ['events', 'id', 'asc'],
+      ],
+    });
 
-  if (!user) {
-    return res.status(403).send("Invalid token!");
-  }
-
-  const { events, own_events } = user;
-
-  const eventsWithStatuses = events.map((event, index) => {
-    const [start, end] = [new Date(event.startTime), new Date(event.endTime)];
-
-    const midStatus = getAvailabilityStatus(own_events, start, end);
-    const otherInvitedEvents = events.filter((_, i) => index !== i);
-    event.setDataValue('availability', getAvailabilityStatus(otherInvitedEvents, start, end, midStatus));
-
-    let attendees = event.attendees;
-    const you = event.attendees.find(attendee => attendee.id === user.id);
-    you.setDataValue('isYou', true);
-    if (!event.isGuestListPublic) {
-      attendees = event.attendees.filter(attendee => attendee.id === user.id);
+    if (!user) {
+      return res.status(403).send("Invalid token!");
     }
-    attendees.unshift(event.organizer);
-    event.setDataValue('attendees', attendees);
 
-    return event;
-  })
+    const { events, own_events } = user;
 
-  res.send(eventsWithStatuses);
+    const eventsWithStatuses = events.map((event, index) => {
+      const [start, end] = [new Date(event.startTime), new Date(event.endTime)];
+
+      const midStatus = getAvailabilityStatus(own_events, start, end);
+      const otherInvitedEvents = events.filter((_, i) => index !== i);
+      event.setDataValue('availability', getAvailabilityStatus(otherInvitedEvents, start, end, midStatus));
+
+      let attendees = event.attendees;
+      const you = event.attendees.find(attendee => attendee.id === user.id);
+      you.setDataValue('isYou', true);
+      if (!event.isGuestListPublic) {
+        attendees = event.attendees.filter(attendee => attendee.id === user.id);
+      }
+      attendees.unshift(event.organizer);
+      event.setDataValue('attendees', attendees);
+
+      return event;
+    })
+
+    res.send(eventsWithStatuses);
+  } catch (e) {
+    console.error(e);
+    res.status(400).send("Error during fetch invited events!");
+  }
 });
 
 router.delete('/invited', privateRoute, async (req, res) => {
@@ -207,6 +219,7 @@ router.delete('/invited', privateRoute, async (req, res) => {
     await event.destroy();
     res.send(event);
   } catch (e) {
+    console.error(e);
     res.status(400).send("Error during delete!");
   }
 });
@@ -223,6 +236,7 @@ router.delete('/invite', privateRoute, async (req, res) => {
     await event.destroy();
     res.send(event);
   } catch (e) {
+    console.error(e);
     res.status(400).send("Error during delete!");
   }
 });
@@ -241,6 +255,7 @@ router.post('/', privateRoute, async (req, res) => {
     completed: false,
     isFullDay: false,
     isGuestListPublic: true,
+    repeatEnabled: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -250,6 +265,7 @@ router.post('/', privateRoute, async (req, res) => {
     const savedEvent = await event.save();
     res.send(savedEvent);
   } catch (e) {
+    console.error(e);
     res.status(400).send("Error during create!");
   }
 });
@@ -260,6 +276,7 @@ router.put('/', privateRoute, async (req, res) => {
   const event = await editEvent(req.body, UserId);
 
   if (!event) {
+    console.error(e);
     res.status(400).send("Event doesn't exists or you aren't the event's organizer!");
   }
 

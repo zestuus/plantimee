@@ -197,9 +197,13 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
 
   const handleCreateNewEvent = async () => {
     const newEvent = await createEvent();
-    setChosenEvent(newEvent.id);
-    const events = [...ownEvents, newEvent]
-    setOwnEvents(events);
+
+    if (newEvent) {
+      setChosenEvent(newEvent.id);
+      const events = [...(ownEvents || []), newEvent]
+      setOwnEvents(events);
+      setReloadSwitch(!reloadSwitch);
+    }
   }
 
   const handleFindAutomatically = async data => {

@@ -36,6 +36,28 @@ module.exports = {
       endTime: {
         type: Sequelize.DATE
       },
+      recurrentEventId: {
+        type: Sequelize.INTEGER
+      },
+      repeatEnabled: {
+        defaultValue: false,
+        type: Sequelize.BOOLEAN
+      },
+      repeatFreq: {
+        type: Sequelize.STRING
+      },
+      repeatInterval: {
+        type: Sequelize.INTEGER
+      },
+      repeatByDay: {
+        type: Sequelize.STRING
+      },
+      repeatUntil: {
+        type: Sequelize.DATE
+      },
+      repeatCount: {
+        type: Sequelize.STRING
+      },
       latitude: {
         type: Sequelize.DECIMAL(10, 8)
       },

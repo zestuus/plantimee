@@ -15,7 +15,23 @@ export const LOCALE = Object.freeze({
 export const FORM_TYPE = Object.freeze({
   SIGN_IN: 'signIn',
   SIGN_UP: 'signUp',
-})
+});
+
+export const REPEAT_FREQ = Object.freeze({
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY',
+  YEARLY: 'YEARLY',
+});
+
+export const REPEAT_FREQ_TYPES = Object.values(REPEAT_FREQ);
+
+export const REPEAT_FREQ_LABEL = Object.freeze({
+  [REPEAT_FREQ.DAILY]: 'day',
+  [REPEAT_FREQ.WEEKLY]: 'week',
+  [REPEAT_FREQ.MONTHLY]: 'month',
+  [REPEAT_FREQ.YEARLY]: 'year',
+});
 
 export const AVAILABILITY_STATUS = Object.freeze({
   CAN_ATTEND: 'CAN_ATTEND',

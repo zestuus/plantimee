@@ -397,6 +397,90 @@ const DICTIONARY = {
   'List of other guests is hidden': {
     [LANGUAGE.UK]: 'Список інших користувачів приховано',
   },
+  'Repeat': {
+    [LANGUAGE.UK]: 'Повторення',
+  },
+  'Repeat event': {
+    [LANGUAGE.UK]: 'Повторювати подію',
+  },
+  'Repeat every': {
+    [LANGUAGE.UK]: 'Повторювати подію кожен',
+  },
+  'Repeat every ': {
+    [LANGUAGE.UK]: 'Повторювати подію кожнi',
+  },
+  'day': {
+    [LANGUAGE.UK]: 'день',
+  },
+  'week': {
+    [LANGUAGE.UK]: 'тиждень',
+  },
+  'month': {
+    [LANGUAGE.UK]: 'місяць',
+  },
+  'year': {
+    [LANGUAGE.UK]: 'рік',
+  },
+  'days  ': {
+    [LANGUAGE.UK]: 'день',
+  },
+  'weeks  ': {
+    [LANGUAGE.UK]: 'тиждень',
+  },
+  'months  ': {
+    [LANGUAGE.UK]: 'місяць',
+  },
+  'years  ': {
+    [LANGUAGE.UK]: 'рік',
+  },
+  'days': {
+    [LANGUAGE.UK]: 'дні',
+  },
+  'weeks': {
+    [LANGUAGE.UK]: 'тижні',
+  },
+  'months': {
+    [LANGUAGE.UK]: 'місяці',
+  },
+  'years': {
+    [LANGUAGE.UK]: 'роки',
+  },
+  'days ': {
+    [LANGUAGE.UK]: 'днів',
+  },
+  'weeks ': {
+    [LANGUAGE.UK]: 'тижнів',
+  },
+  'months ': {
+    [LANGUAGE.UK]: 'місяців',
+  },
+  'years ': {
+    [LANGUAGE.UK]: 'років',
+  },
+  'Ends': {
+    [LANGUAGE.UK]: 'Завершується',
+  },
+  'Never': {
+    [LANGUAGE.UK]: 'Ніколи',
+  },
+  'On': {
+    [LANGUAGE.UK]: 'На',
+  },
+  'After': {
+    [LANGUAGE.UK]: 'Через',
+  },
+  'occurrence': {
+    [LANGUAGE.UK]: 'подію',
+  },
+  'occurrences': {
+    [LANGUAGE.UK]: 'події',
+  },
+  'occurrences ': {
+    [LANGUAGE.UK]: 'подій',
+  },
+  'occurrences  ': {
+    [LANGUAGE.UK]: 'подію',
+  },
 };
 
 export default DICTIONARY;
