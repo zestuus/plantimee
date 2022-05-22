@@ -16,7 +16,6 @@ export const getUserInfo = async () => {
   }
 };
 
-
 export const listUserCalendars = async () => {
   try {
     const response = await axios.get(`${url}/users/me/calendarList`, getGoogleAuthHeader());

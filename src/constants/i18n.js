@@ -481,6 +481,69 @@ const DICTIONARY = {
   'occurrences  ': {
     [LANGUAGE.UK]: 'подію',
   },
+  'Monthly on day': {
+    [LANGUAGE.UK]: 'Щомісяця',
+  },
+  'Monthly on the': {
+    [LANGUAGE.UK]: 'Щомісяця в',
+  },
+  'first ': {
+    [LANGUAGE.UK]: 'перш',
+  },
+  'second ': {
+    [LANGUAGE.UK]: 'друг',
+  },
+  'third ': {
+    [LANGUAGE.UK]: 'трет',
+  },
+  'fourth ': {
+    [LANGUAGE.UK]: 'четверт',
+  },
+  'last ': {
+    [LANGUAGE.UK]: 'останн',
+  },
+  'Monday': {
+    [LANGUAGE.UK]: 'ий понеділок',
+  },
+  'Tuesday': {
+    [LANGUAGE.UK]: 'ий вівторок',
+  },
+  'Wednesday': {
+    [LANGUAGE.UK]: 'у середу',
+  },
+  'Thursday': {
+    [LANGUAGE.UK]: 'ий четвер',
+  },
+  'Friday': {
+    [LANGUAGE.UK]: 'у п\'ятницю',
+  },
+  'Saturday': {
+    [LANGUAGE.UK]: 'у суботу',
+  },
+  'Sunday': {
+    [LANGUAGE.UK]: 'у неділю',
+  },
+  'Monday ': {
+    [LANGUAGE.UK]: 'ій понеділок',
+  },
+  'Tuesday ': {
+    [LANGUAGE.UK]: 'ій вівторок',
+  },
+  'Wednesday ': {
+    [LANGUAGE.UK]: 'ю середу',
+  },
+  'Thursday ': {
+    [LANGUAGE.UK]: 'ій четвер',
+  },
+  'Friday ': {
+    [LANGUAGE.UK]: 'ю п\'ятницю',
+  },
+  'Saturday ': {
+    [LANGUAGE.UK]: 'ю суботу',
+  },
+  'Sunday ': {
+    [LANGUAGE.UK]: 'ю неділю',
+  },
 };
 
 export default DICTIONARY;

@@ -19,7 +19,13 @@ import {ColumnTitle} from './Timeline';
 import {
   ColumnHeader, Container, ScrollArea, ScrollContentWrapper
 } from './Events';
-import { formatDateString, getDayBounds, getGoogleTokenExpired, roundFloat } from '../../utils/helpers';
+import {
+  countCertainDay,
+  formatDateString,
+  getDayBounds,
+  getGoogleTokenExpired,
+  roundFloat
+} from '../../utils/helpers';
 import {
   EnglishDays,
   OneDay, OneHour, OneMinute, UkrainianDays
@@ -31,7 +37,14 @@ import {findNearbyLocation} from "../../api/maps";
 import ChooseLocationDialog from "../dialogs/ChooseLocationDialog";
 
 import { KeyboardDatePicker, KeyboardDateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { LANGUAGE, LOCALE, REPEAT_FREQ, REPEAT_FREQ_LABEL, REPEAT_FREQ_TYPES } from "../../constants/enums";
+import {
+  LANGUAGE,
+  LOCALE,
+  ORDINAL_NUMBERS,
+  REPEAT_FREQ,
+  REPEAT_FREQ_LABEL,
+  REPEAT_FREQ_TYPES
+} from "../../constants/enums";
 import DateFnsUtils from "@date-io/date-fns";
 import googleIcon from "../../images/google.svg";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -329,6 +342,8 @@ const Settings = ({
   const indexOfDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const defaultDay = EnglishDays[indexOfDay] ? (EnglishDays[indexOfDay].slice(0, 2).toUpperCase()) : '';
 
+  const startOfMonth = eventData && new Date(eventData.startTime.slice(0,7));
+  const endOfMonth = eventData && new Date(eventData.startTime.slice(0,7));
   let defaultUntilDate = new Date();
   if (eventData) {
     const startDate = new Date(eventData.startTime);
@@ -348,8 +363,14 @@ const Settings = ({
       default: break;
     }
     ({ dayEnd: defaultUntilDate } = getDayBounds(startDate));
-  }
 
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1)
+    endOfMonth.setDate(endOfMonth.getDate() - 1)
+  }
+  const daysCountFromMonthStart = eventData && countCertainDay(dayOfWeek, startOfMonth, new Date(eventData.startTime));
+  const daysCountToMonthEnd = eventData && countCertainDay(dayOfWeek, new Date(eventData.startTime), endOfMonth) - 1;
+
+  const isMonthlyByDayValue = (value) => !isNaN(value.slice(0, -2)) && EnglishDays.find(day => day.slice(0, 2).toUpperCase() === value.slice(-2));
 
   return (
     <Container container direction="column" justifyContent="flex-start">
@@ -870,6 +891,34 @@ const Settings = ({
                   </TooltipToggleButton>
                 ))}
               </ToggleButtonGroup>
+            )}
+            {eventData.repeatFreq === REPEAT_FREQ.MONTHLY && (
+              <Select
+                disabled={!eventData.repeatEnabled}
+                value={isMonthlyByDayValue(eventData.repeatByDay) ? eventData.repeatByDay : 'onDay'}
+                onBlur={() => handleBlur('repeatByDay')}
+                onChange={(event) => {
+                  onChangeOwnEventLocally({
+                    ...eventData,
+                    repeatByDay: event.target.value,
+                  });
+                }}
+              >
+                <MenuItem value="onDay">
+                  {__('Monthly on day')} {new Date(eventData.startTime).getDate()}{language === LANGUAGE.UK && '-го числа'}
+                </MenuItem>
+                {daysCountFromMonthStart !== 5 && (
+                  <MenuItem value={`${daysCountFromMonthStart}${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
+                    {__(`Monthly on the`)} {__(ORDINAL_NUMBERS[daysCountFromMonthStart] + ' ')}{daysCountFromMonthStart === 3 ? __(EnglishDays[indexOfDay] + '') : __(EnglishDays[indexOfDay])}
+                  </MenuItem>
+                )}
+                {daysCountToMonthEnd === 0 && (
+                  <MenuItem value={`-1${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
+                    {__('Monthly on the')} {__('last ')}{__(EnglishDays[indexOfDay] + ' ')}
+                  </MenuItem>
+                )} +
+                {/*{daysCountToMonthEnd}*/}
+              </Select>
             )}
             <p style={{ color: eventData.repeatEnabled ? 'black' : 'rgba(0,0,0,0.38)' }}>{__('Ends')}</p>
             <FormControlLabel

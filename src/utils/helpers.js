@@ -165,6 +165,11 @@ export const getOtherEventHasSeparateCollisionsBefore = (otherEvent, collisionLi
   )
 );
 
+export const countCertainDay = (dayOfWeek, dateFrom, dateTo) => {
+  const daysBetweenDates = 1 + Math.round((dateTo-dateFrom)/(24*3600*1000));
+  return Math.floor( ( daysBetweenDates + (dateFrom.getDay()+6-dayOfWeek) % 7 ) / 7 );
+}
+
 export const getGoogleTokenExpired = () => (
   !loadStorageItem('googleOAuthToken') || (new Date(loadStorageItem('googleOAuthTokenExpireDate')) < new Date())
 );

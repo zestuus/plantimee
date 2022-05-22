@@ -33,6 +33,13 @@ export const REPEAT_FREQ_LABEL = Object.freeze({
   [REPEAT_FREQ.YEARLY]: 'year',
 });
 
+export const ORDINAL_NUMBERS = Object.freeze({
+  1: 'first',
+  2: 'second',
+  3: 'third',
+  4: 'fourth',
+})
+
 export const AVAILABILITY_STATUS = Object.freeze({
   CAN_ATTEND: 'CAN_ATTEND',
   BE_LATE: 'BE_LATE',
