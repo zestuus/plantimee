@@ -170,6 +170,28 @@ export const countCertainDay = (dayOfWeek, dateFrom, dateTo) => {
   return Math.floor( ( daysBetweenDates + (dateFrom.getDay()+6-dayOfWeek) % 7 ) / 7 );
 }
 
+export const isMonthlyByDayValue = (value) => value && !isNaN(value.slice(0, -2)) && EnglishDays.find(day => day.slice(0, 2).toUpperCase() === value.slice(-2));
+
+export const getPluralizePeriodsSuffix = (interval) => {
+  if (interval === 1) {
+    return '';
+  } else if ((5 <= interval && interval <= 20) || (5 <= (interval % 10) && (interval % 10) <= 9) || ((interval % 10) === 0)) {
+    return 's ';
+  } else if ((2 <= interval && interval <= 4) || (2 <= (interval % 10) && (interval % 10) <= 4)) {
+    return 's';
+  } else if ((interval % 10) === 1) {
+    return 's  ';
+  }
+};
+
+export const getDayOfMonth = (byday) => {
+  const dayNumOfMonth = parseInt(byday.slice(0,-2), 10);
+  const dOfWeek = byday.slice(-2);
+  const dOfWeekIndex = EnglishDays.findIndex(day => day.slice(0, 2).toUpperCase() === dOfWeek);
+
+  return [dayNumOfMonth, dOfWeekIndex];
+};
+
 export const getGoogleTokenExpired = () => (
   !loadStorageItem('googleOAuthToken') || (new Date(loadStorageItem('googleOAuthTokenExpireDate')) < new Date())
 );

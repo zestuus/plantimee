@@ -23,7 +23,7 @@ import {
   countCertainDay,
   formatDateString,
   getDayBounds,
-  getGoogleTokenExpired,
+  getGoogleTokenExpired, getPluralizePeriodsSuffix, isMonthlyByDayValue,
   roundFloat
 } from '../../utils/helpers';
 import {
@@ -326,18 +326,6 @@ const Settings = ({
 
   const EventDateTimePicker = (eventData && eventData.isFullDay) ? DatePicker : DateTimePicker ;
 
-  const getPluralizePeriodsSuffix = (interval) => {
-    if (interval === 1) {
-      return '';
-    } else if ((5 <= interval && interval <= 20) || (5 <= (interval % 10) && (interval % 10) <= 9) || ((interval % 10) === 0)) {
-      return 's ';
-    } else if ((2 <= interval && interval <= 4) || (2 <= (interval % 10) && (interval % 10) <= 4)) {
-      return 's';
-    } else if ((interval % 10) === 1) {
-      return 's  ';
-    }
-  };
-
   const dayOfWeek = eventData && eventData.startTime && new Date(eventData.startTime).getDay();
   const indexOfDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const defaultDay = EnglishDays[indexOfDay] ? (EnglishDays[indexOfDay].slice(0, 2).toUpperCase()) : '';
@@ -369,8 +357,6 @@ const Settings = ({
   }
   const daysCountFromMonthStart = eventData && countCertainDay(dayOfWeek, startOfMonth, new Date(eventData.startTime));
   const daysCountToMonthEnd = eventData && countCertainDay(dayOfWeek, new Date(eventData.startTime), endOfMonth) - 1;
-
-  const isMonthlyByDayValue = (value) => value && !isNaN(value.slice(0, -2)) && EnglishDays.find(day => day.slice(0, 2).toUpperCase() === value.slice(-2));
 
   return (
     <Container container direction="column" justifyContent="flex-start">
@@ -810,18 +796,20 @@ const Settings = ({
                     checked={!!eventData.repeatEnabled}
                     onBlur={() => handleBlur('repeatEnabled')}
                     onChange={(event) => {
-                      const otherFields = {};
-                      if (event.target.checked) {
-                        otherFields.repeatInterval = eventData.repeatEnabled || 1;
-                        otherFields.repeatFreq = eventData.repeatFreq || REPEAT_FREQ.WEEKLY;
-                        otherFields.repeatByDay = eventData.repeatByDay || defaultDay;
-                      }
+                      if (!isInvitedEvent) {
+                        const otherFields = {};
+                        if (event.target.checked) {
+                          otherFields.repeatInterval = eventData.repeatEnabled || 1;
+                          otherFields.repeatFreq = eventData.repeatFreq || REPEAT_FREQ.WEEKLY;
+                          otherFields.repeatByDay = eventData.repeatByDay || defaultDay;
+                        }
 
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        ...otherFields,
-                        repeatEnabled: event.target.checked,
-                      });
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          ...otherFields,
+                          repeatEnabled: event.target.checked,
+                        });
+                      }
                     }}
                   />
                 }
@@ -832,6 +820,7 @@ const Settings = ({
                   {(eventData.repeatInterval === 1 ? __('Repeat every') : __('Repeat every ')).trim()}
                 </p>
                 <Input
+                  {...readOnly}
                   type="number"
                   disabled={!eventData.repeatEnabled}
                   style={{ width: 60, marginRight: 5 }}
@@ -839,10 +828,12 @@ const Settings = ({
                   value={eventData.repeatInterval || 1}
                   onBlur={() => handleBlur('repeatInterval')}
                   onChange={(event) => {
-                    onChangeOwnEventLocally({
-                      ...eventData,
-                      repeatInterval: Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1),
-                    });
+                    if (!isInvitedEvent) {
+                      onChangeOwnEventLocally({
+                        ...eventData,
+                        repeatInterval: Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1),
+                      });
+                    }
                   }}
                 />
                 <Select
@@ -850,18 +841,20 @@ const Settings = ({
                   value={eventData.repeatFreq || REPEAT_FREQ.WEEKLY}
                   onBlur={() => handleBlur('repeatFreq')}
                   onChange={(event) => {
-                    if (eventDataBackup && eventDataBackup.repeatFreq === event.target.value) {
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        repeatFreq: event.target.value,
-                        repeatByDay: eventDataBackup.repeatByDay || event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
-                      });
-                    } else {
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        repeatFreq: event.target.value,
-                        repeatByDay: event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
-                      });
+                    if (!isInvitedEvent) {
+                      if (eventDataBackup && eventDataBackup.repeatFreq === event.target.value) {
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          repeatFreq: event.target.value,
+                          repeatByDay: eventDataBackup.repeatByDay || event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
+                        });
+                      } else {
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          repeatFreq: event.target.value,
+                          repeatByDay: event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
+                        });
+                      }
                     }
                   }}
                 >
@@ -879,7 +872,7 @@ const Settings = ({
                   onBlur={() => handleBlur('repeatByDay')}
                   onChange={(e, value) => {
                     // todo: update event start day when event start date's day of week is missing in byday field
-                    if (value.length) {
+                    if (value.length && !isInvitedEvent) {
                       onChangeOwnEventLocally({
                         ...eventData,
                         repeatByDay: value.join(','),
@@ -904,10 +897,12 @@ const Settings = ({
                   value={isMonthlyByDayValue(eventData.repeatByDay) ? eventData.repeatByDay : 'onDay'}
                   onBlur={() => handleBlur('repeatByDay')}
                   onChange={(event) => {
-                    onChangeOwnEventLocally({
-                      ...eventData,
-                      repeatByDay: event.target.value,
-                    });
+                    if (!isInvitedEvent) {
+                      onChangeOwnEventLocally({
+                        ...eventData,
+                        repeatByDay: event.target.value,
+                      });
+                    }
                   }}
                 >
                   <MenuItem value="onDay">
@@ -937,11 +932,13 @@ const Settings = ({
                       handleBlur('repeatCount')
                     }}
                     onChange={() => {
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        repeatUntil: null,
-                        repeatCount: null,
-                      });
+                      if (!isInvitedEvent) {
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          repeatUntil: null,
+                          repeatCount: null,
+                        });
+                      }
                     }}
                   />
                 }
@@ -959,29 +956,32 @@ const Settings = ({
                         handleBlur('repeatCount')
                       }}
                       onChange={() => {
-                        const startDate = new Date(eventData.startTime);
-                        switch (eventData.repeatFreq) {
-                          case REPEAT_FREQ.DAILY:
-                            startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1));
-                            break;
-                          case REPEAT_FREQ.WEEKLY:
-                            startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1) * 7);
-                            break;
-                          case REPEAT_FREQ.MONTHLY:
-                            startDate.setMonth(startDate.getMonth() + (eventData.repeatInterval || 1));
-                            break;
-                          case REPEAT_FREQ.YEARLY:
-                            startDate.setFullYear(startDate.getFullYear() + (eventData.repeatInterval || 1));
-                            break;
-                          default: break;
-                        }
-                        const { dayEnd } = getDayBounds(startDate);
+                        if (!isInvitedEvent) {
+                          const startDate = new Date(eventData.startTime);
+                          switch (eventData.repeatFreq) {
+                            case REPEAT_FREQ.DAILY:
+                              startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1));
+                              break;
+                            case REPEAT_FREQ.WEEKLY:
+                              startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1) * 7);
+                              break;
+                            case REPEAT_FREQ.MONTHLY:
+                              startDate.setMonth(startDate.getMonth() + (eventData.repeatInterval || 1));
+                              break;
+                            case REPEAT_FREQ.YEARLY:
+                              startDate.setFullYear(startDate.getFullYear() + (eventData.repeatInterval || 1));
+                              break;
+                            default:
+                              break;
+                          }
+                          const { dayEnd } = getDayBounds(startDate);
 
-                        onChangeOwnEventLocally({
-                          ...eventData,
-                          repeatUntil: dayEnd,
-                          repeatCount: null,
-                        });
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            repeatUntil: dayEnd,
+                            repeatCount: null,
+                          });
+                        }
                       }}
                     />
                   }
@@ -997,14 +997,16 @@ const Settings = ({
                     onBlur={() => handleBlur('repeatUntil')}
                     onClose={() => handleBlur('repeatUntil')}
                     onChange={(newDate) => {
-                      const { dayEnd } = getDayBounds(newDate);
+                      if (!isInvitedEvent) {
+                        const { dayEnd } = getDayBounds(newDate);
 
-                      console.log(dayEnd);
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        repeatUntil: dayEnd,
-                        repeatCount: null,
-                      });
+                        console.log(dayEnd);
+                        onChangeOwnEventLocally({
+                          ...eventData,
+                          repeatUntil: dayEnd,
+                          repeatCount: null,
+                        });
+                      }
                     }}
                   />
                 </MuiPickersUtilsProvider>

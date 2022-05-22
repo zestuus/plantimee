@@ -9,9 +9,17 @@ import ScheduleIcon from '@material-ui/icons/Schedule';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 
-import { formatEventTime } from '../../utils/helpers';
+import { formatEventTime, getDayOfMonth, getPluralizePeriodsSuffix } from '../../utils/helpers';
 import withSettings from '../HOCs/withSettings';
-import {AVAILABILITY_COLOR, AVAILABILITY_LABEL} from "../../constants/enums";
+import {
+  AVAILABILITY_COLOR,
+  AVAILABILITY_LABEL,
+  LANGUAGE, ORDINAL_NUMBERS,
+  REPEAT_FREQ,
+  REPEAT_FREQ_LABEL
+} from "../../constants/enums";
+import { Replay } from "@material-ui/icons";
+import { EnglishDays, UkrainianDays } from "../../constants/config";
 
 export const EventCard = styled(Grid)`
   border-radius: 10px;
@@ -70,6 +78,10 @@ export const BubbleBlock = styled.p`
   ${BubbleStyles}
 `;
 
+const ReplayIcon = styled(Replay)`
+  font-size: 12px;
+`
+
 const Event = ({
  invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent, militaryTime, language, translate: __
 }) => {
@@ -86,6 +98,10 @@ const Event = ({
     address,
     isFullDay,
     availability,
+    repeatEnabled,
+    repeatInterval,
+    repeatFreq,
+    repeatByDay,
     organizer: eventOrganizer,
   } = eventData;
   const { username: organizer } = eventOrganizer || {};
@@ -138,6 +154,32 @@ const Event = ({
               <ScheduleIcon fontSize="inherit" /> {dateString}
             </BubbleInline>
           </BubbleWrapper>
+        )}
+        {!!repeatEnabled && (
+          <BubbleBlock>
+            <ReplayIcon />
+            {(repeatInterval === 1 ? __('Repeat every') : __('Repeat every ')).trim()} {repeatInterval || 1} {__(REPEAT_FREQ_LABEL[repeatFreq] + getPluralizePeriodsSuffix(repeatInterval)).trim()}
+          </BubbleBlock>
+        )}
+        {!!repeatEnabled && repeatByDay && repeatFreq === REPEAT_FREQ.WEEKLY && (
+          <BubbleBlock>
+            {repeatByDay.split(',').filter(Boolean).map(day => {
+              const index = EnglishDays.findIndex(d => day === d.slice(0,2).toUpperCase());
+
+              return language === LANGUAGE.EN ? EnglishDays[index] : UkrainianDays[index];
+            }).join(', ')}
+          </BubbleBlock>
+        )}
+        {!!repeatEnabled && repeatFreq === REPEAT_FREQ.MONTHLY && (
+          <BubbleBlock>
+            {repeatByDay === '' ? (
+              `${__('Monthly on day')} ${new Date(startTime).getDate()}${language === LANGUAGE.UK && '-го числа'}`
+            ) : ((getDayOfMonth(repeatByDay)[0] === -1) ? (
+              `${__('Monthly on the')} ${__('last ')}${__(EnglishDays[getDayOfMonth(repeatByDay)[1]] + ' ')}`
+            ) : (
+              `${__('Monthly on the')} ${__(ORDINAL_NUMBERS[getDayOfMonth(repeatByDay)[0]] + ' ')}${getDayOfMonth(repeatByDay)[0] === 3 ? __(EnglishDays[getDayOfMonth(repeatByDay)[1]] + '') : __(EnglishDays[getDayOfMonth(repeatByDay)[1]])}`
+            ))}
+          </BubbleBlock>
         )}
         {!!(latitude && longitude) && (
           <BubbleBlock>

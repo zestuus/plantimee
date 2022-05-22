@@ -1,3 +1,4 @@
+const { EnglishDays } = require("../constants/config");
 const getDayBounds = (date = new Date()) => {
   const dayStart = new Date(date);
   dayStart.setHours(0)
@@ -13,7 +14,8 @@ const getDayBounds = (date = new Date()) => {
   return { dayStart, dayEnd };
 }
 
-const getEventInstance = (event, startTime, endTime, attendees) => ({
+const getEventInstance = (event, startTime, endTime, attendees, extraFields) => ({
+  ...extraFields,
   recurrentEventId: event.id,
   startTime,
   endTime,
@@ -43,4 +45,12 @@ const countCertainDay = (dayOfWeek, dateFrom, dateTo) => {
   return Math.floor( ( daysBetweenDates + (dateFrom.getDay()+6-dayOfWeek) % 7 ) / 7 );
 }
 
-module.exports = { getDayBounds, getEventInstance, countCertainDay };
+const getDayOfMonth = (byday) => {
+  const dayNumOfMonth = parseInt(byday.slice(0,-2), 10);
+  const dOfWeek = byday.slice(-2);
+  const dOfWeekIndex = EnglishDays.findIndex(day => day.slice(0, 2).toUpperCase() === dOfWeek);
+
+  return [dayNumOfMonth, dOfWeekIndex];
+};
+
+module.exports = { getDayBounds, getEventInstance, countCertainDay, getDayOfMonth };
