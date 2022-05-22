@@ -4,7 +4,9 @@ const { Op } = require("sequelize");
 
 const db = require('../../db/models');
 const { privateRoute } = require('../utils/middlewares');
-const { AVAILABILITY_STATUS } = require("../constants/enums");
+const { EnglishDays } = require("../constants/config");
+const { AVAILABILITY_STATUS, REPEAT_FREQ } = require("../constants/enums");
+const { getDayBounds, getEventInstance, countCertainDay } = require("../utils/helpers");
 
 const router = express.Router();
 
@@ -59,7 +61,7 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
     event.repeatEnabled = repeatEnabled;
     event.repeatFreq = repeatFreq;
     event.repeatInterval = repeatInterval;
-    event.repeatByDay = repeatByDay;
+    event.repeatByDay = repeatByDay === 'onDay' ? '' : repeatByDay;
     event.repeatUntil = repeatUntil;
     event.repeatCount = repeatCount;
     event.latitude = latitude;
@@ -99,7 +101,7 @@ router.get('/list-own', privateRoute, async (req, res) => {
       return res.status(403).send("Invalid token!");
     }
 
-    const {own_events} = user;
+    const { own_events } = user;
     const attendeeIds = own_events.reduce((user_ids, event) => ([
       ...user_ids,
       ...event.attendees.map(attendee => attendee.id),
@@ -120,7 +122,7 @@ router.get('/list-own', privateRoute, async (req, res) => {
       ],
     });
 
-    const eventsWithAttendeesStatuses = own_events.map(event => {
+    const eventsWithAttendeesStatuses = own_events.reduce((acc, event) => {
       const attendees = event.attendees.map(attendee => {
         const user = users.find(user => user.id === attendee.id);
         const [start, end] = [new Date(event.startTime), new Date(event.endTime)];
@@ -135,9 +137,173 @@ router.get('/list-own', privateRoute, async (req, res) => {
 
       attendees.unshift(user);
       event.setDataValue('attendees', attendees);
+      acc.push(event);
 
-      return event;
-    });
+      if (event.repeatEnabled && event.repeatFreq) {
+        console.log('repeatFreq', event.repeatFreq);
+        console.log('repeatByDay', event.repeatByDay);
+        console.log('repeatUntil', event.repeatUntil);
+        console.log('repeatInterval', event.repeatInterval);
+        console.log('repeatCount', event.repeatCount);
+
+        let until;
+        if (event.repeatUntil) {
+          ({ dayEnd: until } = getDayBounds(new Date(event.repeatUntil)));
+        } else if (event.repeatCount) {
+          const startDate = new Date(event.startTime);
+          switch (event.repeatFreq) {
+            case REPEAT_FREQ.DAILY:
+              startDate.setDate(startDate.getDate() + (event.repeatInterval || 1) * event.repeatCount);
+              break;
+            case REPEAT_FREQ.WEEKLY:
+              startDate.setDate(startDate.getDate() + (event.repeatInterval || 1) * 7 * event.repeatCount);
+              break;
+            case REPEAT_FREQ.MONTHLY:
+              startDate.setMonth(startDate.getMonth() + (event.repeatInterval || 1) * event.repeatCount);
+              break;
+            case REPEAT_FREQ.YEARLY:
+              startDate.setFullYear(startDate.getFullYear() + (event.repeatInterval || 1) * event.repeatCount);
+              break;
+            default: break;
+          }
+          ({ dayEnd: until } = getDayBounds(startDate));
+        } else {
+          const nextYear = new Date(event.startTime);
+          switch (event.repeatFreq) {
+            case REPEAT_FREQ.DAILY:
+              nextYear.setFullYear(nextYear.getFullYear() + 1);
+              break;
+            case REPEAT_FREQ.WEEKLY:
+              nextYear.setFullYear(nextYear.getFullYear() + 5);
+              break;
+            case REPEAT_FREQ.MONTHLY:
+              nextYear.setFullYear(nextYear.getFullYear() + 20);
+              break;
+            case REPEAT_FREQ.YEARLY:
+              nextYear.setFullYear(nextYear.getFullYear() + 50);
+              break;
+            default: break;
+          }
+          ({ dayEnd: until } = getDayBounds(nextYear));
+        }
+        const since = new Date(event.startTime);
+        const startDayOfWeek = since.getDay();
+        const startIndexOfDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+        const eventDuration = new Date(event.endTime) - new Date(event.startTime);
+
+        const getDayOfMonth = (date, byday) => {
+          const dayNumOfMonth = parseInt(byday.slice(0,-2), 10);
+          const dOfWeek = byday.slice(-2);
+          const dOfWeekIndex = EnglishDays.findIndex(day => day.slice(0, 2).toUpperCase() === dOfWeek);
+
+          return [dayNumOfMonth, dOfWeekIndex];
+        };
+        const dayOfMonth = (event.repeatFreq === REPEAT_FREQ.MONTHLY) ? (
+          event.repeatByDay === '' ? since.getDate() : getDayOfMonth(since, event.repeatByDay)
+        ) : null;
+        const daysOfWeek = (event.repeatFreq === REPEAT_FREQ.WEEKLY) ? (
+          event.repeatByDay
+            .split(',')
+            .map(dayTxt => EnglishDays.findIndex(el => dayTxt === el.slice(0,2).toUpperCase()))
+        ) : [];
+        daysOfWeek.sort();
+        console.log(daysOfWeek);
+
+        switch (event.repeatFreq) {
+          case REPEAT_FREQ.DAILY:
+            if (event.repeatInterval > 1) {
+              since.setDate(since.getDate() + 1);
+            }
+            since.setDate(since.getDate() + 1);
+            break;
+          case REPEAT_FREQ.WEEKLY:
+            if (event.repeatInterval > 1) {
+              since.setDate(since.getDate() + (event.repeatInterval - 1) * 7);
+            }
+            since.setDate(since.getDate() + 1);
+            break;
+          case REPEAT_FREQ.MONTHLY:
+            since.setMonth(since.getMonth() + event.repeatInterval);
+            break;
+          case REPEAT_FREQ.YEARLY:
+            since.setFullYear(since.getFullYear() + event.repeatInterval);
+            break;
+          default: break;
+        }
+
+        while (since < until) {
+          const dayOfWeek = since.getDay();
+          const indexOfDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          let startTime;
+          let endTime;
+          switch (event.repeatFreq) {
+            case REPEAT_FREQ.DAILY:
+              startTime = since.toISOString();
+              endTime = new Date(since.getTime() + eventDuration).toISOString();
+
+              acc.push(getEventInstance(event, startTime, endTime, attendees));
+
+              since.setDate(since.getDate() + (event.repeatInterval || 1));
+              break;
+            case REPEAT_FREQ.WEEKLY:
+              // todo: if weekly and byday is null then skip unnecessary loop
+              // since.setDate(since.getDate() + (event.repeatInterval || 1) * 7);
+              if (daysOfWeek.includes(indexOfDay)) {
+                startTime = since.toISOString();
+                endTime = new Date(since.getTime() + eventDuration).toISOString();
+
+                acc.push(getEventInstance(event, startTime, endTime, attendees));
+              }
+              if (startIndexOfDay === indexOfDay && event.repeatInterval > 1) {
+                since.setDate(since.getDate() + (event.repeatInterval - 1) * 7)
+              }
+              since.setDate(since.getDate() + 1);
+              break;
+            case REPEAT_FREQ.MONTHLY:
+              const startOfMonth = new Date(since.toISOString().slice(0,7));
+              const endOfMonth = new Date(since.toISOString().slice(0,7));
+              endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+              endOfMonth.setDate(endOfMonth.getDate() - 1);
+              const daysCountFromMonthStart = countCertainDay(dayOfWeek, startOfMonth, since);
+              const daysCountToMonthEnd = countCertainDay(dayOfWeek, since, endOfMonth) - 1;
+
+              console.log();
+              console.log('since', since);
+              console.log('daysCountFromMonthStart', daysCountFromMonthStart);
+              console.log('indexOfDay', indexOfDay);
+              console.log('dayOfMonth', dayOfMonth);
+              console.log('since.getDate()', since.getDate());
+              if ((dayOfMonth === since.getDate()) || (dayOfMonth.length && indexOfDay === dayOfMonth[1] && ((dayOfMonth[0] === -1 && daysCountToMonthEnd === 0) || (dayOfMonth[0] === daysCountFromMonthStart)))) {
+                startTime = since.toISOString();
+                endTime = new Date(since.getTime() + eventDuration).toISOString();
+
+                console.log(startTime, endTime);
+
+                acc.push(getEventInstance(event, startTime, endTime, attendees));
+                if (dayOfMonth !== since.getDate()) {
+                  since.setDate(new Date(event.startTime).getDate());
+                }
+                since.setMonth(since.getMonth() + event.repeatInterval);
+              } else {
+                since.setDate(since.getDate() + 1);
+              }
+              break;
+            case REPEAT_FREQ.YEARLY:
+              startTime = since.toISOString();
+              endTime = new Date(since.getTime() + eventDuration).toISOString();
+
+              console.log(startTime, endTime);
+
+              acc.push(getEventInstance(event, startTime, endTime, attendees));
+              since.setFullYear(since.getFullYear() + event.repeatInterval);
+              break;
+            default: break;
+          }
+        }
+      }
+
+      return acc;
+    }, []);
 
     res.send(eventsWithAttendeesStatuses);
   } catch (e) {

@@ -164,16 +164,22 @@ const Events = ({
     handleReload();
   }
 
-  const filterEventByDate = (event) => !filterByDate || (startShowDate < new Date(event.endTime) && new Date(event.startTime) < endShowDate)
+  const filterEventByDate = (event) => !event.recurrentEventId && (
+    !filterByDate || (
+      event.repeatEnabled && ((!event.repeatCount && !event.repeatUntil) || (event.repeatUntil && (startShowDate < new Date(event.repeatUntil)) ))
+    ) || (startShowDate < new Date(event.endTime) && new Date(event.startTime) < endShowDate)
+  );
   const invitedEventsToShow = invitedEvents ? invitedEvents.filter(filterEventByDate) : [];
   const [ownActive, ownFullDay, ownCompleted] = (ownEvents || []).reduce((grouped, event) => {
-    if (event.completed) {
-      grouped[2].push(event);
-    } else if (filterEventByDate(event)) {
-      if (event.isFullDay) {
-        grouped[1].push(event);
-      } else {
-        grouped[0].push(event);
+    if (!event.recurrentEventId) {
+      if (event.completed) {
+        grouped[2].push(event);
+      } else if (filterEventByDate(event)) {
+        if (event.isFullDay) {
+          grouped[1].push(event);
+        } else {
+          grouped[0].push(event);
+        }
       }
     }
 

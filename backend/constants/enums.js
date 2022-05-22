@@ -6,4 +6,11 @@ const AVAILABILITY_STATUS = Object.freeze({
   CANNOT_ATTEND: 'CANNOT_ATTEND',
 });
 
-module.exports = { AVAILABILITY_STATUS };
+const REPEAT_FREQ = Object.freeze({
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY',
+  YEARLY: 'YEARLY',
+});
+
+module.exports = { AVAILABILITY_STATUS, REPEAT_FREQ };

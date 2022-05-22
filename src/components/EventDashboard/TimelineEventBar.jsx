@@ -133,8 +133,12 @@ const TimelineEventBar = ({
         $zIndex={Math.max(zIndex, 0)}
         bgColor={bgColor}
         onClick={() => {
-          setChosenEvent(eventData.id);
-          setColumnShown('settings')
+          if (eventData.recurrentEventId) {
+            setChosenEvent(eventData.recurrentEventId);
+          } else {
+            setChosenEvent(eventData.id);
+          }
+          setColumnShown('settings');
         }}
       >
         {height>=35 ? (<React.Fragment>

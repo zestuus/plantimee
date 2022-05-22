@@ -302,7 +302,7 @@ const Settings = ({
   }
 
   const handleBlur = (key) => {
-    if (!isInvitedEvent && (!eventDataBackup || (eventData && eventData[key] !== eventDataBackup[key]))) {
+    if (!isInvitedEvent && (!eventDataBackup || (eventData && eventData[key] !== eventDataBackup[key] && !eventData.recurrentEventId))) {
       onSaveChangesOwnEvent(eventData);
     }
   }
@@ -364,8 +364,8 @@ const Settings = ({
     }
     ({ dayEnd: defaultUntilDate } = getDayBounds(startDate));
 
-    endOfMonth.setMonth(endOfMonth.getMonth() + 1)
-    endOfMonth.setDate(endOfMonth.getDate() - 1)
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+    endOfMonth.setDate(endOfMonth.getDate() - 1);
   }
   const daysCountFromMonthStart = eventData && countCertainDay(dayOfWeek, startOfMonth, new Date(eventData.startTime));
   const daysCountToMonthEnd = eventData && countCertainDay(dayOfWeek, new Date(eventData.startTime), endOfMonth) - 1;
@@ -642,7 +642,8 @@ const Settings = ({
                   onChange={(value) => {
                     if (eventData.endTime) {
                       let startDate = new Date(eventData.endTime);
-                      if (value && !(value instanceof Date)) {
+
+                      if (value && (value instanceof Date)) {
                         startDate = new Date(value);
                         startDate.setDate(startDate.getDate() + daysLong);
                         startDate.setHours(startDate.getHours() + hoursLong);
@@ -877,10 +878,13 @@ const Settings = ({
                   value={(eventData.repeatByDay || '').split(',').filter(Boolean)}
                   onBlur={() => handleBlur('repeatByDay')}
                   onChange={(e, value) => {
-                    onChangeOwnEventLocally({
-                      ...eventData,
-                      repeatByDay: value.join(','),
-                    });
+                    // todo: update event start day when event start date's day of week is missing in byday field
+                    if (value.length) {
+                      onChangeOwnEventLocally({
+                        ...eventData,
+                        repeatByDay: value.join(','),
+                      });
+                    }
                   }}
                 >
                   {EnglishDays.map((day, index) => (
@@ -918,8 +922,7 @@ const Settings = ({
                     <MenuItem value={`-1${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
                       {__('Monthly on the')} {__('last ')}{__(EnglishDays[indexOfDay] + ' ')}
                     </MenuItem>
-                  )} +
-                  {/*{daysCountToMonthEnd}*/}
+                  )}
                 </Select>
               )}
               <p style={{ color: eventData.repeatEnabled ? 'black' : 'rgba(0,0,0,0.38)' }}>{__('Ends')}</p>
