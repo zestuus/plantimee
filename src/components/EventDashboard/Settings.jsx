@@ -823,7 +823,7 @@ const Settings = ({
               />
               <Select
                 disabled={!eventData.repeatEnabled}
-                value={eventData.repeatFreq || ''}
+                value={eventData.repeatFreq || REPEAT_FREQ.WEEKLY}
                 onBlur={() => handleBlur('repeatFreq')}
                 onChange={(event) => {
                   if (eventDataBackup && eventDataBackup.repeatFreq === event.target.value) {

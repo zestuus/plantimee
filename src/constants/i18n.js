@@ -464,7 +464,7 @@ const DICTIONARY = {
     [LANGUAGE.UK]: 'Ніколи',
   },
   'On': {
-    [LANGUAGE.UK]: 'На',
+    [LANGUAGE.UK]: 'В дату:',
   },
   'After': {
     [LANGUAGE.UK]: 'Через',
