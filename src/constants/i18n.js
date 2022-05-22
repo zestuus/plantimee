@@ -148,6 +148,12 @@ const DICTIONARY = {
   'End date&time': {
     [LANGUAGE.UK]: "Дата і час завершення",
   },
+  'Start date': {
+    [LANGUAGE.UK]: "Дата початку",
+  },
+  'End date': {
+    [LANGUAGE.UK]: "Дата завершення",
+  },
   'Days': {
     [LANGUAGE.UK]: "Дні",
   },
@@ -470,16 +476,16 @@ const DICTIONARY = {
     [LANGUAGE.UK]: 'Через',
   },
   'occurrence': {
-    [LANGUAGE.UK]: 'подію',
+    [LANGUAGE.UK]: 'повторення',
   },
   'occurrences': {
-    [LANGUAGE.UK]: 'події',
+    [LANGUAGE.UK]: 'повторення',
   },
   'occurrences ': {
-    [LANGUAGE.UK]: 'подій',
+    [LANGUAGE.UK]: 'повторень',
   },
   'occurrences  ': {
-    [LANGUAGE.UK]: 'подію',
+    [LANGUAGE.UK]: 'повторення',
   },
   'Monthly on day': {
     [LANGUAGE.UK]: 'Щомісяця',

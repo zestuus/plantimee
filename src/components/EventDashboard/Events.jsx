@@ -135,28 +135,7 @@ const Events = ({
 
       if (result) {
         const { items } = result;
-        // TODO: implement event reccurence and allow to import such events
-        console.log(items);
-        // const reccurentEvents = items.filter(event => event.recurrence);
-        // const neverEnds = reccurentEvents.find(event => (
-        //   !event.recurrence[0].includes('COUNT') && !event.recurrence[0].includes('UNTIL')
-        // ));
-        // const ends = reccurentEvents.find(event => (
-        //   event.recurrence[0].includes('COUNT') || event.recurrence[0].includes('UNTIL')
-        // ));
-        // const {
-        //   id: neverEndsId,
-        //   organizer: { email: neverEndsCalendarId },
-        // } = neverEnds;
-        // const {
-        //   id: endsId,
-        //   organizer: { email: endsCalendarId },
-        // } = ends;
-        // console.log(await listEventInstances(neverEndsCalendarId, neverEndsId));
-        // console.log(await listEventInstances(endsCalendarId, endsId));
-
-        const filterReccurentEventsTemporary = items.filter(event => !event.recurrence);
-        const filterCanceledEvents = filterReccurentEventsTemporary.filter(event => event.status !== 'cancelled');
+        const filterCanceledEvents = items.filter(event => event.status !== 'cancelled');
         const plantimeeEvents = await Promise.all(filterCanceledEvents.map(googleCalendarEventToPlantimeeEvent));
 
         const importResult = await importEvents(plantimeeEvents);

@@ -174,6 +174,12 @@ export const getGoogleTokenExpired = () => (
   !loadStorageItem('googleOAuthToken') || (new Date(loadStorageItem('googleOAuthTokenExpireDate')) < new Date())
 );
 
+export const getRRuleField = (rrule, field) => {
+  const rightHalf = rrule.split(field + '=')[1];
+  return rightHalf && rightHalf.split(';')[0]
+};
+export const formatRRuleDate = (date) => `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,11)}:${date.slice(11,13)}:${date.slice(13)}`;
+
 export const googleCalendarEventToPlantimeeEvent = async(event) => {
   const {
     id: googleId,
@@ -185,8 +191,24 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     creator: { email },
     organizer: { email: googleCalendarId },
     attendees,
-    location
+    location,
+    recurrence,
   } = event;
+
+  let repeat = {};
+  if (recurrence) {
+    const [rrule] = recurrence;
+
+    repeat.repeatEnabled = true;
+    repeat.repeatFreq = getRRuleField(rrule, 'FREQ');
+    repeat.repeatByDay = getRRuleField(rrule, 'BYDAY');
+    repeat.repeatUntil = getRRuleField(rrule, 'UNTIL');
+    repeat.repeatUntil = repeat.repeatUntil && formatRRuleDate(repeat.repeatUntil);
+    repeat.repeatInterval = getRRuleField(rrule, 'INTERVAL');
+    repeat.repeatInterval = repeat.repeatInterval && parseInt(repeat.repeatInterval, 10);
+    repeat.repeatCount = getRRuleField(rrule, 'COUNT');
+    repeat.repeatCount = repeat.repeatCount && parseInt(repeat.repeatCount, 10);
+  }
 
   let venue = {};
   if (location) {
@@ -211,6 +233,7 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
 
   return {
     ...venue,
+    ...repeat,
     name,
     description,
     url,
