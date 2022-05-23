@@ -173,7 +173,7 @@ export const countCertainDay = (dayOfWeek, dateFrom, dateTo) => {
 export const isMonthlyByDayValue = (value) => value && !isNaN(value.slice(0, -2)) && EnglishDays.find(day => day.slice(0, 2).toUpperCase() === value.slice(-2));
 
 export const getPluralizePeriodsSuffix = (interval) => {
-  if (interval === 1) {
+  if (!interval || interval === 1) {
     return '';
   } else if ((5 <= interval && interval <= 20) || (5 <= (interval % 10) && (interval % 10) <= 9) || ((interval % 10) === 0)) {
     return 's ';

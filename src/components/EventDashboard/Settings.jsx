@@ -817,7 +817,7 @@ const Settings = ({
               />)}
               <Grid container alignItems="center">
                 <p style={{ marginRight: 5, color: eventData.repeatEnabled ? 'black' : 'rgba(0,0,0,0.38)' }}>
-                  {(eventData.repeatInterval === 1 ? __('Repeat every') : __('Repeat every ')).trim()}
+                  {((!eventData.repeatInterval || eventData.repeatInterval === 1) ? __('Repeat every') : __('Repeat every ')).trim()}
                 </p>
                 <Input
                   {...readOnly}
@@ -1051,7 +1051,9 @@ const Settings = ({
                   {__('occurrence' + getPluralizePeriodsSuffix(eventData.repeatCount || 1)).trim()}
                 </p>
               </Grid>
-            <SettingsBlockTitle>{__('Venue')}</SettingsBlockTitle>
+            {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && (
+              <SettingsBlockTitle>{__('Venue')}</SettingsBlockTitle>
+            )}
             {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && (
               <Grid container direction="row" justifyContent="space-between">
                 <HalfWidthInput

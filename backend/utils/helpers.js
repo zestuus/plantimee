@@ -14,7 +14,7 @@ const getDayBounds = (date = new Date()) => {
   return { dayStart, dayEnd };
 }
 
-const getEventInstance = (event, startTime, endTime, attendees, extraFields) => ({
+const getEventInstance = (event, startTime, endTime, attendees, extraFields = {}) => ({
   ...extraFields,
   recurrentEventId: event.id,
   startTime,
