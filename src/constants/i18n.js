@@ -196,8 +196,8 @@ const DICTIONARY = {
   'Verification code': {
     [LANGUAGE.UK]: "Код підтвердження",
   },
-  'Create new': {
-    [LANGUAGE.UK]: "Створити нову",
+  'Create': {
+    [LANGUAGE.UK]: "Створити",
   },
   'Remove': {
     [LANGUAGE.UK]: "Видалити",
@@ -358,8 +358,8 @@ const DICTIONARY = {
   'try to choose another calendar': {
     [LANGUAGE.UK]: 'спробуйте вибрати інший календар',
   },
-  'Sync with': {
-    [LANGUAGE.UK]: 'Синхр. з',
+  'Sync with Google': {
+    [LANGUAGE.UK]: 'Синхронізація з Google',
   },
   'Import events': {
     [LANGUAGE.UK]: 'Імпортувати події',
@@ -549,6 +549,15 @@ const DICTIONARY = {
   },
   'Sunday ': {
     [LANGUAGE.UK]: 'ю неділю',
+  },
+  'Sign in with Google': {
+    [LANGUAGE.UK]: 'Увійти за допомогою Google',
+  },
+  'Filter events': {
+    [LANGUAGE.UK]: 'Фільтрувати події',
+  },
+  'Enable filtering': {
+    [LANGUAGE.UK]: 'Включити фільтрування',
   },
 };
 

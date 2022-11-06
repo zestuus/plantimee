@@ -27,8 +27,8 @@ import {
   roundFloat
 } from '../../utils/helpers';
 import {
-  EnglishDays,
-  OneDay, OneHour, OneMinute, UkrainianDays
+    EnglishDays, GOOGLE_MAPS_API_KEY,
+    OneDay, OneHour, OneMinute, UkrainianDays
 } from '../../constants/config';
 import Participant from './Participant';
 import AutoFindModal from '../dialogs/AutoFindModal';
@@ -149,7 +149,6 @@ const Settings = ({
   const [showMap, setShowMap] = useState(true);
   const [selectedRange, setSelectedRange] = useState(0);
 
-  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
   const isInvitedEvent = !!(eventData && eventData.organizer);
   const readOnly = isInvitedEvent ? { InputProps: { readOnly: true }} : {};
   const selectionRanges = [[0,4], [5,7], [8,10], [11,13], [14,16], [17,19]];
@@ -1108,7 +1107,7 @@ const Settings = ({
                 }}
               />
             )}
-            {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && googleMapsApiKey && showMap
+            {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && GOOGLE_MAPS_API_KEY && showMap
               && (
                 <MapWrapper readOnly={isInvitedEvent}>
                   <MapPicker
@@ -1119,7 +1118,7 @@ const Settings = ({
                     }}
                     onChangeLocation={isInvitedEvent ? () => {} : handleChangeLocation}
                     onChangeZoom={handleChangeZoom}
-                    apiKey={googleMapsApiKey}
+                    apiKey={GOOGLE_MAPS_API_KEY}
                   />
                 </MapWrapper>
               )}
