@@ -97,6 +97,7 @@ const TriggerModalButton = styled(Button)`
 
 const GoogleLoginButton = styled(Button)`
   margin: 5px 10px;
+  border: 1px solid black;
 `;
 
 const ProfilePicture = styled.img`
@@ -439,7 +440,7 @@ const Events = ({
             ) : (
                 <React.Fragment>
                   <h4 style={{ margin: 5 }}>{__('Failed to fetch list of you calendars')}</h4>
-                  <p style={{ margin: 5 }}>{__('Please try again later')}</p>
+                  <p style={{ margin: 5 }}>{__('Please login or try again later')}</p>
                 </React.Fragment>
             )}
           </RadioGroup>

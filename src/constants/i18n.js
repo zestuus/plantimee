@@ -334,8 +334,8 @@ const DICTIONARY = {
   'Failed to fetch list of you calendars': {
     [LANGUAGE.UK]: 'Не вдалось отримати список ваших календарів',
   },
-  'Please try again later': {
-    [LANGUAGE.UK]: 'Будь ласка, спробуйте пізніше',
+  'Please login or try again later': {
+    [LANGUAGE.UK]: 'Будь ласка, увійдіть або спробуйте пізніше',
   },
   'Choose a calendar:': {
     [LANGUAGE.UK]: 'Виберіть календар:',
