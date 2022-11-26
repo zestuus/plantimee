@@ -5,19 +5,19 @@ import {Grid, Popover} from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton";
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import Button from "@material-ui/core/Button";
+import { DatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import Tooltip from '@material-ui/core/Tooltip';
+import DateFnsUtils from "@date-io/date-fns";
 
 import {
-  ColumnHeader, Container, ScrollArea, ScrollContentWrapper,
+  ColumnHeader, Container, ScrollArea, ScrollContentWrapper, TooltipText,
 } from "./Events";
 import TimelineEventBar from "./TimelineEventBar";
 import { HourHeight, OneDay, PRIMARY_COLOR, UkrainianMonths } from '../../constants/config';
 import withSettings from '../HOCs/withSettings';
-import {LANGUAGE, LOCALE} from '../../constants/enums';
-import Button from "@material-ui/core/Button";
-
-import {DatePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
-import DateFnsUtils from "@date-io/date-fns";
-import {extendCollisionList, filterEventsByDate} from "../../utils/helpers";
+import { LANGUAGE, LOCALE } from '../../constants/enums';
+import { extendCollisionList, filterEventsByDate } from "../../utils/helpers";
 
 export const ColumnTitle = styled.h3`
   margin: 5px 7.5px 7.5px 7.5px;
@@ -68,7 +68,7 @@ const DateArrow = styled(IconButton)`
   padding: 0;
 `;
 
-const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, militaryTime, translate: __, language }) => {
+const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, militaryTime, handleReload, translate: __, language }) => {
   const dateNow = new Date();
   const [now, setNow] = useState({
     hour: dateNow.getHours(), minute: dateNow.getMinutes()
@@ -87,6 +87,10 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
     },1000)
     return () => clearTimeout(timer);
   },[now]);
+
+  useEffect(() => {
+    handleReload(chosenDate);
+  }, [chosenDate])
 
   const [month, dayNumber, year] = chosenDate.toDateString().split(' ').slice(-3);
   const ukrMonth = UkrainianMonths[chosenDate.getMonth()].slice(0,3);
@@ -152,22 +156,46 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
       <ColumnHeader container direction="row" justifyContent="space-between" alignItems="center">
         <ColumnTitle>{__('Timeline')}</ColumnTitle>
         <div style={{ flex: 1 }} />
-        <DateArrow onClick={() => {
-          const date = new Date(chosenDate);
-          date.setDate(date.getDate() - 1)
-          setChosenDate(date);
-        }}>
-          <ChevronLeftIcon />
-        </DateArrow>
-        <TimelineDateLabel $today={today} onClick={handleClick}>{chosenDateString}</TimelineDateLabel>
-        <DateArrow
-          onClick={() => {
+        <Tooltip
+          title={(
+            <TooltipText>
+              {__('Previous day')}
+            </TooltipText>
+          )}
+        >
+          <DateArrow onClick={() => {
             const date = new Date(chosenDate);
-            date.setDate(date.getDate() + 1)
+            date.setDate(date.getDate() - 1)
             setChosenDate(date);
           }}>
-          <ChevronRightIcon />
-        </DateArrow>
+            <ChevronLeftIcon />
+          </DateArrow>
+        </Tooltip>
+        <Tooltip
+          title={(
+            <TooltipText>
+              {__('Календар')}
+            </TooltipText>
+          )}
+        >
+          <TimelineDateLabel $today={today} onClick={handleClick}>{chosenDateString}</TimelineDateLabel>
+        </Tooltip>
+        <Tooltip
+          title={(
+            <TooltipText>
+              {__('Next day')}
+            </TooltipText>
+          )}
+        >
+          <DateArrow
+            onClick={() => {
+              const date = new Date(chosenDate);
+              date.setDate(date.getDate() + 1)
+              setChosenDate(date);
+            }}>
+            <ChevronRightIcon />
+          </DateArrow>
+        </Tooltip>
       </ColumnHeader>
       {fullDayEventsTodayCount ? (
         <Grid container justifyContent="space-between" style={{ padding: 10, paddingRight: 20, borderBottom: '1px solid #555', marginBottom: 5 }}>

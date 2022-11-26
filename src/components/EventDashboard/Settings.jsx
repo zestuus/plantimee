@@ -52,6 +52,7 @@ import { LinkOff } from "@material-ui/icons";
 import { MenuItem, Radio, Select } from "@material-ui/core";
 import ToggleButton from "@material-ui/lab/ToggleButton";
 import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
+import ConfirmDialog from '../dialogs/ConfirmDialog';
 
 const Input = styled(TextField)`
     margin: 10px 0;
@@ -141,6 +142,7 @@ const Settings = ({
  }) => {
   const [zoom, setZoom] = useState(DefaultZoom);
   const [open, setOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [autoFindProps, setAutoFindProps] = useState({});
   const [autoFindError, setAutoFindError] = useState('');
   const [attendeeFindError, setAttendeeFindError] = useState('');
@@ -370,14 +372,14 @@ const Settings = ({
           <Button
             style={{ fontSize: 13 }}
             onClick={() => {
-              onRejectInvitation(eventData.id);
+              setConfirmDialogOpen(true);
             }}
           >
             <CloseIcon /> {__('Reject invite')}
           </Button>
         ) : (
           <Button disabled={!eventData} onClick={() => {
-            onDeleteOwnEvent(eventData.id);
+            setConfirmDialogOpen(true);
           }}>
             <DeleteIcon /> {__('Remove')}
           </Button>
@@ -768,13 +770,21 @@ const Settings = ({
                 >
                   <SearchIcon /> {__('Auto find free time')}
                 </Button>
-                <IconButton
-                  style={{ padding: 0, marginLeft: 10 }}
-                  onClick={() => {
-                    setOpen(true);
-                  }}>
-                  <SettingsIcon />
-                </IconButton>
+                <Tooltip
+                  title={(
+                    <TooltipText>
+                      {__('Automatic time planning settings')}
+                    </TooltipText>
+                  )}
+                >
+                  <IconButton
+                    style={{ padding: 0, marginLeft: 10 }}
+                    onClick={() => {
+                      setOpen(true);
+                    }}>
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
                 {autoFindError && (
                   <Alert severity="error" style={{ margin: '10px 0'}} onClose={() => setAutoFindError('')}>
                     {autoFindError}
@@ -1140,6 +1150,13 @@ const Settings = ({
           </EventNotChosen>
         )}
       </ScrollArea>
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        submitButtonStyle={{ color: 'red' }}
+        onSubmit={() => isInvitedEvent ? onRejectInvitation(eventData.id) : onDeleteOwnEvent(eventData.id)}
+        onClose={() => setConfirmDialogOpen(false)}
+        message={__(`Do you really want to ${isInvitedEvent ? 'reject the invite' : 'remove the event'}?`)}
+      />
     </Container>
   );
 };

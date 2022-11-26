@@ -5,10 +5,10 @@ import {
 } from '@material-ui/core';
 
 const RootDialog = ({
-  isOpened, title, children, onClose, onSubmit, submitLabel, closeLabel, submitButtonStyle, ...rest
+  isOpen, title, children, onClose, onSubmit, submitLabel, closeLabel, submitButtonStyle, ...rest
 }) => (
   <Dialog
-    open={isOpened}
+    open={isOpen}
     onClose={onClose}
     aria-labelledby="form-dialog-title"
     {...rest}
@@ -21,7 +21,10 @@ const RootDialog = ({
     </DialogContent>
     <DialogActions>
       { onSubmit && (
-        <Button onClick={onSubmit} color="primary" style={submitButtonStyle}>
+        <Button onClick={() => {
+          onSubmit();
+          onClose();
+        }} color="primary" style={submitButtonStyle}>
           { submitLabel }
         </Button>
       )}

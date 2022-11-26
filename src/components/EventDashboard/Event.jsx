@@ -18,7 +18,7 @@ import {
   REPEAT_FREQ,
   REPEAT_FREQ_LABEL
 } from "../../constants/enums";
-import { Replay } from "@material-ui/icons";
+import { Replay, Warning } from "@material-ui/icons";
 import { EnglishDays, UkrainianDays } from "../../constants/config";
 
 export const EventCard = styled(Grid)`
@@ -190,6 +190,13 @@ const Event = ({
           <BubbleWrapper>
             <BubbleInline>
               <AccountCircleIcon fontSize="inherit" /> {__('organizer')}: {organizer}
+            </BubbleInline>
+          </BubbleWrapper>
+        )}
+        {!invited && (new Date(endTime) < new Date()) && (
+          <BubbleWrapper>
+            <BubbleInline>
+              <Warning fontSize="inherit" /> {__('Event time passed')}
             </BubbleInline>
           </BubbleWrapper>
         )}

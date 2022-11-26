@@ -9,12 +9,14 @@ import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import CachedIcon from '@material-ui/icons/Cached';
+import IconButton from "@material-ui/core/IconButton";
+import Tooltip from '@material-ui/core/Tooltip';
 
 import {Container} from "../SignIn";
 import {PRIMARY_COLOR} from "../../constants/config";
 import { getGoogleTokenExpired, getWindowSize } from "../../utils/helpers";
 import Timeline from "./Timeline";
-import Events from "./Events";
+import Events, { TooltipText } from "./Events";
 import Settings from "./Settings";
 import {
   createEvent,
@@ -26,7 +28,6 @@ import {
   updateEvent
 } from "../../api/event";
 import withSettings from '../HOCs/withSettings';
-import IconButton from "@material-ui/core/IconButton";
 import { listUserCalendars } from "../../api/google_calendar";
 
 const Title = styled.h1`
@@ -71,6 +72,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
   const [columnShown, setColumnShown] = useState('timeline');
   const [anchorEl, setAnchorEl] = useState(null);
   const [reloadSwitch, setReloadSwitch] = useState(false);
+  const [reloadDate, setReloadDate] = useState(new Date());
 
   const columnsVisibility = {
     timeline: true,
@@ -83,8 +85,8 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
   useEffect(() => {
     (async () => {
       try {
-        const ownEventsData = await getOwnEvents();
-        const invitedEventsData = await getInvitedEvents();
+        const ownEventsData = await getOwnEvents(reloadDate);
+        const invitedEventsData = await getInvitedEvents(reloadDate);
         setOwnEvents(ownEventsData);
         setOwnEventsBackup(ownEventsData);
         setInvitedEvents(invitedEventsData);
@@ -217,7 +219,12 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
     }
   }
 
-  const handleReload = () => setReloadSwitch(!reloadSwitch);
+  const handleReload = (date) => {
+    setReloadSwitch(!reloadSwitch)
+    if (date) {
+      setReloadDate(date);
+    }
+  };
 
   if (600 < screenWidth && screenWidth < 960) {
     columnsVisibility.settings = columnShown === 'settings';
@@ -239,9 +246,17 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
           <Title>
             {__('Event Dashboard')}
           </Title>
-          <IconButton onClick={handleReload} style={{ marginLeft: 5 }}>
-            <CachedIcon/>
-          </IconButton>
+          <Tooltip
+            title={(
+              <TooltipText>
+                {__('Update data')}
+              </TooltipText>
+            )}
+          >
+            <IconButton onClick={handleReload} style={{ margin: '6px 0 0 5px', padding: 0 }}>
+              <CachedIcon/>
+            </IconButton>
+          </Tooltip>
           <Hidden xsDown mdUp>
             <FormControlLabel
               style={{ marginLeft: 'auto' }}
@@ -311,6 +326,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
                 invitedEvents={invitedEvents}
                 setChosenEvent={setChosenEvent}
                 setColumnShown={setColumnShown}
+                handleReload={handleReload}
               />
             </Column>
           )}

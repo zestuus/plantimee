@@ -13,7 +13,7 @@ import {getProfile, disableMfa, enableMfa } from "../api/user";
 const Profile = ({ translate: __ }) => {
   const [profileData, setProfileData] = useState({});
   const [qrCode, setQrCode] = useState('');
-  const [confirmDialogOpened, setConfirmDialogOpened] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -35,7 +35,7 @@ const Profile = ({ translate: __ }) => {
 
       setProfileData(profile);
       setQrCode('');
-      setConfirmDialogOpened(false);
+      setConfirmDialogOpen(false);
     }
   };
 
@@ -63,7 +63,7 @@ const Profile = ({ translate: __ }) => {
               <h1>{__('Profile')}</h1>
               <Button
                 variant="contained"
-                onClick={profileData.mfaEnabled ? ()=>setConfirmDialogOpened(true) : enableMFA}
+                onClick={profileData.mfaEnabled ? ()=>setConfirmDialogOpen(true) : enableMFA}
                 style={profileData.mfaEnabled ? { color: 'red' } : {}}
               >
                 {profileData.mfaEnabled ? __('Disable') : __('Enable')} {__('multi-factor authentication')}
@@ -78,16 +78,16 @@ const Profile = ({ translate: __ }) => {
           </Grid>
         )}
         <MFADialog
-          isOpened={!!qrCode}
+          isOpen={!!qrCode}
           qrCode={qrCode}
-          onSubmit={()=>setConfirmDialogOpened(true)}
+          onSubmit={()=>setConfirmDialogOpen(true)}
           onClose={handleClose}
         />
         <ConfirmDialog
-          isOpened={confirmDialogOpened}
+          isOpen={confirmDialogOpen}
           submitButtonStyle={{ color: 'red' }}
           onSubmit={disableMFA}
-          onClose={()=>setConfirmDialogOpened(false)}
+          onClose={()=>setConfirmDialogOpen(false)}
           message={__('Do you really want to disable multi-factor authentication?')}
         />
       </Container>

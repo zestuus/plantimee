@@ -6,10 +6,10 @@ import withSettings from "../HOCs/withSettings";
 import RootDialog from "./RootDialog";
 
 const MFADialog = ({
-  translate: __, isOpened, qrCode, onClose, onSubmit,
+  translate: __, isOpen, qrCode, onClose, onSubmit,
 }) => (
   <RootDialog
-    isOpened={isOpened}
+    isOpen={isOpen}
     onClose={onClose}
     onSubmit={onSubmit}
     submitButtonStyle={{ color: 'red' }}

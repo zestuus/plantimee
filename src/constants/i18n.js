@@ -232,6 +232,12 @@ const DICTIONARY = {
   'Confirm the action': {
     [LANGUAGE.UK]: "Підтвердіть дію",
   },
+  'Do you really want to reject the invite?': {
+    [LANGUAGE.UK]: "Ви справді хочете відхилити запрошення?",
+  },
+  'Do you really want to remove the event?': {
+    [LANGUAGE.UK]: "Ви справді хочете видалити подію?",
+  },
   'Do you really want to disable multi-factor authentication?': {
     [LANGUAGE.UK]: "Ви справді хочете вимкнути багатофакторну авторизацію?",
   },
@@ -558,6 +564,21 @@ const DICTIONARY = {
   },
   'Enable filtering': {
     [LANGUAGE.UK]: 'Включити фільтрування',
+  },
+  'Event time passed': {
+    [LANGUAGE.UK]: 'Час події минув',
+  },
+  'Previous day': {
+    [LANGUAGE.UK]: 'Попередній день',
+  },
+  'Next day': {
+    [LANGUAGE.UK]: 'Наступний день',
+  },
+  'Update data': {
+    [LANGUAGE.UK]: 'Оновити дані',
+  },
+  'Automatic time planning settings': {
+    [LANGUAGE.UK]: 'Налаштування автоматичного планування часу',
   },
 };
 

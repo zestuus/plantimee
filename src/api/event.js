@@ -5,18 +5,18 @@ import {getAuthHeader} from "../utils/helpers";
 
 const url = `${APP_URL}/event`;
 
-export const getOwnEvents = async () => {
+export const getOwnEvents = async (date) => {
   try {
-    const response = await axios.get(`${url}/list-own`, getAuthHeader());
+    const response = await axios.get(`${url}/list-own`, { ...getAuthHeader(), params: { date } });
     return response.data;
   } catch (e) {
     return null;
   }
 }
 
-export const getInvitedEvents = async () => {
+export const getInvitedEvents = async (date) => {
   try {
-    const response = await axios.get(`${url}/list-invited`, getAuthHeader());
+    const response = await axios.get(`${url}/list-invited`, { ...getAuthHeader(), params: { date } });
     return response.data;
   } catch (e) {
     return null;

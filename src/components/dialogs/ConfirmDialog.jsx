@@ -4,10 +4,10 @@ import withSettings from "../HOCs/withSettings";
 import RootDialog from "./RootDialog";
 
 const ConfirmDialog = ({
-  translate: __, isOpened, message, onClose, onSubmit, submitButtonStyle,
+  translate: __, isOpen, message, onClose, onSubmit, submitButtonStyle,
 }) => (
   <RootDialog
-    isOpened={isOpened}
+    isOpen={isOpen}
     onClose={onClose}
     onSubmit={onSubmit}
     submitButtonStyle={submitButtonStyle}

@@ -87,7 +87,7 @@ const DatePicker = styled(KeyboardDatePicker)`
   ` : ''};
 `;
 
-const TooltipText = styled.p`
+export const TooltipText = styled.p`
   font-size: 14px;
 `
 
