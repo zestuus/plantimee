@@ -1,4 +1,5 @@
 const { EnglishDays, DAY } = require("../constants/data");
+const { ABSOLUTE_UNIT_GETTERS } = require("../constants/enums");
 
 const getDayBounds = (date = new Date()) => {
   const dayStart = new Date(date);
@@ -41,10 +42,30 @@ const getEventInstance = (event, startTime, endTime, attendees, extraFields = {}
   googleCalendarId: event.googleCalendarId,
 });
 
-const countCertainDay = (dayOfWeek, dateFrom, dateTo) => {
-  const daysBetweenDates = 1 + Math.round((dateTo-dateFrom)/(24*3600*1000));
-  return Math.floor( ( daysBetweenDates + (dateFrom.getDay()+6-dayOfWeek) % 7 ) / 7 );
-}
+const getDaysBetweenDates = (dateFrom, dateTo) => Math.floor((dateTo - dateFrom) / DAY);
+
+const countCertainDaySinceStartOfMonth = (dayOfWeek, date) => {
+  const startOfMonth = new Date(date.toISOString().slice(0,7));
+
+  startOfMonth.setMinutes(startOfMonth.getMinutes() + startOfMonth.getTimezoneOffset());
+
+  return Math.floor((getDaysBetweenDates(startOfMonth, date) + 1) / 7) + (
+    getWeekdayNumber(startOfMonth) <= dayOfWeek && getDaysBetweenDates(startOfMonth, date) > 7
+  );
+};
+
+const countCertainDayTillEndOfMonth = (dayOfWeek, date) => {
+  const endOfMonth = new Date(date.toISOString().slice(0,7));
+
+  endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+  endOfMonth.setDate(endOfMonth.getDate() - 1);
+  endOfMonth.setUTCHours(23,59,59,999);
+  endOfMonth.setMinutes(endOfMonth.getMinutes() + endOfMonth.getTimezoneOffset());
+
+  return Math.floor(getDaysBetweenDates(date, endOfMonth) / 7) + (
+    dayOfWeek <= getWeekdayNumber(endOfMonth) && getDaysBetweenDates(date, endOfMonth) > 7
+  );
+};
 
 const getDayOfMonth = (byday) => {
   const dayNumOfMonth = parseInt(byday.slice(0,-2), 10);
@@ -54,6 +75,18 @@ const getDayOfMonth = (byday) => {
   return [dayNumOfMonth, dOfWeekIndex];
 };
 
-const getDayAbsoluteNumber = (date) => Math.round(date / DAY);
+const getWeekdayNumber = (date) => (date.getDay() || 7) - 1;
 
-module.exports = { getDayBounds, getEventInstance, countCertainDay, getDayOfMonth, getDayAbsoluteNumber };
+const checkRepeatIntervalMatch = (startDate, repeatInterval, repeatFreq, compareDate) => (
+  ((ABSOLUTE_UNIT_GETTERS[repeatFreq](compareDate) - ABSOLUTE_UNIT_GETTERS[repeatFreq](startDate)) % (repeatInterval || 1)) === 0
+);
+
+module.exports = {
+  getDayBounds,
+  getEventInstance,
+  countCertainDaySinceStartOfMonth,
+  countCertainDayTillEndOfMonth,
+  getDayOfMonth,
+  getWeekdayNumber,
+  checkRepeatIntervalMatch
+};

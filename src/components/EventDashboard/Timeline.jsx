@@ -1,26 +1,35 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import styled from "styled-components";
 
-import {Grid, Popover} from "@material-ui/core";
+import DateFnsUtils from "@date-io/date-fns";
+
+import { Grid, Popover } from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton";
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import Button from "@material-ui/core/Button";
 import { DatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import Tooltip from '@material-ui/core/Tooltip';
-import DateFnsUtils from "@date-io/date-fns";
+import { Today } from "@material-ui/icons";
 
 import {
   ColumnHeader, Container, ScrollArea, ScrollContentWrapper, TooltipText,
 } from "./Events";
 import TimelineEventBar from "./TimelineEventBar";
-import { HourHeight, OneDay, PRIMARY_COLOR, UkrainianMonths } from '../../constants/config';
+import {
+  EnglishDays,
+  HourHeight,
+  OneDay,
+  PRIMARY_COLOR,
+  UkrainianDaysShort,
+  UkrainianMonths
+} from '../../constants/config';
 import withSettings from '../HOCs/withSettings';
 import { LANGUAGE, LOCALE } from '../../constants/enums';
-import { extendCollisionList, filterEventsByDate } from "../../utils/helpers";
+import {extendCollisionList, filterEventsByDate, getWeekdayNumber} from "../../utils/helpers";
 
 export const ColumnTitle = styled.h3`
-  margin: 5px 7.5px 7.5px 7.5px;
+  margin: 5px 0 7.5px 7.5px;
   text-align: center;
   font-size: 15px;
 `;
@@ -64,7 +73,7 @@ const TimelineDateLabel = styled(Button)`
 `;
 
 const DateArrow = styled(IconButton)`
-  width: 24px;
+  width: 20px;
   padding: 0;
 `;
 
@@ -93,10 +102,12 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
   }, [chosenDate])
 
   const [month, dayNumber, year] = chosenDate.toDateString().split(' ').slice(-3);
+  const dayLabel = EnglishDays[getWeekdayNumber(chosenDate)].slice(0,3);
+  const ukrDayLabel = UkrainianDaysShort[getWeekdayNumber(chosenDate)];
   const ukrMonth = UkrainianMonths[chosenDate.getMonth()].slice(0,3);
   const chosenDateString = language === LANGUAGE.EN
-    ? `${month} ${dayNumber}, ${year}`
-    : `${dayNumber} ${ukrMonth} ${year}`;
+    ? `${dayLabel}, ${month} ${dayNumber}, ${year}`
+    : `${ukrDayLabel}, ${dayNumber} ${ukrMonth} ${year}`;
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -156,6 +167,17 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
       <ColumnHeader container direction="row" justifyContent="space-between" alignItems="center">
         <ColumnTitle>{__('Timeline')}</ColumnTitle>
         <div style={{ flex: 1 }} />
+        <Tooltip
+            title={(
+                <TooltipText>
+                  {__('Today')}
+                </TooltipText>
+            )}
+        >
+          <DateArrow onClick={() => setChosenDate(new Date())}>
+            <Today />
+          </DateArrow>
+        </Tooltip>
         <Tooltip
           title={(
             <TooltipText>

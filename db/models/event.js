@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
     recurrentEventId: DataTypes.INTEGER,
+    originalStartTime: DataTypes.DATE,
     repeatEnabled: DataTypes.BOOLEAN,
     repeatFreq: DataTypes.STRING,
     repeatInterval: DataTypes.INTEGER,

@@ -32,7 +32,7 @@ import { listUserCalendars } from "../../api/google_calendar";
 
 const Title = styled.h1`
   @media (max-width: 600px) {
-    font-size: 22px; 
+    font-size: 21px; 
   }
 `;
 

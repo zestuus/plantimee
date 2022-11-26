@@ -186,7 +186,7 @@ const Event = ({
         {!!repeatEnabled && (
           <BubbleBlock>
             <ReplayIcon />
-            {(repeatInterval === 1 ? __('Repeat every') : __('Repeat every ')).trim()} {repeatInterval || 1} {__(REPEAT_FREQ_LABEL[repeatFreq] + getPluralizePeriodsSuffix(repeatInterval)).trim()}
+            {([1, null].includes(repeatInterval) ? __('Repeat every') : __('Repeat every ')).trim()} {repeatInterval || 1} {__(REPEAT_FREQ_LABEL[repeatFreq] + getPluralizePeriodsSuffix(repeatInterval)).trim()}
           </BubbleBlock>
         )}
         {!!repeatEnabled && repeatByDay && repeatFreq === REPEAT_FREQ.WEEKLY && (
@@ -200,12 +200,12 @@ const Event = ({
         )}
         {!!repeatEnabled && repeatFreq === REPEAT_FREQ.MONTHLY && (
           <BubbleBlock>
-            {repeatByDay === '' ? (
-              `${__('Monthly on day')} ${new Date(startTime).getDate()}${language === LANGUAGE.UK && '-го числа'}`
+            {!repeatByDay ? (
+              `${__('On day')} ${new Date(startTime).getDate()}${language === LANGUAGE.UK && '-го числа'}`
             ) : ((getDayOfMonth(repeatByDay)[0] === -1) ? (
-              `${__('Monthly on the')} ${__('last ')}${__(EnglishDays[getDayOfMonth(repeatByDay)[1]] + ' ')}`
+              `${__('On the')} ${__('last ')}${__(EnglishDays[getDayOfMonth(repeatByDay)[1]] + ' ')}`
             ) : (
-              `${__('Monthly on the')} ${__(ORDINAL_NUMBERS[getDayOfMonth(repeatByDay)[0]] + ' ')}${getDayOfMonth(repeatByDay)[0] === 3 ? __(EnglishDays[getDayOfMonth(repeatByDay)[1]] + '') : __(EnglishDays[getDayOfMonth(repeatByDay)[1]])}`
+              `${__('On the')} ${__(ORDINAL_NUMBERS[getDayOfMonth(repeatByDay)[0]] + ' ')}${getDayOfMonth(repeatByDay)[0] === 3 ? __(EnglishDays[getDayOfMonth(repeatByDay)[1]] + '') : __(EnglishDays[getDayOfMonth(repeatByDay)[1]])}`
             ))}
           </BubbleBlock>
         )}

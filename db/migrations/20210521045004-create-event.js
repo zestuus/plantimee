@@ -39,6 +39,9 @@ module.exports = {
       recurrentEventId: {
         type: Sequelize.INTEGER
       },
+      originalStartTime: {
+        type: Sequelize.DATE
+      },
       repeatEnabled: {
         defaultValue: false,
         type: Sequelize.BOOLEAN

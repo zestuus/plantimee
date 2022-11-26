@@ -505,6 +505,7 @@ const Settings = ({
                     />
                   }
                   label={__('list is visible to others')}
+                  labelPlacement="start"
                 />)}
               </Grid>
               {eventData && eventData.attendees
@@ -832,7 +833,7 @@ const Settings = ({
                   {...readOnly}
                   type="number"
                   disabled={!eventData.repeatEnabled}
-                  style={{ width: 60, marginRight: 5 }}
+                  style={{ width: 40, marginRight: 5 }}
                   inputProps={{ style: { textAlign: 'center' } }}
                   value={eventData.repeatInterval || 1}
                   onBlur={() => handleBlur('repeatInterval')}
@@ -915,16 +916,16 @@ const Settings = ({
                   }}
                 >
                   <MenuItem value="onDay">
-                    {__('Monthly on day')} {new Date(eventData.startTime).getDate()}{language === LANGUAGE.UK && '-го числа'}
+                    {__('On day')} {new Date(eventData.startTime).getDate()}{language === LANGUAGE.UK && '-го числа'}
                   </MenuItem>
                   {daysCountFromMonthStart !== 5 && (
                     <MenuItem value={`${daysCountFromMonthStart}${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
-                      {__(`Monthly on the`)} {__(ORDINAL_NUMBERS[daysCountFromMonthStart] + ' ')}{daysCountFromMonthStart === 3 ? __(EnglishDays[indexOfDay] + '') : __(EnglishDays[indexOfDay])}
+                      {__(`On the`)} {__(ORDINAL_NUMBERS[daysCountFromMonthStart] + ' ')}{daysCountFromMonthStart === 3 ? __(EnglishDays[indexOfDay] + '') : __(EnglishDays[indexOfDay])}
                     </MenuItem>
                   )}
                   {daysCountToMonthEnd === 0 && (
                     <MenuItem value={`-1${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
-                      {__('Monthly on the')} {__('last ')}{__(EnglishDays[indexOfDay] + ' ')}
+                      {__('On the')} {__('last ')}{__(EnglishDays[indexOfDay] + ' ')}
                     </MenuItem>
                   )}
                 </Select>

@@ -50,6 +50,15 @@ export const UkrainianDays = [
   'субота',
   'неділя'
 ];
+export const UkrainianDaysShort = [
+  'Пн',
+  'Вт',
+  'Ср',
+  'Чт',
+  'Пт',
+  'Сб',
+  'Нд'
+];
 export const EnglishDays = [
   'Monday',
   'Tuesday',

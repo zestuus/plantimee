@@ -9,8 +9,11 @@ const { AVAILABILITY_STATUS, REPEAT_FREQ } = require("../constants/enums");
 const {
   getDayBounds,
   getEventInstance,
-  // getDayOfMonth,
-  getDayAbsoluteNumber
+  getDayOfMonth,
+  checkRepeatIntervalMatch,
+  getWeekdayNumber,
+  countCertainDaySinceStartOfMonth,
+  countCertainDayTillEndOfMonth
 } = require("../utils/helpers");
 
 const router = express.Router();
@@ -46,8 +49,8 @@ const getAvailabilityStatus = (events, start, end, defaultStatus = AVAILABILITY_
 
 const editEvent = async (eventData, UserId, keys=['id']) => {
   const {
-    name, description, completed, startTime, endTime, isFullDay, isGuestListPublic,
-    latitude, longitude, placeName, address, url, googleId, googleCalendarId,
+    name, description, completed, startTime, endTime, recurringEventId, originalStartTime, isFullDay,
+    latitude, longitude, placeName, address, url, googleId, googleCalendarId, isGuestListPublic,
     repeatEnabled, repeatFreq, repeatInterval, repeatByDay, repeatUntil, repeatCount
   } = eventData;
 
@@ -78,151 +81,19 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
     event.googleCalendarId = googleCalendarId;
     event.updatedAt = new Date();
 
+    if (recurringEventId) {
+      const recurringEvent = await db.Event.findOne({ where: { googleId: recurringEventId }});
+
+      event.recurrentEventId = recurringEvent.id;
+      event.originalStartTime = originalStartTime;
+    }
+
     return event;
   }
   return eventData;
 }
 
-// const addPeriodicOccurrences = (acc, event, attendees, extraFields={}) => {
-//   let until;
-//   if (event.repeatUntil) {
-//     ({ dayEnd: until } = getDayBounds(new Date(event.repeatUntil)));
-//   } else if (event.repeatCount) {
-//     const startDate = new Date(event.startTime);
-//     switch (event.repeatFreq) {
-//       case REPEAT_FREQ.DAILY:
-//         startDate.setDate(startDate.getDate() + (event.repeatInterval || 1) * event.repeatCount);
-//         break;
-//       case REPEAT_FREQ.WEEKLY:
-//         startDate.setDate(startDate.getDate() + (event.repeatInterval || 1) * 7 * event.repeatCount);
-//         break;
-//       case REPEAT_FREQ.MONTHLY:
-//         startDate.setMonth(startDate.getMonth() + (event.repeatInterval || 1) * event.repeatCount);
-//         break;
-//       case REPEAT_FREQ.YEARLY:
-//         startDate.setFullYear(startDate.getFullYear() + (event.repeatInterval || 1) * event.repeatCount);
-//         break;
-//       default: break;
-//     }
-//     ({ dayEnd: until } = getDayBounds(startDate));
-//   } else {
-//     const nextYear = new Date(event.startTime);
-//     switch (event.repeatFreq) {
-//       case REPEAT_FREQ.DAILY:
-//         nextYear.setFullYear(nextYear.getFullYear() + 1);
-//         break;
-//       case REPEAT_FREQ.WEEKLY:
-//         nextYear.setFullYear(nextYear.getFullYear() + 5);
-//         break;
-//       case REPEAT_FREQ.MONTHLY:
-//         nextYear.setFullYear(nextYear.getFullYear() + 10);
-//         break;
-//       case REPEAT_FREQ.YEARLY:
-//         nextYear.setFullYear(nextYear.getFullYear() + 30);
-//         break;
-//       default: break;
-//     }
-//     ({ dayEnd: until } = getDayBounds(nextYear));
-//   }
-//   const since = new Date(event.startTime);
-//   const startDayOfWeek = since.getDay();
-//   const startIndexOfDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
-//   const eventDuration = new Date(event.endTime) - new Date(event.startTime);
-//
-//   const dayOfMonth = (event.repeatFreq === REPEAT_FREQ.MONTHLY) ? (
-//     event.repeatByDay ? getDayOfMonth(event.repeatByDay) : since.getDate()
-//   ) : null;
-//   const daysOfWeek = (event.repeatFreq === REPEAT_FREQ.WEEKLY) ? (
-//     event.repeatByDay
-//       .split(',')
-//       .map(dayTxt => EnglishDays.findIndex(el => dayTxt === el.slice(0,2).toUpperCase()))
-//   ) : [];
-//   daysOfWeek.sort();
-//
-//   switch (event.repeatFreq) {
-//     case REPEAT_FREQ.DAILY:
-//       if (event.repeatInterval > 1) {
-//         since.setDate(since.getDate() + 1);
-//       }
-//       since.setDate(since.getDate() + 1);
-//       break;
-//     case REPEAT_FREQ.WEEKLY:
-//       if (event.repeatInterval > 1) {
-//         since.setDate(since.getDate() + (event.repeatInterval - 1) * 7);
-//       }
-//       since.setDate(since.getDate() + 1);
-//       break;
-//     case REPEAT_FREQ.MONTHLY:
-//       since.setMonth(since.getMonth() + event.repeatInterval);
-//       break;
-//     case REPEAT_FREQ.YEARLY:
-//       since.setFullYear(since.getFullYear() + event.repeatInterval);
-//       break;
-//     default: break;
-//   }
-//
-//   while (since < until) {
-//     const dayOfWeek = since.getDay();
-//     const indexOfDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-//     let startTime;
-//     let endTime;
-//     switch (event.repeatFreq) {
-//       case REPEAT_FREQ.DAILY:
-//         startTime = since.toISOString();
-//         endTime = new Date(since.getTime() + eventDuration).toISOString();
-//
-//         acc.push(getEventInstance(event, startTime, endTime, attendees, extraFields));
-//
-//         since.setDate(since.getDate() + (event.repeatInterval || 1));
-//         break;
-//       case REPEAT_FREQ.WEEKLY:
-//         // todo: if weekly and byday is null then skip unnecessary loop
-//         // since.setDate(since.getDate() + (event.repeatInterval || 1) * 7);
-//         if (daysOfWeek.includes(indexOfDay)) {
-//           startTime = since.toISOString();
-//           endTime = new Date(since.getTime() + eventDuration).toISOString();
-//
-//           acc.push(getEventInstance(event, startTime, endTime, attendees, extraFields));
-//         }
-//         if (startIndexOfDay === indexOfDay && event.repeatInterval > 1) {
-//           since.setDate(since.getDate() + (event.repeatInterval - 1) * 7)
-//         }
-//         since.setDate(since.getDate() + 1);
-//         break;
-//       case REPEAT_FREQ.MONTHLY:
-//         const startOfMonth = new Date(since.toISOString().slice(0,7));
-//         const endOfMonth = new Date(since.toISOString().slice(0,7));
-//         endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-//         endOfMonth.setDate(endOfMonth.getDate() - 1);
-//         const daysCountFromMonthStart = countCertainDay(dayOfWeek, startOfMonth, since);
-//         const daysCountToMonthEnd = countCertainDay(dayOfWeek, since, endOfMonth) - 1;
-//
-//         if ((dayOfMonth === since.getDate()) || (dayOfMonth.length && indexOfDay === dayOfMonth[1] && ((dayOfMonth[0] === -1 && daysCountToMonthEnd === 0) || (dayOfMonth[0] === daysCountFromMonthStart)))) {
-//           startTime = since.toISOString();
-//           endTime = new Date(since.getTime() + eventDuration).toISOString();
-//
-//           acc.push(getEventInstance(event, startTime, endTime, attendees, extraFields));
-//           if (dayOfMonth !== since.getDate()) {
-//             since.setDate(new Date(event.startTime).getDate());
-//           }
-//           since.setMonth(since.getMonth() + event.repeatInterval);
-//         } else {
-//           since.setDate(since.getDate() + 1);
-//         }
-//         break;
-//       case REPEAT_FREQ.YEARLY:
-//         startTime = since.toISOString();
-//         endTime = new Date(since.getTime() + eventDuration).toISOString();
-//
-//         acc.push(getEventInstance(event, startTime, endTime, attendees, extraFields));
-//         since.setFullYear(since.getFullYear() + event.repeatInterval);
-//         break;
-//       default: break;
-//     }
-//   }
-// }
-
-const addEventOcurrence = (acc, event, chosenDate, attendees, extraFields = {}) => {
+const addEventOccurrence = (acc, event, chosenDate, attendees, extraFields = {}) => {
   const startTime = new Date(event.startTime);
   const eventDuration = new Date(event.endTime) - startTime;
   startTime.setFullYear(chosenDate.getFullYear());
@@ -257,56 +128,63 @@ const checkIfDayHasEventOccurrence = (date, event) => {
     ({ dayEnd: until } = getDayBounds(startDate));
   }
 
-  // const dayOfMonth = (event.repeatFreq === REPEAT_FREQ.MONTHLY) ? (
-  //   event.repeatByDay ? getDayOfMonth(event.repeatByDay) : since.getDate()
-  // ) : null;
-  const daysOfWeek = (event.repeatFreq === REPEAT_FREQ.WEEKLY) ? (
-    event.repeatByDay
-      .split(',')
-      .map(dayTxt => EnglishDays.findIndex(el => dayTxt === el.slice(0,2).toUpperCase()))
-  ) : [];
-  daysOfWeek.sort();
-
   const since = new Date(event.startTime);
   switch (event.repeatFreq) {
     case REPEAT_FREQ.DAILY:
       since.setDate(since.getDate() + (event.repeatInterval || 1));
       break;
     case REPEAT_FREQ.WEEKLY:
-      since.setDate(since.getDate() + (event.repeatInterval - 1 || 0) * 7 + 1);
+      since.setDate(since.getDate() + 1);
       break;
     case REPEAT_FREQ.MONTHLY:
-      since.setMonth(since.getMonth() + event.repeatInterval);
+      since.setDate(since.getDate() + 1);
+      since.setMonth(since.getMonth() + (event.repeatInterval || 1) - 1);
       break;
     case REPEAT_FREQ.YEARLY:
-      since.setFullYear(since.getFullYear() + event.repeatInterval);
+      since.setDate(since.getDate() + 1);
+      since.setFullYear(since.getFullYear() + (event.repeatInterval || 1) - 1);
       break;
     default: break;
   }
 
   const { dayStart, dayEnd } = getDayBounds(new Date(date));
-
   const { dayStart: sinceStart } = getDayBounds(since);
-  // TODO: remove after debug
-  console.log('sinceStart', sinceStart);
-  console.log('dayEnd', dayEnd);
+
   if ((until && until < dayStart) || (dayEnd < sinceStart)) return false;
 
+  const startTime = new Date(event.startTime);
   switch (event.repeatFreq) {
     case REPEAT_FREQ.DAILY:
-      return ((getDayAbsoluteNumber(dayStart) - getDayAbsoluteNumber(new Date(event.startTime))) % (event.repeatInterval || 1)) === 0
+      return checkRepeatIntervalMatch(startTime, event.repeatInterval, event.repeatFreq, dayStart)
     case REPEAT_FREQ.WEEKLY:
-      // TODO
-      console.log('dayStart', dayStart);
-      console.log('daysOfWeek', daysOfWeek);
-      console.log('daysOfWeek.includes(dayStart.getDay())', daysOfWeek.includes(dayStart.getDay()));
-      return false;
+      const daysOfWeek = event.repeatByDay.split(',').map(dayTxt => (
+        EnglishDays.findIndex(el => dayTxt === el.slice(0,2).toUpperCase())
+      ));
+      daysOfWeek.sort();
+      return daysOfWeek.includes(getWeekdayNumber(dayStart)) && (
+        checkRepeatIntervalMatch(startTime, event.repeatInterval, event.repeatFreq, dayStart)
+      );
     case REPEAT_FREQ.MONTHLY:
-      // TODO
-      return false;
+      if (!event.repeatByDay) {
+        return dayStart.getDate() === startTime.getDate() && (
+          checkRepeatIntervalMatch(startTime, event.repeatInterval, event.repeatFreq, dayStart)
+        );
+      } else {
+        const [weekdayOfMonth, dayOfWeek] = getDayOfMonth(event.repeatByDay);
+        const chosenDayOfWeek = getWeekdayNumber(dayStart);
+
+        if (dayOfWeek !== chosenDayOfWeek) return false;
+
+        return checkRepeatIntervalMatch(startTime, event.repeatInterval, event.repeatFreq, dayStart) && ((
+            weekdayOfMonth === -1 && countCertainDayTillEndOfMonth(dayOfWeek, dayStart) === 0
+          ) || (
+            countCertainDaySinceStartOfMonth(dayOfWeek, dayStart) === weekdayOfMonth
+          ));
+      }
     case REPEAT_FREQ.YEARLY:
-      // TODO
-      return false;
+      return dayStart.getMonth() === startTime.getMonth() && dayStart.getDate() === startTime.getDate() && (
+        checkRepeatIntervalMatch(startTime, event.repeatInterval, event.repeatFreq, dayStart)
+      );
     default:
       return false;
   }
@@ -315,17 +193,31 @@ const checkIfDayHasEventOccurrence = (date, event) => {
 router.get('/list-own', privateRoute, async (req, res) => {
   const { id } = req.user;
   const { date } = req.query;
+  const chosenDate = new Date(date);
+  const { dayStart, dayEnd } = getDayBounds(chosenDate);
   try {
     const user = await db.User.findOne({
-      where: {id},
+      where: { id },
       include: [{
         model: db.Event,
         as: "own_events",
-        include: [{
-          model: db.User,
-          as: 'attendees',
-          attributes: ['id', 'username', 'full_name', 'email']
-        }]
+        where: {
+          [Op.or]: [
+            { recurrentEventId: null },
+            {
+              startTime: {
+                [Op.between]: [dayStart, dayEnd]
+              }
+            }
+          ]
+        },
+        include: [
+          {
+            model: db.User,
+            as: 'attendees',
+            attributes: ['id', 'username', 'full_name', 'email']
+          }
+        ]
       }],
       order: [
         ["own_events", 'startTime', 'asc'],
@@ -357,6 +249,22 @@ router.get('/list-own', privateRoute, async (req, res) => {
       ],
     });
 
+    const recurrentInstances = await db.Event.findAll({
+      where: {
+        recurrentEventId: {
+          [Op.not]: null
+        },
+        originalStartTime: {
+          [Op.between]: [dayStart, dayEnd]
+        }
+      }
+    });
+    const recurrentInstanceExistenceMap = recurrentInstances.reduce((acc, event) => {
+      acc[event.recurrentEventId] = !!event;
+
+      return acc;
+    }, {});
+
     const eventsWithAttendeesStatuses = own_events.reduce((acc, event) => {
       const attendees = event.attendees.map(attendee => {
         const user = users.find(user => user.id === attendee.id);
@@ -375,10 +283,8 @@ router.get('/list-own', privateRoute, async (req, res) => {
       acc.push(event);
 
       if (event.repeatEnabled && event.repeatFreq) {
-        const chosenDate = new Date(date);
-        const result = checkIfDayHasEventOccurrence(chosenDate, event);
-        if (result) {
-          addEventOcurrence(acc, event, chosenDate, attendees);
+        if (!recurrentInstanceExistenceMap[event.id] && checkIfDayHasEventOccurrence(chosenDate, event)) {
+          addEventOccurrence(acc, event, chosenDate, attendees);
         }
       }
 
@@ -445,7 +351,10 @@ router.get('/list-invited', privateRoute, async (req, res) => {
       acc.push(event);
 
       if (event.repeatEnabled && event.repeatFreq) {
-        checkIfDayHasEventOccurrence(acc, event, date, attendees, { availability: AVAILABILITY_STATUS.CAN_ATTEND });
+        const chosenDate = new Date(date);
+        if (checkIfDayHasEventOccurrence(chosenDate, event)) {
+          addEventOccurrence(acc, event, chosenDate, attendees, { availability: AVAILABILITY_STATUS.CAN_ATTEND });
+        }
       }
 
       return acc;

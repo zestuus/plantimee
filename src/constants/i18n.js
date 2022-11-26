@@ -412,14 +412,17 @@ const DICTIONARY = {
   'Repeat': {
     [LANGUAGE.UK]: 'Повторення',
   },
+  'Repeat ': {
+    [LANGUAGE.UK]: 'Повторюється',
+  },
   'Repeat event': {
     [LANGUAGE.UK]: 'Повторювати подію',
   },
   'Repeat every': {
-    [LANGUAGE.UK]: 'Повторювати подію кожен',
+    [LANGUAGE.UK]: 'Повторюється кожен',
   },
   'Repeat every ': {
-    [LANGUAGE.UK]: 'Повторювати подію кожнi',
+    [LANGUAGE.UK]: 'Повторюється кожнi',
   },
   'day': {
     [LANGUAGE.UK]: 'день',
@@ -493,11 +496,11 @@ const DICTIONARY = {
   'occurrences  ': {
     [LANGUAGE.UK]: 'повторення',
   },
-  'Monthly on day': {
-    [LANGUAGE.UK]: 'Щомісяця',
+  'On day': {
+    [LANGUAGE.UK]: '',
   },
-  'Monthly on the': {
-    [LANGUAGE.UK]: 'Щомісяця в',
+  'On the': {
+    [LANGUAGE.UK]: 'в',
   },
   'first ': {
     [LANGUAGE.UK]: 'перш',
@@ -567,6 +570,9 @@ const DICTIONARY = {
   },
   'Event time passed, move it to done or reschedule it': {
     [LANGUAGE.UK]: 'Час події минув, переведіть у виконані або заплануйте на інший час',
+  },
+  'Today': {
+    [LANGUAGE.UK]: 'Сьогодні',
   },
   'Previous day': {
     [LANGUAGE.UK]: 'Попередній день',

@@ -185,6 +185,8 @@ export const getPluralizePeriodsSuffix = (interval) => {
   }
 };
 
+export const getWeekdayNumber = (date) => (date.getDay() || 7) - 1;
+
 export const getDayOfMonth = (byday) => {
   const dayNumOfMonth = parseInt(byday.slice(0,-2), 10);
   const dOfWeek = byday.slice(-2);
@@ -246,6 +248,8 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     summary: name,
     start: { dateTime: startDateTime, date: startDate },
     end: { dateTime: endDateTime, date: endDateNextDay },
+    originalStartTime: { dateTime: originalStartDateTime, date: originalStartDate } = {},
+    recurringEventId,
     hangoutLink: url,
     creator: { email },
     organizer: { email: googleCalendarId },
@@ -298,8 +302,10 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     url,
     googleId,
     googleCalendarId,
+    recurringEventId,
     startTime: startDateTime || startDate,
     endTime: endDateTime || endDate.toISOString().split('T')[0],
+    originalStartTime: originalStartDateTime || originalStartDate,
     isFullDay: !startDateTime && !endDateTime,
     attendees: attendees && attendees.filter(attendee => attendee.email !== email) ,
   }
