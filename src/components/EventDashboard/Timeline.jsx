@@ -229,7 +229,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
       <ScrollArea>
         <ScrollContentWrapper container direction="column" alignItems="stretch">
           {Array.from(Array(24).keys()).map(hour => (
-            <HourContainer key={hour}>
+              <HourContainer key={`hour-${hour}`}>
               <Grid container direction="row" alignItems="center">
                 <HourLabel>{hour.toString().padStart(2, '0')}</HourLabel>
                 <HourLine />
@@ -242,7 +242,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
           </Grid>
           {ownEventsToday && ownEventsToday.map(event => (
             <TimelineEventBar
-              key={event.id}
+              key={`own-${event.id}`}
               eventData={event}
               chosenDate={chosenDate}
               fullDayEventsTodayCount={fullDayEventsTodayCount}
@@ -254,7 +254,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
           ))}
           {invitedEventsToday && invitedEventsToday.map(event => (
             <TimelineEventBar
-              key={event.id}
+              key={`invited-${event.id}`}
               eventData={event}
               chosenDate={chosenDate}
               fullDayEventsTodayCount={fullDayEventsTodayCount}

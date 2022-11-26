@@ -565,8 +565,8 @@ const DICTIONARY = {
   'Enable filtering': {
     [LANGUAGE.UK]: 'Включити фільтрування',
   },
-  'Event time passed': {
-    [LANGUAGE.UK]: 'Час події минув',
+  'Event time passed, move it to done or reschedule it': {
+    [LANGUAGE.UK]: 'Час події минув, переведіть у виконані або заплануйте на інший час',
   },
   'Previous day': {
     [LANGUAGE.UK]: 'Попередній день',

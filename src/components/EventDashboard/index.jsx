@@ -219,7 +219,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
     }
   }
 
-  const handleReload = (date) => {
+  const handleReload = (date = null) => {
     setReloadSwitch(!reloadSwitch)
     if (date) {
       setReloadDate(date);
@@ -253,7 +253,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
               </TooltipText>
             )}
           >
-            <IconButton onClick={handleReload} style={{ margin: '6px 0 0 5px', padding: 0 }}>
+            <IconButton onClick={() => handleReload()} style={{ margin: '6px 0 0 5px', padding: 0 }}>
               <CachedIcon/>
             </IconButton>
           </Tooltip>

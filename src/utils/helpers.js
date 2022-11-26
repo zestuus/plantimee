@@ -2,6 +2,7 @@ import {EnglishDays, EnglishMonths, UkrainianDays, UkrainianMonths} from "../con
 import {LANGUAGE} from "../constants/enums";
 import { loadStorageItem } from "./localStorage";
 import { findLocationByAddress } from "../api/maps";
+import { REPEAT_FREQ } from '../constants/enums';
 
 export const getAuthHeader = () => ({ headers: { authorization: `Bearer ${loadStorageItem('user')}` }});
 
@@ -200,7 +201,43 @@ export const getRRuleField = (rrule, field) => {
   const rightHalf = rrule.split(field + '=')[1];
   return rightHalf && rightHalf.split(';')[0]
 };
+
 export const formatRRuleDate = (date) => `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,11)}:${date.slice(11,13)}:${date.slice(13)}`;
+
+const updateDateKeepTime = (time, date) => {
+  const result = new Date(time);
+  const dateToCopy = new Date(date);
+  result.setFullYear(dateToCopy.getFullYear());
+  result.setMonth(dateToCopy.getMonth());
+  result.setDate(dateToCopy.getDate());
+
+  return result;
+};
+
+export const getEventRecurrenceEndDate = (event) => {
+  if (event.repeatUntil) {
+    return updateDateKeepTime(event.endTime, event.repeatUntil);
+  } else if (event.repeatCount) {
+    const endTime = new Date(event.endTime);
+    switch (event.repeatFreq) {
+      case REPEAT_FREQ.DAILY:
+        endTime.setDate(endTime.getDate() + (event.repeatInterval || 1) * event.repeatCount);
+        break;
+      case REPEAT_FREQ.WEEKLY:
+        endTime.setDate(endTime.getDate() + (event.repeatInterval || 1) * 7 * event.repeatCount);
+        break;
+      case REPEAT_FREQ.MONTHLY:
+        endTime.setMonth(endTime.getMonth() + (event.repeatInterval || 1) * event.repeatCount);
+        break;
+      case REPEAT_FREQ.YEARLY:
+        endTime.setFullYear(endTime.getFullYear() + (event.repeatInterval || 1) * event.repeatCount);
+        break;
+      default: break;
+    }
+    return endTime;
+  }
+  return null;
+};
 
 export const googleCalendarEventToPlantimeeEvent = async(event) => {
   const {

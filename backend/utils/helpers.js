@@ -1,4 +1,5 @@
-const { EnglishDays } = require("../constants/config");
+const { EnglishDays, DAY } = require("../constants/data");
+
 const getDayBounds = (date = new Date()) => {
   const dayStart = new Date(date);
   dayStart.setHours(0)
@@ -53,4 +54,6 @@ const getDayOfMonth = (byday) => {
   return [dayNumOfMonth, dOfWeekIndex];
 };
 
-module.exports = { getDayBounds, getEventInstance, countCertainDay, getDayOfMonth };
+const getDayAbsoluteNumber = (date) => Math.round(date / DAY);
+
+module.exports = { getDayBounds, getEventInstance, countCertainDay, getDayOfMonth, getDayAbsoluteNumber };

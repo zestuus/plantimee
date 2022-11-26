@@ -8,8 +8,15 @@ import CircleUnchecked from '@material-ui/icons/RadioButtonUnchecked';
 import ScheduleIcon from '@material-ui/icons/Schedule';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
+import { EventAvailable, Replay } from "@material-ui/icons";
+import Tooltip from '@material-ui/core/Tooltip';
 
-import { formatEventTime, getDayOfMonth, getPluralizePeriodsSuffix } from '../../utils/helpers';
+import {
+  formatEventTime,
+  getDayOfMonth,
+  getEventRecurrenceEndDate,
+  getPluralizePeriodsSuffix
+} from '../../utils/helpers';
 import withSettings from '../HOCs/withSettings';
 import {
   AVAILABILITY_COLOR,
@@ -18,8 +25,8 @@ import {
   REPEAT_FREQ,
   REPEAT_FREQ_LABEL
 } from "../../constants/enums";
-import { Replay, Warning } from "@material-ui/icons";
 import { EnglishDays, UkrainianDays } from "../../constants/config";
+import { TooltipText } from './Events';
 
 export const EventCard = styled(Grid)`
   border-radius: 10px;
@@ -108,6 +115,12 @@ const Event = ({
   const [completedLocal, setCompletedLocal] = useState(!!completed);
 
   const dateString = formatEventTime(startTime, endTime, isFullDay, language, militaryTime);
+  let timePassed = new Date(endTime) < new Date();
+  if (repeatEnabled) {
+    const eventRecurrenceEndDate = getEventRecurrenceEndDate(eventData);
+
+    timePassed = eventRecurrenceEndDate && eventRecurrenceEndDate < new Date();
+  }
 
   return (
     <EventCard
@@ -145,9 +158,24 @@ const Event = ({
         direction="column"
         completed={completed ? 'true' : undefined}
       >
-        <EventTitle>{name}</EventTitle>
+        <Grid container direction="row" alignItems="center">
+          <EventTitle>
+            {name}
+          </EventTitle>
+          {timePassed && (
+            <Tooltip
+              title={(
+                <TooltipText>
+                  {__('Event time passed, move it to done or reschedule it')}
+                </TooltipText>
+              )}
+            >
+              <EventAvailable fontSize="inherit"/>
+            </Tooltip>
+          )}
+        </Grid>
         {!!description && <EventDescription>{description}</EventDescription>}
-        {!!availability && <EventDescription color={AVAILABILITY_COLOR[availability]}>{__(AVAILABILITY_LABEL[availability])}</EventDescription>}
+        {!!availability && !timePassed && <EventDescription color={AVAILABILITY_COLOR[availability]}>{__(AVAILABILITY_LABEL[availability])}</EventDescription>}
         {!!dateString && (
           <BubbleWrapper>
             <BubbleInline>
@@ -190,13 +218,6 @@ const Event = ({
           <BubbleWrapper>
             <BubbleInline>
               <AccountCircleIcon fontSize="inherit" /> {__('organizer')}: {organizer}
-            </BubbleInline>
-          </BubbleWrapper>
-        )}
-        {!invited && (new Date(endTime) < new Date()) && (
-          <BubbleWrapper>
-            <BubbleInline>
-              <Warning fontSize="inherit" /> {__('Event time passed')}
             </BubbleInline>
           </BubbleWrapper>
         )}
