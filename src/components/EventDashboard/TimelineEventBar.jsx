@@ -32,7 +32,7 @@ const EventBar = styled.div`
 `;
 
 const TimelineEventBar = ({
-  eventData, collisionMap, chosenDate, setChosenEvent, setColumnShown, militaryTime, fullDayEventsTodayCount
+  eventData, collisionMap, chosenDate, setChosenEvent, militaryTime, fullDayEventsTodayCount
 }) => {
   if (!eventData) return null;
 
@@ -133,12 +133,7 @@ const TimelineEventBar = ({
         $zIndex={Math.max(zIndex, 0)}
         bgColor={bgColor}
         onClick={() => {
-          if (eventData.recurrentEventId) {
-            setChosenEvent(eventData.recurrentEventId);
-          } else {
-            setChosenEvent(eventData.id);
-          }
-          setColumnShown('settings');
+          setChosenEvent(eventData);
         }}
       >
         {height>=35 ? (<React.Fragment>

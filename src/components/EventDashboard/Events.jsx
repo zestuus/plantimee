@@ -114,7 +114,6 @@ const Events = ({
   chosenEvent,
   handleReload,
   setChosenEvent,
-  openColumn,
   onCreateNewEvent,
   onChangeOwnEvent,
   googleOAuthToken,
@@ -289,10 +288,7 @@ const Events = ({
           </span>
         <Button
           style={{ paddingLeft: 0 }}
-          onClick={() => {
-            onCreateNewEvent();
-            openColumn('settings');
-          }}
+          onClick={() => onCreateNewEvent()}
         >
           <AddIcon />{__('Create')}
         </Button>
@@ -313,7 +309,6 @@ const Events = ({
                   key={event.id}
                   eventData={event}
                   isChosen={chosenEvent === event.id}
-                  openColumn={openColumn}
                   setChosenEvent={setChosenEvent}
                 />
               ))}
@@ -333,8 +328,8 @@ const Events = ({
                   eventData={event}
                   isChosen={chosenEvent === event.id}
                   setChosenEvent={setChosenEvent}
-                  openColumn={openColumn}
-                  onChangeOwnEvent={onChangeOwnEvent} />
+                  onChangeOwnEvent={onChangeOwnEvent}
+                />
               ))}
             </Grid>
           ) : <EventCard>{__('You have no own active events')}</EventCard>)}
@@ -352,8 +347,8 @@ const Events = ({
                   eventData={event}
                   isChosen={chosenEvent === event.id}
                   setChosenEvent={setChosenEvent}
-                  openColumn={openColumn}
-                  onChangeOwnEvent={onChangeOwnEvent} />
+                  onChangeOwnEvent={onChangeOwnEvent}
+                />
               ))}
             </Grid>
           ) : <EventCard>{__('You have no own full day events')}</EventCard>)}
@@ -380,7 +375,6 @@ const Events = ({
                   eventData={event}
                   isChosen={chosenEvent === event.id}
                   setChosenEvent={setChosenEvent}
-                  openColumn={openColumn}
                   onChangeOwnEvent={onChangeOwnEvent} />
               ))}
             </Grid>

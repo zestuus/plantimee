@@ -91,6 +91,15 @@ export const importEvents = async (events) => {
   }
 };
 
+export const extractEventOccurence = async (recurrentEventId, originalStartTime) => {
+  try {
+    const response = await axios.post(`${url}/extract`, { recurrentEventId, originalStartTime }, getAuthHeader());
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};
+
 export const inviteParticipant = async data => {
   try {
     const { keywordToLookFor, eventId } = data;

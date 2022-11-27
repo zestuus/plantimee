@@ -586,6 +586,15 @@ const DICTIONARY = {
   'Automatic time planning settings': {
     [LANGUAGE.UK]: 'Налаштування автоматичного планування часу',
   },
+  'Edit recurring event': {
+    [LANGUAGE.UK]: 'Редагувати подію, що повторюється',
+  },
+  'This event': {
+    [LANGUAGE.UK]: 'Ця подія',
+  },
+  'All events': {
+    [LANGUAGE.UK]: 'Усі події',
+  },
 };
 
 export default DICTIONARY;

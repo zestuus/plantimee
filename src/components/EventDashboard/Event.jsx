@@ -90,10 +90,9 @@ const ReplayIcon = styled(Replay)`
 `
 
 const Event = ({
- invited, eventData, isChosen, setChosenEvent, openColumn, onChangeOwnEvent, militaryTime, language, translate: __
+  disableCheck, invited, eventData, isChosen, setChosenEvent, onChangeOwnEvent, militaryTime, language, translate: __
 }) => {
   const {
-    id,
     name,
     description,
     completed,
@@ -133,12 +132,9 @@ const Event = ({
           ? 'true'
           : undefined
       }
-      onClick={() => {
-        setChosenEvent(id);
-        openColumn('settings');
-      }}
+      onClick={() => setChosenEvent(eventData)}
     >
-      {!invited && <Checkbox
+      {!invited && !disableCheck && <Checkbox
         checked={completedLocal}
         icon={<CircleUnchecked htmlColor="white" />}
         checkedIcon={<CheckIcon htmlColor="white" />}

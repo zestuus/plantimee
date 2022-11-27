@@ -20,15 +20,19 @@ import Events, { TooltipText } from "./Events";
 import Settings from "./Settings";
 import {
   createEvent,
-  deleteEvent, deleteInvitation, findHoursAutomatically,
+  deleteEvent,
+  deleteInvitation,
+  findHoursAutomatically,
   getInvitedEvents,
   getOwnEvents,
   inviteParticipant,
   rejectInvitation,
-  updateEvent
+  updateEvent,
+  extractEventOccurence
 } from "../../api/event";
 import withSettings from '../HOCs/withSettings';
 import { listUserCalendars } from "../../api/google_calendar";
+import ConfirmDialog from "../dialogs/ConfirmDialog";
 
 const Title = styled.h1`
   @media (max-width: 600px) {
@@ -63,6 +67,8 @@ const ColumnSwitch = styled(Button)`
 const EventDashboard = ({ translate: __, googleOAuthToken }) => {
   // external state
   const [chosenEvent, setChosenEvent] = useState(null);
+  const [chosenRecurrentEvent, setChosenRecurrentEvent] = useState(null);
+  const [originalStartTime, setOriginalStartTime] = useState(null);
   const [ownEvents, setOwnEvents] = useState([]);
   const [ownEventsBackup, setOwnEventsBackup] = useState([]);
   const [invitedEvents, setInvitedEvents] = useState([]);
@@ -127,10 +133,6 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const openColumn = column => {
-    setColumnShown(column);
-  };
-
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -179,6 +181,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
     setChosenEvent(null);
     setOwnEvents(events);
     await deleteEvent(id);
+    setReloadSwitch(!reloadSwitch);
   }
 
   const handleRejectInvitation = async id => {
@@ -186,6 +189,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
     setChosenEvent(null);
     setInvitedEvents(events);
     await rejectInvitation(id);
+    setReloadSwitch(!reloadSwitch);
   }
 
   const handleDeleteInvitation = async data => {
@@ -202,6 +206,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
 
     if (newEvent) {
       setChosenEvent(newEvent.id);
+      setColumnShown('settings');
       const events = [...(ownEvents || []), newEvent]
       setOwnEvents(events);
       setReloadSwitch(!reloadSwitch);
@@ -226,6 +231,33 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
     }
   };
 
+  const handleChosenEventChange = (event) => {
+    setColumnShown('settings');
+    if (event.id) {
+      setChosenEvent(event.id);
+      if (event.recurrentEventId) {
+        setChosenRecurrentEvent(event.recurrentEventId);
+      }
+    } else {
+      setOriginalStartTime(event.startTime);
+      if (event.recurrentEventId) {
+        setChosenEvent(event.recurrentEventId);
+      }
+    }
+  };
+
+  const handleExtractEventOccurrence = async () => {
+    const newEvent = await extractEventOccurence(chosenEvent, originalStartTime);
+
+    if (newEvent) {
+      setChosenEvent(newEvent.id);
+      setColumnShown('settings');
+      const events = [...(ownEvents || []), newEvent];
+      setOwnEvents(events);
+      setReloadSwitch(!reloadSwitch);
+    }
+  }
+
   if (600 < screenWidth && screenWidth < 960) {
     columnsVisibility.settings = columnShown === 'settings';
     columnsVisibility.timeline = !columnsVisibility.settings;
@@ -237,6 +269,8 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
 
   const chosenEventData = (ownEvents && ownEvents.find(event => event.id === chosenEvent))
     || (invitedEvents && invitedEvents.find(event => event.id === chosenEvent));
+  const chosenRecurrentEventData = (ownEvents && ownEvents.find(event => event.id === chosenRecurrentEvent))
+    || (invitedEvents && invitedEvents.find(event => event.id === chosenRecurrentEvent));
   const chosenEventDataBackup = ownEventsBackup && ownEventsBackup.find(event => event.id === chosenEvent);
 
   return (
@@ -324,8 +358,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
               <Timeline
                 ownEvents={ownEvents}
                 invitedEvents={invitedEvents}
-                setChosenEvent={setChosenEvent}
-                setColumnShown={setColumnShown}
+                setChosenEvent={handleChosenEventChange}
                 handleReload={handleReload}
               />
             </Column>
@@ -336,10 +369,9 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
                 ownEvents={ownEvents}
                 invitedEvents={invitedEvents}
                 chosenEvent={chosenEvent}
-                setChosenEvent={setChosenEvent}
+                setChosenEvent={handleChosenEventChange}
                 userCalendars={userCalendars}
                 handleReload={handleReload}
-                openColumn={openColumn}
                 onCreateNewEvent={handleCreateNewEvent}
                 onChangeOwnEvent={handleChangeOwnEvent}
               />
@@ -349,6 +381,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
             <Column item container direction="column" md={4} sm={6} xs={12}>
               <Settings
                 eventData={chosenEventData}
+                recurrentEventData={chosenRecurrentEventData}
                 eventDataBackup={chosenEventDataBackup}
                 userCalendars={userCalendars}
                 onInviteAttendee={handleInvite}
@@ -358,9 +391,22 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
                 onRejectInvitation={handleRejectInvitation}
                 onDeleteInvitation={handleDeleteInvitation}
                 onFindAutomatically={handleFindAutomatically}
+                setChosenEvent={handleChosenEventChange}
+                onChangeOwnEvent={handleChangeOwnEvent}
               />
             </Column>
           )}
+          <ConfirmDialog
+            isOpen={!!originalStartTime}
+            submitButtonStyle={{ color: '#f85e0c' }}
+            onSubmit={handleExtractEventOccurrence}
+            onClose={() => {
+              setOriginalStartTime(null);
+            }}
+            message={__(`Edit recurring event`)}
+            submitLabel={__('This event')}
+            closeLabel={__('All events')}
+          />
         </Table>
       </Container>
     </Grid>

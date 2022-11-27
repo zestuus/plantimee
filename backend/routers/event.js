@@ -578,6 +578,79 @@ router.post('/invite', privateRoute, async (req, res) => {
   }
 });
 
+router.post('/extract', privateRoute, async (req, res) => {
+  const { id } = req.user;
+  const { recurrentEventId, originalStartTime } = req.body;
+
+  const user = await db.User.findOne({
+    where: { id },
+    include: [{
+      model: db.Event,
+      where: {
+        id: recurrentEventId
+      },
+      as: "own_events",
+    }],
+    order: [
+      ["own_events", 'id', 'asc'],
+    ],
+  });
+
+  if (!user) {
+    return res.status(403).send("Invalid token!");
+  }
+
+  if (user.own_events && user.own_events.length === 1) {
+    const [recurrentEvent] = user.own_events;
+    const startTime = new Date(originalStartTime);
+    const duration = recurrentEvent.endTime - recurrentEvent.startTime;
+    const endTime = new Date(duration + startTime.getTime());
+
+    const { name, description, url, latitude, longitude, placeName, address } = recurrentEvent;
+
+    const eventData = {
+      UserId: id,
+      name,
+      description,
+      url,
+      startTime,
+      endTime,
+      latitude,
+      longitude,
+      placeName,
+      address,
+      recurrentEventId,
+      originalStartTime: startTime,
+      completed: false,
+      isFullDay: false,
+      isGuestListPublic: true,
+      repeatEnabled: false,
+      repeatFreq: null,
+      repeatInterval: null,
+      repeatByDay: null,
+      repeatUntil: null,
+      repeatCount: null,
+      googleId: null,
+      googleCalendarId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const event = await db.Event.build(eventData);
+
+    try {
+      await event.save();
+
+      res.send(event);
+    } catch (e) {
+      console.error(e);
+      res.status(500).send("Error during extraction!");
+    }
+  } else {
+    res.status(500).send("Something went wrong during extraction!");
+  }
+});
+
 router.get('/hours', privateRoute, async (req, res) => {
   const { id } = req.user;
   const eventId = parseInt(req.query.event, 10);

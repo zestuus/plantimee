@@ -77,7 +77,7 @@ const DateArrow = styled(IconButton)`
   padding: 0;
 `;
 
-const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, militaryTime, handleReload, translate: __, language }) => {
+const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, militaryTime, handleReload, translate: __, language }) => {
   const dateNow = new Date();
   const [now, setNow] = useState({
     hour: dateNow.getHours(), minute: dateNow.getMinutes()
@@ -236,7 +236,6 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
             collisionMap={collisionMap}
             militaryTime={militaryTime}
             setChosenEvent={setChosenEvent}
-            setColumnShown={setColumnShown}
           />
           <DateArrow
             disabled={chosenFullDayEvent === (fullDayEventsToday.length - 1)}
@@ -271,7 +270,6 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
               collisionMap={collisionMap}
               militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
-              setColumnShown={setColumnShown}
             />
           ))}
           {invitedEventsToday && invitedEventsToday.map(event => (
@@ -283,7 +281,6 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, setColumnShown, mi
               collisionMap={collisionMap}
               militaryTime={militaryTime}
               setChosenEvent={setChosenEvent}
-              setColumnShown={setColumnShown}
             />
           ))}
           <ClockArrow

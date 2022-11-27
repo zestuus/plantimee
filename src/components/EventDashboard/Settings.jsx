@@ -53,6 +53,7 @@ import { MenuItem, Radio, Select } from "@material-ui/core";
 import ToggleButton from "@material-ui/lab/ToggleButton";
 import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 import ConfirmDialog from '../dialogs/ConfirmDialog';
+import Event from "./Event";
 
 const Input = styled(TextField)`
     margin: 10px 0;
@@ -130,6 +131,7 @@ const Settings = ({
   language,
   militaryTime,
   eventData,
+  recurrentEventData,
   eventDataBackup,
   userCalendars,
   onChangeOwnEventLocally,
@@ -139,6 +141,8 @@ const Settings = ({
   onInviteAttendee,
   onDeleteInvitation,
   onFindAutomatically,
+  setChosenEvent,
+  onChangeOwnEvent,
  }) => {
   const [zoom, setZoom] = useState(DefaultZoom);
   const [open, setOpen] = useState(false);
@@ -303,7 +307,7 @@ const Settings = ({
   }
 
   const handleBlur = (key) => {
-    if (!isInvitedEvent && (!eventDataBackup || (eventData && eventData[key] !== eventDataBackup[key] && !eventData.recurrentEventId))) {
+    if (!isInvitedEvent && (!eventDataBackup || (eventData && eventData[key] !== eventDataBackup[key]))) {
       onSaveChangesOwnEvent(eventData);
     }
   }
@@ -798,194 +802,229 @@ const Settings = ({
                   setAutoFindProps={setAutoFindProps} />
               </Grid>
             )}
-              <SettingsBlockTitle>{__('Repeat')}</SettingsBlockTitle>
-              {!isInvitedEvent && (<FormControlLabel
-                control={
-                  <Checkbox
-                    color="primary"
-                    checked={!!eventData.repeatEnabled}
-                    onBlur={() => handleBlur('repeatEnabled')}
+            <SettingsBlockTitle>{__('Repeat')}</SettingsBlockTitle>
+            {(!isInvitedEvent && eventData.recurrentEventId) ? (
+              <Event
+                disableCheck
+                key={eventData.recurrentEventId}
+                eventData={recurrentEventData}
+                setChosenEvent={setChosenEvent}
+                onChangeOwnEvent={onChangeOwnEvent}
+              />
+            ) : (
+              <>
+                {!isInvitedEvent && (<FormControlLabel
+                  control={
+                    <Checkbox
+                      color="primary"
+                      checked={!!eventData.repeatEnabled}
+                      onBlur={() => handleBlur('repeatEnabled')}
+                      onChange={(event) => {
+                        if (!isInvitedEvent) {
+                          const otherFields = {};
+                          if (event.target.checked) {
+                            otherFields.repeatInterval = eventData.repeatEnabled || 1;
+                            otherFields.repeatFreq = eventData.repeatFreq || REPEAT_FREQ.WEEKLY;
+                            otherFields.repeatByDay = eventData.repeatByDay || defaultDay;
+                          }
+
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            ...otherFields,
+                            repeatEnabled: event.target.checked,
+                          });
+                        }
+                      }}
+                    />
+                  }
+                  label={__('Repeat event')}
+                />)}
+                <Grid container alignItems="center">
+                  <p style={{ marginRight: 5, color: eventData.repeatEnabled ? 'black' : 'rgba(0,0,0,0.38)' }}>
+                    {((!eventData.repeatInterval || eventData.repeatInterval === 1) ? __('Repeat every') : __('Repeat every ')).trim()}
+                  </p>
+                  <Input
+                    {...readOnly}
+                    type="number"
+                    disabled={!eventData.repeatEnabled}
+                    style={{ width: 40, marginRight: 5 }}
+                    inputProps={{ style: { textAlign: 'center' } }}
+                    value={eventData.repeatInterval || 1}
+                    onBlur={() => handleBlur('repeatInterval')}
                     onChange={(event) => {
                       if (!isInvitedEvent) {
-                        const otherFields = {};
-                        if (event.target.checked) {
-                          otherFields.repeatInterval = eventData.repeatEnabled || 1;
-                          otherFields.repeatFreq = eventData.repeatFreq || REPEAT_FREQ.WEEKLY;
-                          otherFields.repeatByDay = eventData.repeatByDay || defaultDay;
-                        }
-
                         onChangeOwnEventLocally({
                           ...eventData,
-                          ...otherFields,
-                          repeatEnabled: event.target.checked,
+                          repeatInterval: Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1),
                         });
                       }
                     }}
                   />
-                }
-                label={__('Repeat event')}
-              />)}
-              <Grid container alignItems="center">
-                <p style={{ marginRight: 5, color: eventData.repeatEnabled ? 'black' : 'rgba(0,0,0,0.38)' }}>
-                  {((!eventData.repeatInterval || eventData.repeatInterval === 1) ? __('Repeat every') : __('Repeat every ')).trim()}
-                </p>
-                <Input
-                  {...readOnly}
-                  type="number"
-                  disabled={!eventData.repeatEnabled}
-                  style={{ width: 40, marginRight: 5 }}
-                  inputProps={{ style: { textAlign: 'center' } }}
-                  value={eventData.repeatInterval || 1}
-                  onBlur={() => handleBlur('repeatInterval')}
-                  onChange={(event) => {
-                    if (!isInvitedEvent) {
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        repeatInterval: Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1),
-                      });
-                    }
-                  }}
-                />
-                <Select
-                  disabled={!eventData.repeatEnabled}
-                  value={eventData.repeatFreq || REPEAT_FREQ.WEEKLY}
-                  onBlur={() => handleBlur('repeatFreq')}
-                  onChange={(event) => {
-                    if (!isInvitedEvent) {
-                      if (eventDataBackup && eventDataBackup.repeatFreq === event.target.value) {
+                  <Select
+                    disabled={!eventData.repeatEnabled}
+                    value={eventData.repeatFreq || REPEAT_FREQ.WEEKLY}
+                    onBlur={() => handleBlur('repeatFreq')}
+                    onChange={(event) => {
+                      if (!isInvitedEvent) {
+                        if (eventDataBackup && eventDataBackup.repeatFreq === event.target.value) {
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            repeatFreq: event.target.value,
+                            repeatByDay: eventDataBackup.repeatByDay || event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
+                          });
+                        } else {
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            repeatFreq: event.target.value,
+                            repeatByDay: event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    {REPEAT_FREQ_TYPES.map(type => (
+                      <MenuItem key={type} value={type}>
+                        {__(REPEAT_FREQ_LABEL[type] + getPluralizePeriodsSuffix(eventData.repeatInterval)).trim()}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Grid>
+                {eventData.repeatFreq === REPEAT_FREQ.WEEKLY && (
+                  <ToggleButtonGroup
+                    color="primary"
+                    value={(eventData.repeatByDay || '').split(',').filter(Boolean)}
+                    onBlur={() => handleBlur('repeatByDay')}
+                    onChange={(e, value) => {
+                      // todo: update event start day when event start weekday is missing in byday field ???
+                      if (value.length && !isInvitedEvent) {
                         onChangeOwnEventLocally({
                           ...eventData,
-                          repeatFreq: event.target.value,
-                          repeatByDay: eventDataBackup.repeatByDay || event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
-                        });
-                      } else {
-                        onChangeOwnEventLocally({
-                          ...eventData,
-                          repeatFreq: event.target.value,
-                          repeatByDay: event.target.value === REPEAT_FREQ.WEEKLY ? defaultDay : '',
+                          repeatByDay: value.join(','),
                         });
                       }
-                    }
-                  }}
-                >
-                  {REPEAT_FREQ_TYPES.map(type => (
-                    <MenuItem key={type} value={type}>
-                      {__(REPEAT_FREQ_LABEL[type] + getPluralizePeriodsSuffix(eventData.repeatInterval)).trim()}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Grid>
-              {eventData.repeatFreq === REPEAT_FREQ.WEEKLY && (
-                <ToggleButtonGroup
-                  color="primary"
-                  value={(eventData.repeatByDay || '').split(',').filter(Boolean)}
-                  onBlur={() => handleBlur('repeatByDay')}
-                  onChange={(e, value) => {
-                    // todo: update event start day when event start date's day of week is missing in byday field
-                    if (value.length && !isInvitedEvent) {
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        repeatByDay: value.join(','),
-                      });
-                    }
-                  }}
-                >
-                  {EnglishDays.map((day, index) => (
-                    <TooltipToggleButton
-                      key={day}
-                      TooltipProps={{ title: language === LANGUAGE.EN ? day : UkrainianDays[index] }}
-                      value={day.slice(0, 2).toUpperCase()}
-                    >
-                      {(language === LANGUAGE.EN ? day : UkrainianDays[index])[0]}
-                    </TooltipToggleButton>
-                  ))}
-                </ToggleButtonGroup>
-              )}
-              {eventData.repeatFreq === REPEAT_FREQ.MONTHLY && (
-                <Select
-                  disabled={!eventData.repeatEnabled}
-                  value={isMonthlyByDayValue(eventData.repeatByDay) ? eventData.repeatByDay : 'onDay'}
-                  onBlur={() => handleBlur('repeatByDay')}
-                  onChange={(event) => {
-                    if (!isInvitedEvent) {
-                      onChangeOwnEventLocally({
-                        ...eventData,
-                        repeatByDay: event.target.value,
-                      });
-                    }
-                  }}
-                >
-                  <MenuItem value="onDay">
-                    {__('On day')} {new Date(eventData.startTime).getDate()}{language === LANGUAGE.UK && '-го числа'}
-                  </MenuItem>
-                  {daysCountFromMonthStart !== 5 && (
-                    <MenuItem value={`${daysCountFromMonthStart}${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
-                      {__(`On the`)} {__(ORDINAL_NUMBERS[daysCountFromMonthStart] + ' ')}{daysCountFromMonthStart === 3 ? __(EnglishDays[indexOfDay] + '') : __(EnglishDays[indexOfDay])}
-                    </MenuItem>
-                  )}
-                  {daysCountToMonthEnd === 0 && (
-                    <MenuItem value={`-1${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
-                      {__('On the')} {__('last ')}{__(EnglishDays[indexOfDay] + ' ')}
-                    </MenuItem>
-                  )}
-                </Select>
-              )}
-              <p style={{ color: eventData.repeatEnabled ? 'black' : 'rgba(0,0,0,0.38)' }}>{__('Ends')}</p>
-              <FormControlLabel
-                control={
-                  <Radio
-                    color="primary"
-                    disabled={!eventData.repeatEnabled}
-                    checked={!eventData.repeatUntil && !eventData.repeatCount}
-                    onBlur={() => {
-                      handleBlur('repeatUntil')
-                      handleBlur('repeatCount')
                     }}
-                    onChange={() => {
+                  >
+                    {EnglishDays.map((day, index) => (
+                      <TooltipToggleButton
+                        key={day}
+                        TooltipProps={{ title: language === LANGUAGE.EN ? day : UkrainianDays[index] }}
+                        value={day.slice(0, 2).toUpperCase()}
+                      >
+                        {(language === LANGUAGE.EN ? day : UkrainianDays[index])[0]}
+                      </TooltipToggleButton>
+                    ))}
+                  </ToggleButtonGroup>
+                )}
+                {eventData.repeatFreq === REPEAT_FREQ.MONTHLY && (
+                  <Select
+                    disabled={!eventData.repeatEnabled}
+                    value={isMonthlyByDayValue(eventData.repeatByDay) ? eventData.repeatByDay : 'onDay'}
+                    onBlur={() => handleBlur('repeatByDay')}
+                    onChange={(event) => {
                       if (!isInvitedEvent) {
                         onChangeOwnEventLocally({
                           ...eventData,
-                          repeatUntil: null,
-                          repeatCount: null,
+                          repeatByDay: event.target.value,
                         });
                       }
                     }}
-                  />
-                }
-                label={__('Never')}
-              />
-              <Grid container alignItems="center">
+                  >
+                    <MenuItem value="onDay">
+                      {__('On day')} {new Date(eventData.startTime).getDate()}{language === LANGUAGE.UK && '-го числа'}
+                    </MenuItem>
+                    {daysCountFromMonthStart !== 5 && (
+                      <MenuItem value={`${daysCountFromMonthStart}${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
+                        {__(`On the`)} {__(ORDINAL_NUMBERS[daysCountFromMonthStart] + ' ')}{daysCountFromMonthStart === 3 ? __(EnglishDays[indexOfDay] + '') : __(EnglishDays[indexOfDay])}
+                      </MenuItem>
+                    )}
+                    {daysCountToMonthEnd === 0 && (
+                      <MenuItem value={`-1${EnglishDays[indexOfDay].slice(0, 2).toUpperCase()}`}>
+                        {__('On the')} {__('last ')}{__(EnglishDays[indexOfDay] + ' ')}
+                      </MenuItem>
+                    )}
+                  </Select>
+                )}
+                <p style={{ color: eventData.repeatEnabled ? 'black' : 'rgba(0,0,0,0.38)' }}>{__('Ends')}</p>
                 <FormControlLabel
                   control={
                     <Radio
                       color="primary"
                       disabled={!eventData.repeatEnabled}
-                      checked={!!eventData.repeatUntil && !eventData.repeatCount}
+                      checked={!eventData.repeatUntil && !eventData.repeatCount}
                       onBlur={() => {
                         handleBlur('repeatUntil')
                         handleBlur('repeatCount')
                       }}
                       onChange={() => {
                         if (!isInvitedEvent) {
-                          const startDate = new Date(eventData.startTime);
-                          switch (eventData.repeatFreq) {
-                            case REPEAT_FREQ.DAILY:
-                              startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1));
-                              break;
-                            case REPEAT_FREQ.WEEKLY:
-                              startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1) * 7);
-                              break;
-                            case REPEAT_FREQ.MONTHLY:
-                              startDate.setMonth(startDate.getMonth() + (eventData.repeatInterval || 1));
-                              break;
-                            case REPEAT_FREQ.YEARLY:
-                              startDate.setFullYear(startDate.getFullYear() + (eventData.repeatInterval || 1));
-                              break;
-                            default:
-                              break;
-                          }
-                          const { dayEnd } = getDayBounds(startDate);
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            repeatUntil: null,
+                            repeatCount: null,
+                          });
+                        }
+                      }}
+                    />
+                  }
+                  label={__('Never')}
+                />
+                <Grid container alignItems="center">
+                  <FormControlLabel
+                    control={
+                      <Radio
+                        color="primary"
+                        disabled={!eventData.repeatEnabled}
+                        checked={!!eventData.repeatUntil && !eventData.repeatCount}
+                        onBlur={() => {
+                          handleBlur('repeatUntil')
+                          handleBlur('repeatCount')
+                        }}
+                        onChange={() => {
+                          if (!isInvitedEvent) {
+                            const startDate = new Date(eventData.startTime);
+                            switch (eventData.repeatFreq) {
+                              case REPEAT_FREQ.DAILY:
+                                startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1));
+                                break;
+                              case REPEAT_FREQ.WEEKLY:
+                                startDate.setDate(startDate.getDate() + (eventData.repeatInterval || 1) * 7);
+                                break;
+                              case REPEAT_FREQ.MONTHLY:
+                                startDate.setMonth(startDate.getMonth() + (eventData.repeatInterval || 1));
+                                break;
+                              case REPEAT_FREQ.YEARLY:
+                                startDate.setFullYear(startDate.getFullYear() + (eventData.repeatInterval || 1));
+                                break;
+                              default:
+                                break;
+                            }
+                            const { dayEnd } = getDayBounds(startDate);
 
+                            onChangeOwnEventLocally({
+                              ...eventData,
+                              repeatUntil: dayEnd,
+                              repeatCount: null,
+                            });
+                          }
+                        }}
+                      />
+                    }
+                    label={__('On')}
+                  />
+                  <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
+                    <DatePicker
+                      $width="145px"
+                      disabled={!eventData.repeatEnabled || !eventData.repeatUntil}
+                      variant="inline"
+                      format="yyyy/MM/dd"
+                      value={eventData.repeatUntil ? new Date(eventData.repeatUntil) : defaultUntilDate}
+                      onBlur={() => handleBlur('repeatUntil')}
+                      onClose={() => handleBlur('repeatUntil')}
+                      onChange={(newDate) => {
+                        if (!isInvitedEvent) {
+                          const { dayEnd } = getDayBounds(newDate);
+
+                          console.log(dayEnd);
                           onChangeOwnEventLocally({
                             ...eventData,
                             repeatUntil: dayEnd,
@@ -994,73 +1033,51 @@ const Settings = ({
                         }
                       }}
                     />
-                  }
-                  label={__('On')}
-                />
-                <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
-                  <DatePicker
-                    $width="145px"
-                    disabled={!eventData.repeatEnabled || !eventData.repeatUntil}
-                    variant="inline"
-                    format="yyyy/MM/dd"
-                    value={eventData.repeatUntil ? new Date(eventData.repeatUntil) : defaultUntilDate}
-                    onBlur={() => handleBlur('repeatUntil')}
-                    onClose={() => handleBlur('repeatUntil')}
-                    onChange={(newDate) => {
-                      if (!isInvitedEvent) {
-                        const { dayEnd } = getDayBounds(newDate);
-
-                        console.log(dayEnd);
-                        onChangeOwnEventLocally({
-                          ...eventData,
-                          repeatUntil: dayEnd,
-                          repeatCount: null,
-                        });
-                      }
+                  </MuiPickersUtilsProvider>
+                </Grid>
+                <Grid container alignItems="center">
+                  <FormControlLabel
+                    control={
+                      <Radio
+                        color="primary"
+                        disabled={!eventData.repeatEnabled}
+                        checked={!eventData.repeatUntil && !!eventData.repeatCount}
+                        onBlur={() => {
+                          handleBlur('repeatUntil')
+                          handleBlur('repeatCount')
+                        }}
+                        onChange={() => {
+                          onChangeOwnEventLocally({
+                            ...eventData,
+                            repeatUntil: null,
+                            repeatCount: 1,
+                          });
+                        }}
+                      />
+                    }
+                    label={__('After')}
+                  />
+                  <Input
+                    type="number"
+                    disabled={!eventData.repeatEnabled || !eventData.repeatCount}
+                    style={{ width: 60, marginRight: 5 }}
+                    inputProps={{ style: { textAlign: 'center' } }}
+                    value={eventData.repeatCount || 1}
+                    onBlur={() => handleBlur('repeatCount')}
+                    onChange={(event) => {
+                      onChangeOwnEventLocally({
+                        ...eventData,
+                        repeatCount: Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1),
+                      });
                     }}
                   />
-                </MuiPickersUtilsProvider>
-              </Grid>
-              <Grid container alignItems="center">
-                <FormControlLabel
-                  control={
-                    <Radio
-                      color="primary"
-                      disabled={!eventData.repeatEnabled}
-                      checked={!eventData.repeatUntil && !!eventData.repeatCount}
-                      onBlur={() => {
-                        handleBlur('repeatUntil')
-                        handleBlur('repeatCount')
-                      }}
-                      onChange={() => {
-                        onChangeOwnEventLocally({
-                          ...eventData,
-                          repeatUntil: null,
-                          repeatCount: 1,
-                        });
-                      }}
-                    />
-                  }
-                  label={__('After')}
-                />
-                <Input
-                  type="number"
-                  disabled={!eventData.repeatEnabled || !eventData.repeatCount}
-                  style={{ width: 60, marginRight: 5 }}
-                  inputProps={{ style: { textAlign: 'center' } }}
-                  value={eventData.repeatCount || 1}
-                  onBlur={() => handleBlur('repeatCount')}
-                  onChange={(event) => {
-                    onChangeOwnEventLocally({
-                      ...eventData,
-                      repeatCount: Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1),
-                    });
-                  }}
-                />
-                <p style={{ color: (eventData.repeatEnabled && eventData.repeatCount) ? 'black' : 'rgba(0,0,0,0.38)' }}>
-                  {__('occurrence' + getPluralizePeriodsSuffix(eventData.repeatCount || 1)).trim()}
-                </p>
-              </Grid>
+                  <p style={{ color: (eventData.repeatEnabled && eventData.repeatCount) ? 'black' : 'rgba(0,0,0,0.38)' }}>
+                    {__('occurrence' + getPluralizePeriodsSuffix(eventData.repeatCount || 1)).trim()}
+                  </p>
+                </Grid>
+              </>
+            )}
+
             {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && (
               <SettingsBlockTitle>{__('Venue')}</SettingsBlockTitle>
             )}
