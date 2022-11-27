@@ -170,7 +170,7 @@ const Events = ({
         }));
         setDelayedExportData([]);
         handleReload();
-        actions.openSnackbar(`${__('Events are successfully synchronized')} ${__('created')}: ${count})!`);
+        actions.openSnackbar(`${__('Events are successfully synchronized')} ${__('created')}: (${count})!`);
         setTimeout(actions.closeSnackbar, 2000);
       };
       run();
@@ -289,6 +289,7 @@ const Events = ({
       }));
 
       setDelayedExportData(eventsToExportLater);
+      handleReload();
       actions.openSnackbar(`${__('Events are successfully synchronized')} (${__('edited')}: ${updatedCount}, ${__('created')}: ${createdCount})!`);
       setTimeout(actions.closeSnackbar, 2000);
     }
