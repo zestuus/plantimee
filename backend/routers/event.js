@@ -58,6 +58,21 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
 
   const event = await db.Event.findOne({ where: { ...where, UserId }});
 
+  if (recurringEventId) {
+    const recurringEvent = await db.Event.findOne({ where: { googleId: recurringEventId }});
+
+    if (recurringEvent) {
+      if (event) {
+        event.recurrentEventId = recurringEvent.id;
+        event.originalStartTime = originalStartTime;
+        event.recurringEventId = null;
+      } else {
+        eventData.recurrentEventId = recurringEvent.id;
+        eventData.recurringEventId = null;
+      }
+    }
+  }
+
   if (event) {
     event.name = name || null;
     event.description = description || null;
@@ -80,13 +95,6 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
     event.googleId = googleId;
     event.googleCalendarId = googleCalendarId;
     event.updatedAt = new Date();
-
-    if (recurringEventId) {
-      const recurringEvent = await db.Event.findOne({ where: { googleId: recurringEventId }});
-
-      event.recurrentEventId = recurringEvent.id;
-      event.originalStartTime = originalStartTime;
-    }
 
     return event;
   }
@@ -225,7 +233,7 @@ router.get('/list-own', privateRoute, async (req, res) => {
     });
 
     if (!user) {
-      return res.status(403).send("Invalid token!");
+      return res.status(404).send("No events!");
     }
 
     const { own_events } = user;
@@ -462,6 +470,11 @@ router.delete('/', privateRoute, async (req, res) => {
   }
 
   try {
+    if (event.repeatEnabled) {
+      const count = await db.Event.destroy({ where: { recurrentEventId: id }});
+      console.log('\n\ndeleted', count);
+    }
+
     await event.destroy();
     res.send(event);
   } catch (e) {
@@ -499,7 +512,22 @@ router.post('/import', privateRoute, async (req, res) => {
     );
     const eventsToCreate = editedEvents.filter(event => !event.id);
 
-    const createdEvents = await db.Event.bulkCreate(eventsToCreate);
+    await Promise.all(eventsToCreate.map(async event => {
+      if (event.recurringEventId) {
+        const recurringEvent = eventsToCreate.find(e => e.googleId === event.recurringEventId);
+
+        if (recurringEvent) {
+          const createdEvent = await db.Event.create(recurringEvent);
+
+          if (createdEvent) {
+            event.recurrentEventId = createdEvent.id;
+            recurringEvent.id = createdEvent.id;
+          }
+        }
+      }
+    }));
+
+    const createdEvents = await db.Event.bulkCreate(eventsToCreate.filter(event => !event.id));
 
     events.forEach(event => {
       if (event.attendees && event.attendees.length) {
