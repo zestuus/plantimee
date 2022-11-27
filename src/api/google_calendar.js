@@ -25,11 +25,11 @@ export const listUserCalendars = async () => {
   }
 };
 
-export const importEventsFromGoogleCalendar = async (calendarId, timeMin) => {
+export const importEventsFromGoogleCalendar = async (calendarId, timeMin, timeMax) => {
   try {
     const response = await axios.get(`${url}/calendars/${encodeURIComponent(calendarId)}/events`, {
       ...getGoogleAuthHeader(),
-      params: { timeMin },
+      params: { timeMin, timeMax },
     });
     return response.data;
   } catch (e) {
@@ -37,11 +37,20 @@ export const importEventsFromGoogleCalendar = async (calendarId, timeMin) => {
   }
 };
 
-// export const exportEventsToGoogleCalendar = async () => {
-//   try {
-//     const response = await axios.post(`${url}/nearbysearch`, getGoogleAuthHeader());
-//     return response.data;
-//   } catch (e) {
-//     return null;
-//   }
-// };
+export const createEventInGoogleCalendar = async (calendarId, event) => {
+  try {
+    const response = await axios.post(`${url}/calendars/${encodeURIComponent(calendarId)}/events`, event, getGoogleAuthHeader());
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const updateEventInGoogleCalendar = async (calendarId, eventId, event) => {
+  try {
+    const response = await axios.put(`${url}/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`, event, getGoogleAuthHeader());
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};

@@ -388,6 +388,9 @@ const DICTIONARY = {
   'Sync events starting from:': {
     [LANGUAGE.UK]: 'Синхронізувати події починаючи з:',
   },
+  'Sync events till:': {
+    [LANGUAGE.UK]: 'Синхронізувати події до:',
+  },
   'Delete all': {
     [LANGUAGE.UK]: 'Видалити всі',
   },

@@ -27,9 +27,14 @@ import { ColumnTitle } from "./Timeline";
 import Event, { EventCard } from "./Event";
 import withSettings from '../HOCs/withSettings';
 import googleIcon from "../../images/google.svg";
-import { getDayBounds, getGoogleTokenExpired, googleCalendarEventToPlantimeeEvent } from "../../utils/helpers";
+import { getDayBounds, getGoogleTokenExpired, googleCalendarEventToPlantimeeEvent, plantimeeEventToGoogleCalendarEvent } from "../../utils/helpers";
 import { Control } from "../Header";
-import { getUserInfo, importEventsFromGoogleCalendar } from "../../api/google_calendar";
+import {
+  getUserInfo,
+  importEventsFromGoogleCalendar,
+  createEventInGoogleCalendar,
+  updateEventInGoogleCalendar
+} from "../../api/google_calendar";
 import { deleteCompletedEvent, importEvents } from "../../api/event";
 import { GOOGLE_API_USER_SCOPE, LOCALE } from "../../constants/enums";
 import { closeSnackbar, googleOAuthLogin, googleOAuthLogout, openSnackbar } from "../../actions/settingsAction";
@@ -127,7 +132,10 @@ const Events = ({
   const [filterEventsModalAnchorEl, setFilterEventsModalAnchorEl] = useState(null);
   const [googleSyncModalAnchorEl, setGoogleSyncModalAnchorEl] = useState(null);
   const [chosenCalendar, setChosenCalendar] = useState(null);
-  const [chosenDayStart, setChosenDayStart] = useState(new Date());
+  const [chosenDayStart, setChosenDayStart] = useState(defaultStartShowDate);
+  const [chosenDayEnd, setChosenDayEnd] = useState(defaultEndShowDate);
+  const [enableSyncDayStart, setEnableSyncDayStart] = useState(true);
+  const [enableSyncDayEnd, setEnableSyncDayEnd] = useState(false);
 
   const [showInvitedEvents, setShowInvitedEvents] = useState(true);
   const [showActiveEvents, setShowActiveEvents] = useState(true);
@@ -172,8 +180,9 @@ const Events = ({
 
   const handleImport = async () => {
     if (googleOAuthToken && chosenCalendar) {
-      const { dayStart } = getDayBounds(chosenDayStart);
-      const result = await importEventsFromGoogleCalendar(chosenCalendar, dayStart.toISOString());
+      const { dayStart } = enableSyncDayStart ? getDayBounds(chosenDayStart) : {};
+      const { dayEnd } = enableSyncDayEnd ? getDayBounds(chosenDayEnd) : {};
+      const result = await importEventsFromGoogleCalendar(chosenCalendar, dayStart && dayStart.toISOString(), dayEnd && dayEnd.toISOString());
 
       if (result) {
         const { items } = result;
@@ -194,7 +203,50 @@ const Events = ({
   };
 
   const handleExport = async () => {
-    console.log('Export');
+    const filterSyncEventByDate = (event) => (
+      (!enableSyncDayStart || chosenDayStart < new Date(event.endTime)) && (!enableSyncDayEnd || new Date(event.startTime) < chosenDayEnd)
+    ) || (
+      event.repeatEnabled && ((!event.repeatCount && !event.repeatUntil) || (event.repeatUntil && (chosenDayStart < new Date(event.repeatUntil)) ))
+    );
+
+    if (googleOAuthToken && chosenCalendar) {
+      const [linkedEvents, separateEvents] = (ownEvents || []).reduce((grouped, event) => {
+        if (!event.recurrentEventId && !event.completed && filterSyncEventByDate(event)) {
+          if (event.googleId) {
+            grouped[0].push(event);
+          } else {
+            grouped[1].push(event);
+          }
+        }
+
+        return grouped;
+      }, [[], []]);
+
+      const eventsToUpdate = linkedEvents.map(plantimeeEventToGoogleCalendarEvent);
+      const eventsToCreate = separateEvents.map(plantimeeEventToGoogleCalendarEvent);
+
+      let createdCount = 0;
+
+      let updatedCount = 0;
+      eventsToCreate.map(async({ event, id }) => {
+        const createdEvent = await createEventInGoogleCalendar(chosenCalendar, event);
+        if (createdEvent) {
+          const ownEvent = (ownEvents || []).find(e => e.id === id);
+          if (ownEvent) {
+            onChangeOwnEvent({ ...ownEvent, googleId: createdEvent.id, googleCalendarId: createdEvent.calendarId });
+          }
+          createdCount++;
+        }
+      });
+      await Promise.all(eventsToUpdate.map(async({ event, googleId }) => {
+        if (await updateEventInGoogleCalendar(chosenCalendar, googleId, event)) {
+          updatedCount++;
+        }
+      }));
+
+      actions.openSnackbar(`${__('Events are successfully synchronized')} (${__('edited')}: ${updatedCount}, ${__('created')}: ${createdCount})!`);
+      setTimeout(actions.closeSnackbar, 2000);
+    }
   };
 
   const handleChangeCalendar = (event) => {
@@ -439,14 +491,36 @@ const Events = ({
             )}
           </RadioGroup>
           <MuiPickersUtilsProvider key="date-pickers" utils={DateFnsUtils} locale={LOCALE[language]}>
-            <DatePicker
+            <Grid container>
+              <Checkbox
+                color="primary"
+                checked={enableSyncDayStart}
+                onChange={(event) => { setEnableSyncDayStart(event.target.checked); }}
+              />
+              <DatePicker
                 variant="inline"
                 label={__('Sync events starting from:')}
                 format="yyyy/MM/dd"
-                disabled={googleTokenExpired || !chosenCalendar}
+                disabled={googleTokenExpired || !chosenCalendar || !enableSyncDayStart}
                 value={chosenDayStart}
                 onChange={setChosenDayStart}
-            />
+              />
+            </Grid>
+            <Grid container>
+              <Checkbox
+                color="primary"
+                checked={enableSyncDayEnd}
+                onChange={(event) => { setEnableSyncDayEnd(event.target.checked); }}
+              />
+              <DatePicker
+                variant="inline"
+                label={__('Sync events till:')}
+                format="yyyy/MM/dd"
+                disabled={googleTokenExpired || !chosenCalendar || !enableSyncDayEnd}
+                value={chosenDayEnd}
+                onChange={setChosenDayEnd}
+              />
+            </Grid>
           </MuiPickersUtilsProvider>
           <Grid container>
             <Button
@@ -457,8 +531,7 @@ const Events = ({
               {__('Import events')}
             </Button>
             <Button
-                disabled
-                // disabled={!chosenCalendar}
+                disabled={googleTokenExpired || !chosenCalendar}
                 onClick={handleExport}
             >
               <PublishIcon style={{marginRight: 'auto'}}/>

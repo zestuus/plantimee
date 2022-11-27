@@ -8,7 +8,7 @@ import CircleUnchecked from '@material-ui/icons/RadioButtonUnchecked';
 import ScheduleIcon from '@material-ui/icons/Schedule';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
-import { EventAvailable, Replay } from "@material-ui/icons";
+import { DateRange, EventAvailable, Replay } from "@material-ui/icons";
 import Tooltip from '@material-ui/core/Tooltip';
 
 import {
@@ -187,6 +187,8 @@ const Event = ({
         )}
         {!!repeatEnabled && repeatByDay && repeatFreq === REPEAT_FREQ.WEEKLY && (
           <BubbleBlock>
+            <DateRange fontSize="inherit" />
+            &nbsp;
             {repeatByDay.split(',').filter(Boolean).map(day => {
               const index = EnglishDays.findIndex(d => day === d.slice(0,2).toUpperCase());
 
@@ -196,6 +198,8 @@ const Event = ({
         )}
         {!!repeatEnabled && repeatFreq === REPEAT_FREQ.MONTHLY && (
           <BubbleBlock>
+            <DateRange fontSize="inherit" />
+            &nbsp;
             {!repeatByDay ? (
               `${__('On day')} ${new Date(startTime).getDate()}${language === LANGUAGE.UK && '-го числа'}`
             ) : ((getDayOfMonth(repeatByDay)[0] === -1) ? (

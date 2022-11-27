@@ -256,6 +256,7 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     attendees,
     location,
     recurrence,
+    guestsCanSeeOtherGuests,
   } = event;
 
   let repeat = {};
@@ -303,10 +304,92 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
     googleId,
     googleCalendarId,
     recurringEventId,
+    isGuestListPublic: guestsCanSeeOtherGuests,
     startTime: startDateTime || startDate,
     endTime: endDateTime || endDate.toISOString().split('T')[0],
     originalStartTime: originalStartDateTime || originalStartDate,
     isFullDay: !startDateTime && !endDateTime,
     attendees: attendees && attendees.filter(attendee => attendee.email !== email) ,
   }
+};
+
+export const plantimeeEventToGoogleCalendarEvent = (event) => {
+  const {
+    id,
+    googleId,
+    startTime, endTime, originalStartTime,
+    isFullDay,
+    name: summary,
+    description,
+    placeName,
+    address,
+    isGuestListPublic,
+    attendees,
+    repeatEnabled,
+    repeatFreq,
+    repeatInterval,
+    repeatByDay,
+    repeatUntil,
+    repeatCount,
+  } = event;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const startDate = startTime && new Date(startTime).toISOString();
+  const originalStartDate = originalStartTime && new Date(originalStartTime).toISOString();
+
+  let endDate = endTime && new Date(endTime);
+  if (endDate) {
+    if (isFullDay) {
+      endDate.setDate(endDate.getDate() + 1);
+    }
+    endDate = endDate.toISOString();
+  }
+
+  const result = {
+    summary,
+    description,
+    guestsCanSeeOtherGuests: isGuestListPublic,
+    start: isFullDay ? {
+      date: startDate && startDate.split('T')[0]
+    } : {
+      timeZone,
+      dateTime: startDate
+    },
+    end: isFullDay ? {
+      date: endDate && endDate.split('T')[0]
+    } : {
+      timeZone,
+      dateTime: endDate
+    },
+  };
+
+  if (originalStartDate) {
+    result.originalStartTime = isFullDay ? {
+      date: originalStartDate.split('T')[0]
+    } : {
+      timeZone,
+      dateTime: originalStartDate
+    };
+  }
+  if (placeName && address) {
+    result.location = `${placeName}, ${address}`;
+  }
+  if (attendees && attendees.length > 1) {
+    result.attendees = attendees.slice(1).reduce((list, { email }) => {
+      if (email) {
+        list.push({ email });
+      }
+
+      return list;
+    }, [])
+  }
+  if (repeatEnabled) {
+    const freq = repeatFreq ? `FREQ=${repeatFreq};` : '';
+    const interval = repeatInterval ? `INTERVAL=${repeatInterval};` : '';
+    const byDay = repeatByDay ? `BYDAY=${repeatByDay};` : '';
+    const until = repeatUntil ? `UNTIL=${repeatUntil};` : '';
+    const count = repeatCount ? `COUNT=${repeatCount};` : '';
+    result.recurrence = [('RRULE:' + freq + interval + byDay + until + count).slice(0, -1)];
+  }
+
+  return { event: result, id, googleId };
 };
