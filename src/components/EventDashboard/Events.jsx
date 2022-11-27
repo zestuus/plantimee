@@ -27,7 +27,9 @@ import { ColumnTitle } from "./Timeline";
 import Event, { EventCard } from "./Event";
 import withSettings from '../HOCs/withSettings';
 import googleIcon from "../../images/google.svg";
-import { getDayBounds, getGoogleTokenExpired, googleCalendarEventToPlantimeeEvent, plantimeeEventToGoogleCalendarEvent } from "../../utils/helpers";
+import {
+  getDayBounds, getGoogleTokenExpired, googleCalendarEventToPlantimeeEventAdapter, plantimeeEventToGoogleCalendarEventAdapter
+} from "../../utils/helpers";
 import { Control } from "../Header";
 import {
   getUserInfo,
@@ -148,6 +150,33 @@ const Events = ({
 
   const [userInfo, setUserInfo] = useState(null);
 
+  const [delayedExportData, setDelayedExportData] = useState([]);
+
+  useEffect(() => {
+    if (delayedExportData.length) {
+      const run = async () => {
+        let count = 0;
+        await Promise.all(delayedExportData.map(async ({ ownEvent, event }) => {
+          const recurrentEvent = ownEvents.find(e => e.id === ownEvent.recurrentEventId);
+
+          if (recurrentEvent) {
+            event.recurringEventId = recurrentEvent.googleId;
+          }
+          const createdEvent = await createEventInGoogleCalendar(chosenCalendar, event);
+          if (createdEvent) {
+            onChangeOwnEvent({ ...ownEvent, googleId: createdEvent.id, googleCalendarId: chosenCalendar });
+            count++;
+          }
+        }));
+        setDelayedExportData([]);
+        handleReload();
+        actions.openSnackbar(`${__('Events are successfully synchronized')} ${__('created')}: ${count})!`);
+        setTimeout(actions.closeSnackbar, 2000);
+      };
+      run();
+    }
+  }, [JSON.stringify(ownEvents)])
+
   const handleOpenGoogleSyncModal = (event) => {
     setGoogleSyncModalAnchorEl(event.currentTarget);
   };
@@ -187,7 +216,7 @@ const Events = ({
       if (result) {
         const { items } = result;
         const filterCanceledEvents = items.filter(event => event.status !== 'cancelled');
-        const plantimeeEvents = await Promise.all(filterCanceledEvents.map(googleCalendarEventToPlantimeeEvent));
+        const plantimeeEvents = await Promise.all(filterCanceledEvents.map(googleCalendarEventToPlantimeeEventAdapter));
 
         const importResult = await importEvents(plantimeeEvents);
 
@@ -211,7 +240,7 @@ const Events = ({
 
     if (googleOAuthToken && chosenCalendar) {
       const [linkedEvents, separateEvents] = (ownEvents || []).reduce((grouped, event) => {
-        if (!event.recurrentEventId && !event.completed && filterSyncEventByDate(event)) {
+        if (!event.completed && filterSyncEventByDate(event)) {
           if (event.googleId) {
             grouped[0].push(event);
           } else {
@@ -222,28 +251,44 @@ const Events = ({
         return grouped;
       }, [[], []]);
 
-      const eventsToUpdate = linkedEvents.map(plantimeeEventToGoogleCalendarEvent);
-      const eventsToCreate = separateEvents.map(plantimeeEventToGoogleCalendarEvent);
+      const eventsToUpdate = linkedEvents.map(plantimeeEventToGoogleCalendarEventAdapter);
+      const eventsToCreate = separateEvents.map(plantimeeEventToGoogleCalendarEventAdapter);
 
       let createdCount = 0;
-
       let updatedCount = 0;
-      eventsToCreate.map(async({ event, id }) => {
-        const createdEvent = await createEventInGoogleCalendar(chosenCalendar, event);
-        if (createdEvent) {
-          const ownEvent = (ownEvents || []).find(e => e.id === id);
-          if (ownEvent) {
-            onChangeOwnEvent({ ...ownEvent, googleId: createdEvent.id, googleCalendarId: createdEvent.calendarId });
+      const eventsToExportLater = [];
+      await Promise.all(eventsToCreate.map(async({ event, id }) => {
+        const ownEvent = ownEvents.find(e => e.id === id);
+        if (ownEvent) {
+          if (ownEvent.recurrentEventId) {
+            eventsToExportLater.push({ ownEvent, event });
+          } else {
+            const createdEvent = await createEventInGoogleCalendar(chosenCalendar, event);
+            if (createdEvent) {
+              onChangeOwnEvent({ ...ownEvent, googleId: createdEvent.id, googleCalendarId: chosenCalendar });
+              createdCount++;
+            }
           }
-          createdCount++;
         }
-      });
-      await Promise.all(eventsToUpdate.map(async({ event, googleId }) => {
-        if (await updateEventInGoogleCalendar(chosenCalendar, googleId, event)) {
-          updatedCount++;
+      }));
+      await Promise.all(eventsToUpdate.map(async({ event, id, googleId }) => {
+        const ownEvent = ownEvents.find(e => e.id === id);
+        if (ownEvent) {
+          if (ownEvent.recurrentEventId) {
+            const recurrentEvent = ownEvents.find(e => e.id === ownEvent.recurrentEventId);
+
+            if (recurrentEvent) {
+              event.recurringEventId = recurrentEvent.googleId;
+            }
+          }
+          const updatedEvent = await updateEventInGoogleCalendar(chosenCalendar, googleId, event);
+          if (updatedEvent) {
+            updatedCount++;
+          }
         }
       }));
 
+      setDelayedExportData(eventsToExportLater);
       actions.openSnackbar(`${__('Events are successfully synchronized')} (${__('edited')}: ${updatedCount}, ${__('created')}: ${createdCount})!`);
       setTimeout(actions.closeSnackbar, 2000);
     }
@@ -588,7 +633,6 @@ const Events = ({
   );
 };
 
-
 const mapDispatchToProps = (dispatch) => ({
   actions: bindActionCreators({
     openSnackbar,
@@ -597,7 +641,6 @@ const mapDispatchToProps = (dispatch) => ({
     googleOAuthLogout,
   }, dispatch),
 });
-
 
 export default compose(
   withSettings,

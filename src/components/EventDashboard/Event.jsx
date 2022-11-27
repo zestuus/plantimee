@@ -109,7 +109,7 @@ const Event = ({
     repeatFreq,
     repeatByDay,
     organizer: eventOrganizer,
-  } = eventData;
+  } = eventData || {};
   const { username: organizer } = eventOrganizer || {};
   const [completedLocal, setCompletedLocal] = useState(!!completed);
 

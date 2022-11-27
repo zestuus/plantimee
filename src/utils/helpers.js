@@ -241,7 +241,7 @@ export const getEventRecurrenceEndDate = (event) => {
   return null;
 };
 
-export const googleCalendarEventToPlantimeeEvent = async(event) => {
+export const googleCalendarEventToPlantimeeEventAdapter = async(event) => {
   const {
     id: googleId,
     description,
@@ -313,7 +313,7 @@ export const googleCalendarEventToPlantimeeEvent = async(event) => {
   }
 };
 
-export const plantimeeEventToGoogleCalendarEvent = (event) => {
+export const plantimeeEventToGoogleCalendarEventAdapter = (event) => {
   const {
     id,
     googleId,
