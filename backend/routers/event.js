@@ -214,7 +214,10 @@ router.get('/list-own', privateRoute, async (req, res) => {
             { recurrentEventId: null },
             {
               startTime: {
-                [Op.between]: [dayStart, dayEnd]
+                [Op.lt]: dayEnd,
+              },
+              endTime: {
+                [Op.gt]: dayStart,
               }
             }
           ]
@@ -372,6 +375,49 @@ router.get('/list-invited', privateRoute, async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(400).send("Error during fetch invited events!");
+  }
+});
+
+router.get('/list-instances', privateRoute, async (req, res) => {
+  const { id } = req.user;
+  const { dateFrom, dateTo, currentDate } = req.query;
+  const { dayStart: filterStart } = getDayBounds(dateFrom);
+  const { dayEnd: filterEnd } = getDayBounds(dateTo);
+  const { dayStart, dayEnd } = getDayBounds(currentDate);
+  const filterFrom = dateFrom ? {
+    endDate: {
+      [Op.gt]: filterStart
+    }
+  } : null;
+  const filterTo = dateFrom ? {
+    startDate: {
+      [Op.lt]: filterEnd
+    }
+  } : null;
+  try {
+    const instances = await db.Event.findAll({
+      where: {
+        UserId: id,
+        recurrentEventId: {
+          [Op.not]: null
+        },
+        // TODO: test it!!!
+        [Op.not]: {
+          startTime: {
+            [Op.lt]: dayEnd,
+          },
+          endTime: {
+            [Op.gt]: dayStart,
+          }
+        },
+        ...filterFrom,
+        ...filterTo,
+      }
+    });
+    res.send(instances);
+  } catch (e) {
+    console.error(e);
+    res.status(400).send("Error during list instances of recurring events!");
   }
 });
 

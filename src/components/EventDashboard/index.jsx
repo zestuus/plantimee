@@ -369,6 +369,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
                 ownEvents={ownEvents}
                 invitedEvents={invitedEvents}
                 chosenEvent={chosenEvent}
+                chosenDate={reloadDate}
                 setChosenEvent={handleChosenEventChange}
                 userCalendars={userCalendars}
                 handleReload={handleReload}

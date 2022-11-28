@@ -23,6 +23,15 @@ export const getInvitedEvents = async (date) => {
   }
 }
 
+export const getRecurringInstances = async (currentDate, dateFrom, dateTo) => {
+  try {
+    const response = await axios.get(`${url}/list-instances`, { ...getAuthHeader(), params: { dateFrom, dateTo, currentDate } });
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+}
+
 export const updateEvent = async (eventData) => {
   try {
     const response = await axios.put(url, eventData, getAuthHeader());

@@ -37,7 +37,7 @@ import {
   createEventInGoogleCalendar,
   updateEventInGoogleCalendar
 } from "../../api/google_calendar";
-import { deleteCompletedEvent, importEvents } from "../../api/event";
+import { deleteCompletedEvent, getRecurringInstances, importEvents } from "../../api/event";
 import { GOOGLE_API_USER_SCOPE, LOCALE } from "../../constants/enums";
 import { closeSnackbar, googleOAuthLogin, googleOAuthLogout, openSnackbar } from "../../actions/settingsAction";
 
@@ -119,6 +119,7 @@ const Events = ({
   ownEvents,
   invitedEvents,
   chosenEvent,
+  chosenDate,
   handleReload,
   setChosenEvent,
   onCreateNewEvent,
@@ -239,7 +240,11 @@ const Events = ({
     );
 
     if (googleOAuthToken && chosenCalendar) {
-      const [linkedEvents, separateEvents] = (ownEvents || []).reduce((grouped, event) => {
+      const recurringInstances = await getRecurringInstances(chosenDate, chosenDayStart, chosenDayEnd);
+      const [linkedEvents, separateEvents] = [
+        ...ownEvents,
+        ...recurringInstances
+      ].reduce((grouped, event) => {
         if (!event.completed && filterSyncEventByDate(event)) {
           if (event.googleId) {
             grouped[0].push(event);
@@ -262,12 +267,12 @@ const Events = ({
         if (ownEvent) {
           if (ownEvent.recurrentEventId) {
             eventsToExportLater.push({ ownEvent, event });
-          } else {
-            const createdEvent = await createEventInGoogleCalendar(chosenCalendar, event);
-            if (createdEvent) {
-              onChangeOwnEvent({ ...ownEvent, googleId: createdEvent.id, googleCalendarId: chosenCalendar });
-              createdCount++;
-            }
+            return
+          }
+          const createdEvent = await createEventInGoogleCalendar(chosenCalendar, event);
+          if (createdEvent) {
+            onChangeOwnEvent({ ...ownEvent, googleId: createdEvent.id, googleCalendarId: chosenCalendar });
+            createdCount++;
           }
         }
       }));
