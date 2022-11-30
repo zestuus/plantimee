@@ -53,6 +53,7 @@
     "start": "react-scripts start",
     "start:backend": "nodemon server.js",
     "start:prod": "node server.js",
+    "build:prod": "yarn && react-scripts build",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
