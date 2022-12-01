@@ -385,12 +385,12 @@ router.get('/list-instances', privateRoute, async (req, res) => {
   const { dayEnd: filterEnd } = getDayBounds(dateTo);
   const { dayStart, dayEnd } = getDayBounds(currentDate);
   const filterFrom = dateFrom ? {
-    endDate: {
+    endTime: {
       [Op.gt]: filterStart
     }
   } : null;
   const filterTo = dateFrom ? {
-    startDate: {
+    startTime: {
       [Op.lt]: filterEnd
     }
   } : null;

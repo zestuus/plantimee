@@ -68,6 +68,10 @@ const Label = styled(FormLabel)`
   margin: 10px 0;
 `;
 
+const SettingsField = styled.div`
+  margin: 0 15px;
+`;
+
 const Header = ({
   translate: __, actions, isLoggedIn, onLogout, language, militaryTime,
 }) => {
@@ -184,19 +188,21 @@ const Header = ({
                 open={Boolean(settingsAnchorEl)}
                 onClose={() => setSettingsAnchorEl(null)}
               >
-                <Control component="fieldset" variant="standard">
-                  <Label component="legend">{__('Language')}</Label>
-                  <ToggleButtonGroup
-                    color="primary"
-                    value={language}
-                    exclusive
-                    onChange={(e, value) => value && actions.changeLanguage(value)}
-                  >
-                    <ToggleButton value={LANGUAGE.EN}>EN</ToggleButton>
-                    <ToggleButton value={LANGUAGE.UK}>UK</ToggleButton>
-                  </ToggleButtonGroup>
+                <Grid container alignItems="center">
+                  <SettingsField>
+                    <Label component="legend">{__('Language')}</Label>
+                    <ToggleButtonGroup
+                      color="primary"
+                      value={language}
+                      exclusive
+                      onChange={(e, value) => value && actions.changeLanguage(value)}
+                    >
+                      <ToggleButton value={LANGUAGE.EN}>EN</ToggleButton>
+                      <ToggleButton value={LANGUAGE.UK}>UK</ToggleButton>
+                    </ToggleButtonGroup>
+                  </SettingsField>
                   {isLoggedIn && (
-                    <React.Fragment>
+                    <SettingsField>
                       <Label component="legend">{__('Time format')}</Label>
                       <ToggleButtonGroup
                         color="primary"
@@ -207,9 +213,9 @@ const Header = ({
                         <ToggleButton value={false}>12 {__('hours')}</ToggleButton>
                         <ToggleButton value={true}>24{__(' hours')}</ToggleButton>
                       </ToggleButtonGroup>
-                    </React.Fragment>
+                    </SettingsField>
                   )}
-                </Control>
+                </Grid>
               </Menu>
             </Grid>
           </MenuBlock>
