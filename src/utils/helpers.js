@@ -96,15 +96,15 @@ export const roundFloat = (number, digits= 0) => Math.round(number * 10 ** digit
 
 export const getDayBounds = (date = new Date()) => {
   const dayStart = new Date(date);
-  dayStart.setHours(0)
-  dayStart.setMinutes(0)
-  dayStart.setSeconds(0)
-  dayStart.setMilliseconds(0)
+  dayStart.setHours(0);
+  dayStart.setMinutes(0);
+  dayStart.setSeconds(0);
+  dayStart.setMilliseconds(0);
   const dayEnd = new Date(date);
-  dayEnd.setHours(23)
-  dayEnd.setMinutes(59)
-  dayEnd.setSeconds(0)
-  dayEnd.setMilliseconds(0)
+  dayEnd.setHours(23);
+  dayEnd.setMinutes(59);
+  dayEnd.setSeconds(0);
+  dayEnd.setMilliseconds(0);
 
   return { dayStart, dayEnd };
 }

@@ -14,4 +14,4 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const WEEK = 7 * DAY;
 
-module.exports = { EnglishDays, DAY, WEEK };
+module.exports = { EnglishDays, DAY, WEEK, MINUTE };

@@ -4,7 +4,7 @@ const { Op } = require("sequelize");
 
 const db = require('../../db/models');
 const { privateRoute } = require('../utils/middlewares');
-const { EnglishDays } = require("../constants/data");
+const { EnglishDays, MINUTE } = require("../constants/data");
 const { AVAILABILITY_STATUS, REPEAT_FREQ } = require("../constants/enums");
 const {
   getDayBounds,
@@ -51,8 +51,9 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
   const {
     name, description, completed, startTime, endTime, recurringEventId, originalStartTime, isFullDay,
     latitude, longitude, placeName, address, url, googleId, googleCalendarId, isGuestListPublic,
-    repeatEnabled, repeatFreq, repeatInterval, repeatByDay, repeatUntil, repeatCount
+    repeatEnabled, repeatFreq, repeatInterval, repeatByDayReceived, repeatUntil, repeatCount
   } = eventData;
+  const repeatByDay = repeatByDayReceived === 'onDay' ? '' : repeatByDayReceived;
 
   const where = keys.reduce((acc, key) => ({ ...acc, [key]: eventData[key] }), {});
 
@@ -74,6 +75,20 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
   }
 
   if (event) {
+    if (event.repeatEnabled) {
+      if (!repeatEnabled) {
+        event.noLongerRecurrent = true;
+      } else if (
+        event.repeatFreq !== repeatFreq ||
+        event.repeatInterval !== repeatInterval ||
+        event.repeatByDay !== repeatByDay ||
+        event.repeatUntil !== repeatUntil ||
+        event.repeatCount !== repeatCount
+      ) {
+        event.repeatChanged = true;
+      }
+    }
+
     event.name = name || null;
     event.description = description || null;
     event.completed = completed;
@@ -84,7 +99,7 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
     event.repeatEnabled = repeatEnabled;
     event.repeatFreq = repeatFreq;
     event.repeatInterval = repeatInterval;
-    event.repeatByDay = repeatByDay === 'onDay' ? '' : repeatByDay;
+    event.repeatByDay = repeatByDay;
     event.repeatUntil = repeatUntil;
     event.repeatCount = repeatCount;
     event.latitude = latitude;
@@ -139,7 +154,7 @@ const checkIfDayHasEventOccurrence = (date, event) => {
   const since = new Date(event.startTime);
   switch (event.repeatFreq) {
     case REPEAT_FREQ.DAILY:
-      since.setDate(since.getDate() + (event.repeatInterval || 1));
+      since.setDate(since.getDate() + 1);
       break;
     case REPEAT_FREQ.WEEKLY:
       since.setDate(since.getDate() + 1);
@@ -401,7 +416,6 @@ router.get('/list-instances', privateRoute, async (req, res) => {
         recurrentEventId: {
           [Op.not]: null
         },
-        // TODO: test it!!!
         [Op.not]: {
           startTime: {
             [Op.lt]: dayEnd,
@@ -496,12 +510,25 @@ router.put('/', privateRoute, async (req, res) => {
     res.status(400).send("Event doesn't exists or you aren't the event's organizer!");
   }
 
+  if (event.noLongerRecurrent) {
+    await db.Event.destroy({ where: { recurrentEventId: event.id }});
+  } else if (event.repeatChanged) {
+    const recurrentInstances = await db.Event.findAll({ where: { recurrentEventId: event.id }});
+
+    await Promise.all(recurrentInstances.map(async instance => {
+      if (!checkIfDayHasEventOccurrence(instance.originalStartTime, event)) {
+        await instance.destroy();
+      }
+    }));
+  }
+
+
   try {
     await event.save();
     res.send(event);
   } catch (e) {
     console.error(e);
-    res.status(400).send("Error  during update!");
+    res.status(400).send("Error during update!");
   }
 });
 
@@ -517,8 +544,7 @@ router.delete('/', privateRoute, async (req, res) => {
 
   try {
     if (event.repeatEnabled) {
-      const count = await db.Event.destroy({ where: { recurrentEventId: id }});
-      console.log('\n\ndeleted', count);
+      await db.Event.destroy({ where: { recurrentEventId: id }});
     }
 
     await event.destroy();
@@ -552,6 +578,18 @@ router.post('/import', privateRoute, async (req, res) => {
 
         if (editedEvent.id) {
           await editedEvent.save();
+
+          if (editedEvent.noLongerRecurrent) {
+            await db.Event.destroy({ where: { recurrentEventId: event.id }});
+          } else if (editedEvent.repeatChanged) {
+            const recurrentInstances = await db.Event.findAll({ where: { recurrentEventId: editedEvent.id }});
+
+            await Promise.all(recurrentInstances.map(async instance => {
+              if (!checkIfDayHasEventOccurrence(instance.originalStartTime, instance)) {
+                await instance.destroy();
+              }
+            }));
+          }
         }
         return editedEvent;
       })
@@ -727,13 +765,10 @@ router.post('/extract', privateRoute, async (req, res) => {
 
 router.get('/hours', privateRoute, async (req, res) => {
   const { id } = req.user;
-  const eventId = parseInt(req.query.event, 10);
-  const duration = parseInt(req.query.duration, 10);
-  const fromDate = req.query.fromDate;
-  const toDate = req.query.toDate;
-  const fromTime = req.query.fromTime;
-  const toTime = req.query.toTime || (fromTime && '23:59');
-  const msDuration = duration * 60 * 1000;
+  const { fromDate, toDate, fromTime, toTime, event: eventIdStr, duration: durationStr } = req.query;
+  const eventId = parseInt(eventIdStr, 10);
+  const duration = parseInt(durationStr, 10);
+  const msDuration = duration * MINUTE;
 
   console.log(fromDate);
   console.log(toDate);
@@ -792,7 +827,7 @@ router.get('/hours', privateRoute, async (req, res) => {
     const endDate = new Date(eventData.endTime);
     const now = new Date();
 
-    if (eventData.startTime && eventData.endTime && now < startDate && startDate < endDate) {
+    if (eventData.startTime && eventData.endTime && !eventData.isFullDay && now < startDate && startDate < endDate) {
       raw_tasks.push([startDate.getTime(), endDate.getTime()]);
     }
   }

@@ -77,9 +77,11 @@ const getDayOfMonth = (byday) => {
 
 const getWeekdayNumber = (date) => (date.getDay() || 7) - 1;
 
-const checkRepeatIntervalMatch = (startDate, repeatInterval, repeatFreq, compareDate) => (
-  ((ABSOLUTE_UNIT_GETTERS[repeatFreq](compareDate) - ABSOLUTE_UNIT_GETTERS[repeatFreq](startDate)) % (repeatInterval || 1)) === 0
-);
+const checkRepeatIntervalMatch = (startDate, repeatInterval, repeatFreq, compareDate) => {
+  const unitGetter = ABSOLUTE_UNIT_GETTERS[repeatFreq];
+
+  return ((unitGetter(compareDate) - unitGetter(startDate)) % (repeatInterval || 1)) === 0;
+};
 
 module.exports = {
   getDayBounds,

@@ -1,6 +1,6 @@
-const { DAY, WEEK } = require("../constants/data");
+const { MINUTE, DAY, WEEK } = require("../constants/data");
 
-const getDayAbsoluteNumber = (date) => Math.round(date / DAY);
+const getDayAbsoluteNumber = (date) => Math.floor((date - (date.getTimezoneOffset() * MINUTE)) / DAY);
 
 const getWeekAbsoluteNumber = (date) => Math.round(date / WEEK);
 

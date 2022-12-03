@@ -254,6 +254,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
       setColumnShown('settings');
       const events = [...(ownEvents || []), newEvent];
       setOwnEvents(events);
+      setChosenRecurrentEvent(newEvent.recurrentEventId);
       setReloadSwitch(!reloadSwitch);
     }
   }

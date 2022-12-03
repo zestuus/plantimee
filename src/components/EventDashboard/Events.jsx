@@ -142,7 +142,7 @@ const Events = ({
 
   const [showInvitedEvents, setShowInvitedEvents] = useState(true);
   const [showActiveEvents, setShowActiveEvents] = useState(true);
-  const [showFullDayEvents, setShowFullDayEvents] = useState(false);
+  const [showFullDayEvents, setShowFullDayEvents] = useState(true);
   const [showCompletedEvents, setShowCompletedEvents] = useState(false);
 
   const [filterByDate, setFilterByDate] = useState(false);

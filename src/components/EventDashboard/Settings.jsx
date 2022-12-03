@@ -216,27 +216,41 @@ const Settings = ({
         break;
       default: break;
     }
+    date.setSeconds(0);
 
     if (key === 'startTime') {
       if (eventData.endTime) {
-        const startDate = new Date(date.getTime());
-        startDate.setDate(startDate.getDate() + daysLong);
-        startDate.setHours(startDate.getHours() + hoursLong);
-        startDate.setMinutes(startDate.getMinutes() + minutesLong);
+        const endTime = new Date(date.getTime());
+        endTime.setDate(endTime.getDate() + daysLong + (eventData.isFullDay ? -1 : 0));
+        endTime.setHours(endTime.getHours() + hoursLong);
+        endTime.setMinutes(endTime.getMinutes() + minutesLong);
 
+        if (eventData.isFullDay) {
+          endTime.setHours(23);
+          endTime.setMinutes(59);
+        }
         onChangeOwnEventLocally({
           ...eventData,
           startTime: formatDateString(date),
-          endTime: formatDateString(startDate),
+          endTime: formatDateString(endTime),
         });
       } else {
+        const endTime = new Date(date);
+        if (eventData.isFullDay) {
+          endTime.setHours(23);
+          endTime.setMinutes(59);
+        }
         onChangeOwnEventLocally({
           ...eventData,
           startTime: formatDateString(date),
-          endTime: formatDateString(date),
+          endTime: formatDateString(endTime),
         });
       }
     } else {
+      if (eventData.isFullDay) {
+        date.setHours(23);
+        date.setMinutes(59);
+      }
       onChangeOwnEventLocally({ ...eventData, [key]: formatDateString(date) });
     }
 
@@ -262,18 +276,19 @@ const Settings = ({
   const handleKeyDown = (event, key, readOnly = false) => {
     const { code } = event;
 
-    if ( code === 'Tab') {
+    if (code === 'Tab' || code === 'ArrowRight' || code === 'ArrowLeft') {
       event.preventDefault();
-      const newRangeIndex = (selectedRange + 1) % selectionRanges.length;
+      const move = (code === 'ArrowLeft') ? -1 : 1;
+      const newRangeIndex = (selectedRange + move) % selectionRanges.length;
       const newRange = selectionRanges[newRangeIndex];
 
       if (newRange) {
         event.target.setSelectionRange(...newRange);
         setSelectedRange(newRangeIndex);
       }
-    } else if ( code === 'ArrowUp') {
+    } else if (code === 'ArrowUp') {
       handleArrowPressed(event, key, 1);
-    } else if ( code === 'ArrowDown') {
+    } else if (code === 'ArrowDown') {
       handleArrowPressed(event, key, -1);
     } else if (readOnly) {
       event.preventDefault();
@@ -284,12 +299,14 @@ const Settings = ({
     const latitude = roundFloat(lat,7);
     const longitude = roundFloat(lng,7);
 
-    const { results } = await findNearbyLocation({ location: `${latitude},${longitude}`, language });
-    const placesFound = results.filter(place => place.business_status);
+    const { results } = await findNearbyLocation({ location: `${latitude},${longitude}`, language }) || {};
+    if (results) {
+      const placesFound = results.filter(place => place.business_status);
+
+      setPlacesToChoose(placesFound);
+    }
+
     const updatedEventData = {...eventData, latitude, longitude };
-
-    setPlacesToChoose(placesFound);
-
     onChangeOwnEventLocally(updatedEventData);
     onSaveChangesOwnEvent(updatedEventData);
   };
@@ -362,6 +379,9 @@ const Settings = ({
   }
   const daysCountFromMonthStart = eventData && countCertainDay(dayOfWeek, startOfMonth, new Date(eventData.startTime));
   const daysCountToMonthEnd = eventData && countCertainDay(dayOfWeek, new Date(eventData.startTime), endOfMonth) - 1;
+
+  const nowTime = new Date();
+  nowTime.setSeconds(0);
 
   return (
     <Container container direction="column" justifyContent="flex-start">
@@ -586,8 +606,8 @@ const Settings = ({
                         });
                       } else {
                         if (!event.target.checked) {
-                          const startTime = new Date();
-                          const endTime = new Date();
+                          const startTime = new Date(nowTime);
+                          const endTime = new Date(nowTime);
                           endTime.setHours(endTime.getHours() + 1);
 
                           onChangeOwnEventLocally({
@@ -625,7 +645,7 @@ const Settings = ({
                   ampm={!militaryTime}
                   label={eventData.isFullDay ? __('Start date') : __('Start date&time')}
                   readOnly={isInvitedEvent}
-                  value={eventData.startTime ? new Date(eventData.startTime) : new Date()}
+                  value={eventData.startTime ? new Date(eventData.startTime) : new Date(nowTime)}
                   format={`yyyy/MM/dd${eventData.isFullDay ? '' : (militaryTime ? ' HH:mm' : ' hh:mm a')}`}
                   onBlur={() => handleBlur('startTime')}
                   onClose={() => handleBlur('startTime')}
@@ -633,19 +653,19 @@ const Settings = ({
                   onKeyDown={(event) => handleKeyDown(event, 'startTime', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
                   onChange={(value) => {
                     if (eventData.endTime) {
-                      let startDate = new Date(eventData.endTime);
+                      let endTime = new Date(eventData.endTime);
 
                       if (value && (value instanceof Date)) {
-                        startDate = new Date(value);
-                        startDate.setDate(startDate.getDate() + daysLong);
-                        startDate.setHours(startDate.getHours() + hoursLong);
-                        startDate.setMinutes(startDate.getMinutes() + minutesLong);
+                        endTime = new Date(value);
+                        endTime.setDate(endTime.getDate() + daysLong - (eventData.isFullDay ? -1 : 0));
+                        endTime.setHours(endTime.getHours() + hoursLong);
+                        endTime.setMinutes(endTime.getMinutes() + minutesLong);
                       }
 
                       onChangeOwnEventLocally({
                         ...eventData,
                         startTime: formatDateString(value),
-                        endTime: formatDateString(startDate),
+                        endTime: formatDateString(endTime),
                       });
                     } else {
                       onChangeOwnEventLocally({
@@ -663,19 +683,24 @@ const Settings = ({
                   readOnly={isInvitedEvent}
                   ampm={!militaryTime}
                   label={eventData.isFullDay ? __('End date') : __('End date&time')}
-                  value={eventData.endTime ? new Date(eventData.endTime) : new Date()}
+                  value={eventData.endTime ? new Date(eventData.endTime) : new Date(nowTime)}
                   format={`yyyy/MM/dd${eventData.isFullDay ? '' : (militaryTime ? ' HH:mm' : ' hh:mm a')}`}
                   onBlur={() => handleBlur('endTime')}
                   onClose={() => handleBlur('endTime')}
                   onClick={handleDateTimeClick}
                   onKeyDown={(event) => handleKeyDown(event, 'endTime', (isInvitedEvent || (!militaryTime && language !== LANGUAGE.EN)))}
                   onChange={(value) => {
-                    const formatedValue = formatDateString(value);
+                    let newDate = new Date(value);
+                    if (eventData.isFullDay) {
+                      newDate.setHours(23);
+                      newDate.setMinutes(59);
+                    }
+                    const formattedValue = formatDateString(newDate);
 
                     onChangeOwnEventLocally({
                       ...eventData,
-                      endTime: formatedValue,
-                      startTime: eventData.startTime || formatedValue,
+                      endTime: formattedValue,
+                      startTime: eventData.startTime || formattedValue,
                     });
                   }}
                 />
@@ -702,13 +727,16 @@ const Settings = ({
                   onBlur={() => handleBlur('endTime')}
                   onChange={(event) => {
                     if (event.target.value) {
-                      const startDate = new Date(eventData.startTime)
-                      startDate.setDate(startDate.getDate() + parseInt(event.target.value, 10));
-                      startDate.setHours(startDate.getHours() + hoursLong);
-                      startDate.setMinutes(startDate.getMinutes() + minutesLong);
+                      const endTime = new Date(eventData.startTime)
+                      endTime.setDate(endTime.getDate() + parseInt(event.target.value, 10));
+                      endTime.setHours(endTime.getHours() + hoursLong);
+                      endTime.setMinutes(endTime.getMinutes() + minutesLong);
+                      if (eventData.isFullDay) {
+                        endTime.setMilliseconds(-1);
+                      }
                       onChangeOwnEventLocally({
                         ...eventData,
-                        endTime: formatDateString(startDate),
+                        endTime: formatDateString(endTime),
                       });
                     }
                   }} />
@@ -721,13 +749,13 @@ const Settings = ({
                   onBlur={() => handleBlur('endTime')}
                   onChange={(event) => {
                     if (event.target.value) {
-                      const startDate = new Date(eventData.startTime);
-                      startDate.setDate(startDate.getDate() + daysLong);
-                      startDate.setHours(startDate.getHours() + parseInt(event.target.value, 10));
-                      startDate.setMinutes(startDate.getMinutes() + minutesLong);
+                      const endTime = new Date(eventData.startTime);
+                      endTime.setDate(endTime.getDate() + daysLong);
+                      endTime.setHours(endTime.getHours() + parseInt(event.target.value, 10));
+                      endTime.setMinutes(endTime.getMinutes() + minutesLong);
                       onChangeOwnEventLocally({
                         ...eventData,
-                        endTime: formatDateString(startDate),
+                        endTime: formatDateString(endTime),
                       });
                     }
                   }} />
@@ -740,13 +768,18 @@ const Settings = ({
                   onBlur={() => handleBlur('endTime')}
                   onChange={(event) => {
                     if (event.target.value) {
-                      const startDate = new Date(eventData.startTime)
-                      startDate.setDate(startDate.getDate() + daysLong)
-                      startDate.setHours(startDate.getHours() + hoursLong);
-                      startDate.setMinutes(startDate.getMinutes() + parseInt(event.target.value, 10));
+                      const endTime = new Date(eventData.startTime);
+                      console.log('endTime', endTime);
+                      endTime.setDate(endTime.getDate() + daysLong);
+                      console.log('endTime', endTime);
+                      endTime.setHours(endTime.getHours() + hoursLong);
+                      console.log('endTime', endTime);
+                      endTime.setMinutes(endTime.getMinutes() + parseInt(event.target.value, 10));
+                      console.log('endTime', endTime);
+                      console.log('newMinutes', parseInt(event.target.value, 10));
                       onChangeOwnEventLocally({
                         ...eventData,
-                        endTime: formatDateString(startDate)
+                        endTime: formatDateString(endTime)
                       });
                     }
                   }} />
@@ -761,7 +794,7 @@ const Settings = ({
                   onClick={ async () => {
                     const result = onFindAutomatically({
                       event: eventData.id,
-                      duration: daysLong* 24*60 + hoursLong*60 + minutesLong,
+                      duration: daysLong * 24*60 + hoursLong*60 + minutesLong,
                       ...autoFindProps
                     })
                     if (!await result) {
@@ -1024,7 +1057,6 @@ const Settings = ({
                         if (!isInvitedEvent) {
                           const { dayEnd } = getDayBounds(newDate);
 
-                          console.log(dayEnd);
                           onChangeOwnEventLocally({
                             ...eventData,
                             repeatUntil: dayEnd,
