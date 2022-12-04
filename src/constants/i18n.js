@@ -49,10 +49,10 @@ const DICTIONARY = {
   'Time format': {
     [LANGUAGE.UK]: 'Формат часу',
   },
-  'hours': {
+  '   hours': {
     [LANGUAGE.UK]: 'годин',
   },
-  ' hours': {
+  '  hours': {
     [LANGUAGE.UK]: ' години',
   },
   'Cannot get your profile info': {
@@ -73,8 +73,8 @@ const DICTIONARY = {
   'Submit': {
     [LANGUAGE.UK]: "Підтвердити",
   },
-  'Auto find properties': {
-    [LANGUAGE.UK]: "Властивості автоматичного пошуку",
+  'Auto find time settings': {
+    [LANGUAGE.UK]: "Налаштування автоматичного пошуку часу",
   },
   'From date': {
     [LANGUAGE.UK]: "Від дати",
@@ -427,6 +427,12 @@ const DICTIONARY = {
   'Repeat every ': {
     [LANGUAGE.UK]: 'Повторюється кожнi',
   },
+  'minute': {
+    [LANGUAGE.UK]: 'хвилину',
+  },
+  'hour': {
+    [LANGUAGE.UK]: 'годину',
+  },
   'day': {
     [LANGUAGE.UK]: 'день',
   },
@@ -438,6 +444,24 @@ const DICTIONARY = {
   },
   'year': {
     [LANGUAGE.UK]: 'рік',
+  },
+  ' minute': {
+    [LANGUAGE.UK]: 'хвилини',
+  },
+  ' hour': {
+    [LANGUAGE.UK]: 'години',
+  },
+  ' day': {
+    [LANGUAGE.UK]: 'дня',
+  },
+  ' week': {
+    [LANGUAGE.UK]: 'тиждня',
+  },
+  'minutes  ': {
+    [LANGUAGE.UK]: 'хвилина',
+  },
+  'hour  ': {
+    [LANGUAGE.UK]: 'година',
   },
   'days  ': {
     [LANGUAGE.UK]: 'день',
@@ -451,6 +475,24 @@ const DICTIONARY = {
   'years  ': {
     [LANGUAGE.UK]: 'рік',
   },
+  ' minutes  ': {
+    [LANGUAGE.UK]: 'хвилини',
+  },
+  ' hours  ': {
+    [LANGUAGE.UK]: 'години',
+  },
+  ' days  ': {
+    [LANGUAGE.UK]: 'дня',
+  },
+  ' weeks  ': {
+    [LANGUAGE.UK]: 'тиждня',
+  },
+  'minutes': {
+    [LANGUAGE.UK]: 'хвилини',
+  },
+  'hours': {
+    [LANGUAGE.UK]: 'години',
+  },
   'days': {
     [LANGUAGE.UK]: 'дні',
   },
@@ -463,6 +505,24 @@ const DICTIONARY = {
   'years': {
     [LANGUAGE.UK]: 'роки',
   },
+  ' minutes': {
+    [LANGUAGE.UK]: 'хвилин',
+  },
+  ' hours': {
+    [LANGUAGE.UK]: 'годин',
+  },
+  ' days': {
+    [LANGUAGE.UK]: 'днів',
+  },
+  ' weeks': {
+    [LANGUAGE.UK]: 'тижднів',
+  },
+  'minutes ': {
+    [LANGUAGE.UK]: 'хвилин',
+  },
+  'hours ': {
+    [LANGUAGE.UK]: 'годин',
+  },
   'days ': {
     [LANGUAGE.UK]: 'днів',
   },
@@ -474,6 +534,18 @@ const DICTIONARY = {
   },
   'years ': {
     [LANGUAGE.UK]: 'років',
+  },
+  ' minutes ': {
+    [LANGUAGE.UK]: 'хвилин',
+  },
+  ' hours ': {
+    [LANGUAGE.UK]: 'годин',
+  },
+  ' days ': {
+    [LANGUAGE.UK]: 'днів',
+  },
+  ' weeks ': {
+    [LANGUAGE.UK]: 'тижднів',
   },
   'Ends': {
     [LANGUAGE.UK]: 'Завершується',
@@ -597,6 +669,63 @@ const DICTIONARY = {
   },
   'All events': {
     [LANGUAGE.UK]: 'Усі події',
+  },
+  'Start search:': {
+    [LANGUAGE.UK]: 'Починати пошук:',
+  },
+  'Now': {
+    [LANGUAGE.UK]: 'Зараз',
+  },
+  'Search:': {
+    [LANGUAGE.UK]: 'Шукати:',
+  },
+  'During': {
+    [LANGUAGE.UK]: 'Протягом',
+  },
+  'Until end of the day': {
+    [LANGUAGE.UK]: 'До кінця дня',
+  },
+  'In date and time': {
+    [LANGUAGE.UK]: 'В дату і час',
+  },
+  'Until date and time': {
+    [LANGUAGE.UK]: 'До дати і часу',
+  },
+  'During:': {
+    [LANGUAGE.UK]: 'Протягом:',
+  },
+  'Whole day': {
+    [LANGUAGE.UK]: 'Цілої доби',
+  },
+  'Whole days': {
+    [LANGUAGE.UK]: 'Цілих діб',
+  },
+  'Working hours': {
+    [LANGUAGE.UK]: 'Робочих годин',
+  },
+  'Morning': {
+    [LANGUAGE.UK]: 'Ранку',
+  },
+  'Afternoon': {
+    [LANGUAGE.UK]: 'Обіду',
+  },
+  'Evening': {
+    [LANGUAGE.UK]: 'Вечорa',
+  },
+  'Night': {
+    [LANGUAGE.UK]: 'Ночі',
+  },
+  'Mornings': {
+    [LANGUAGE.UK]: 'Ранків',
+  },
+  'Afternoons': {
+    [LANGUAGE.UK]: 'Обідів',
+  },
+  'Evenings': {
+    [LANGUAGE.UK]: 'Вечорів',
+  },
+  'Nights': {
+    [LANGUAGE.UK]: 'Ночей',
   },
 };
 

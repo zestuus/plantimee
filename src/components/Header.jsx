@@ -210,8 +210,8 @@ const Header = ({
                         exclusive
                         onChange={actions.switchTimeFormat}
                       >
-                        <ToggleButton value={false}>12 {__('hours')}</ToggleButton>
-                        <ToggleButton value={true}>24{__(' hours')}</ToggleButton>
+                        <ToggleButton value={false}>12 {__('   hours')}</ToggleButton>
+                        <ToggleButton value={true}>24{__('  hours')}</ToggleButton>
                       </ToggleButtonGroup>
                     </SettingsField>
                   )}

@@ -185,6 +185,13 @@ export const getPluralizePeriodsSuffix = (interval) => {
   }
 };
 
+export const getDateObjectFromTimeString = (timeString) => {
+  const [hours, minutes] = timeString.split(':');
+  const result = new Date();
+  result.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+  return result;
+};
+
 export const getWeekdayNumber = (date) => (date.getDay() || 7) - 1;
 
 export const getDayOfMonth = (byday) => {

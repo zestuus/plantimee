@@ -383,6 +383,8 @@ const Settings = ({
   const nowTime = new Date();
   nowTime.setSeconds(0);
 
+  console.log('autoFindProps', autoFindProps);
+
   return (
     <Container container direction="column" justifyContent="flex-start">
       <ColumnHeader
