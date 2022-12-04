@@ -10,20 +10,23 @@ import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
 import { DialogActions, MenuItem, Select } from '@material-ui/core';
 import { DatePicker, MuiPickersUtilsProvider, TimePicker } from '@material-ui/pickers';
+import HelpOutlineOutlinedIcon from '@material-ui/icons/HelpOutlineOutlined';
+import Button from '@material-ui/core/Button';
+import Tooltip from '@material-ui/core/Tooltip';
 
 import withSettings from '../HOCs/withSettings';
 import SelectBlock from '../common/SelectBlock';
-import { getDateObjectFromTimeString, getDayBounds, getPluralizePeriodsSuffix } from '../../utils/helpers';
 import { LOCALE } from '../../constants/enums';
 import { OneDay } from '../../constants/config';
-import Button from '@material-ui/core/Button';
+import { getDateObjectFromTimeString, getDayBounds, getPluralizePeriodsSuffix } from '../../utils/helpers';
+import { TooltipText } from '../EventDashboard/Events';
 
 const Content = styled(Grid)`
   margin-bottom: 10px;
 `;
 
 const Row = styled(Grid)`
-  height: 75px;
+  height: 80px;
   margin: 5px 0;
 `;
 
@@ -37,6 +40,11 @@ const TimeSeparator = styled.span`
   margin-top: 5px;
   font-weight: bold;
 `;
+
+const HelpIcon = styled(HelpOutlineOutlinedIcon)`
+  position: relative;
+  top: 5px;
+`
 
 const SEARCH_LIMITS = {
   START: 'START',
@@ -74,7 +82,7 @@ const SEARCH_PERIOD_DURATION = {
 
 const SEARCH_DURING_TYPE = {
   DEFAULT: 'DEFAULT',
-  CUSTOM: 'CUSTOM',
+  CUSTOM: 'CUSTOM'
 };
 
 const SEARCH_DURING_CUSTOM_TYPE = {
@@ -128,7 +136,7 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
   const [searchDuringEndTime, setSearchDuringEndTime] = useState(searchDuringEndTimeDefault);
 
   const limitDuration = searchEndTime - searchStartTime;
-  const limitDurationInDays = Math.floor(limitDuration / OneDay);
+  const limitDurationInDays = limitDuration / OneDay;
 
   const SEARCH_BLOCKS = (startOrEnd) => [
     {
@@ -138,7 +146,16 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
       handleClick: () => {
         if (startOrEnd === SEARCH_LIMITS.START) {
           setSearchStartTime(now);
+          if (searchEndType === SEARCH_TYPE.PERIOD) {
+            const newSearchEndTime = new Date(now);
+            newSearchEndTime.setMinutes(
+              newSearchEndTime.getMinutes() + SEARCH_PERIOD_DURATION[searchEndPeriod] * searchEndInterval,
+              0
+            );
+            setSearchEndTime(newSearchEndTime);
+          }
         } else {
+          const { dayEnd } = getDayBounds(searchStartTime);
           setSearchEndTime(dayEnd);
         }
       },
@@ -146,58 +163,70 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
     },
     {
       type: SEARCH_TYPE.PERIOD,
-      title: startOrEnd === SEARCH_LIMITS.START ? 'After' : 'During',
-      width: 200,
+      title: startOrEnd === SEARCH_LIMITS.START ? '' : 'During',
+      width: startOrEnd === SEARCH_LIMITS.START ? 255: 220,
       handleClick: () => {
         if (startOrEnd === SEARCH_LIMITS.START) {
           const newSearchStartTime = new Date();
           newSearchStartTime.setMinutes(
-            newSearchStartTime.getMinutes() + SEARCH_PERIOD_DURATION[searchStartPeriod] * searchStartInterval
+            newSearchStartTime.getMinutes() + SEARCH_PERIOD_DURATION[searchStartPeriod] * searchStartInterval,
+            0
           );
-          newSearchStartTime.setSeconds(0);
           setSearchStartTime(newSearchStartTime);
+          if (searchEndType === SEARCH_TYPE.PERIOD) {
+            const newSearchEndTime = new Date(newSearchStartTime);
+            newSearchEndTime.setMinutes(
+              newSearchEndTime.getMinutes() + SEARCH_PERIOD_DURATION[searchEndPeriod] * searchEndInterval,
+              0
+            );
+            setSearchEndTime(newSearchEndTime);
+          }
         } else {
           const newSearchEndTime = new Date(searchStartTime);
           newSearchEndTime.setMinutes(
-            newSearchEndTime.getMinutes() + SEARCH_PERIOD_DURATION[searchEndPeriod] * searchEndInterval
+            newSearchEndTime.getMinutes() + SEARCH_PERIOD_DURATION[searchEndPeriod] * searchEndInterval,
+            0
           );
-          newSearchEndTime.setSeconds(0);
           setSearchEndTime(newSearchEndTime);
         }
       },
       content: (
-        <Grid container alignItems="center" justifyContent="center">
-          <TextField
-            type="number"
-            value={startOrEnd === SEARCH_LIMITS.START ? searchStartInterval : searchEndInterval}
-            style={{ width: 40, marginRight: 5 }}
-            inputProps={{ style: { textAlign: 'center' } }}
-            onChange={event => {
-              const setValue = startOrEnd === SEARCH_LIMITS.START ? setSearchStartInterval : setSearchEndInterval;
+        <>
+          <Grid container alignItems="center" justifyContent="center">
+            <TextField
+              type="number"
+              value={startOrEnd === SEARCH_LIMITS.START ? searchStartInterval : searchEndInterval}
+              style={{ width: 40, marginRight: 5 }}
+              inputProps={{ style: { textAlign: 'center' } }}
+              onChange={event => {
+                const setValue = startOrEnd === SEARCH_LIMITS.START ? setSearchStartInterval : setSearchEndInterval;
 
-              setValue(Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1))
-            }}
-          />
-          <Select
-            value={startOrEnd === SEARCH_LIMITS.START ? searchStartPeriod : searchEndPeriod}
-            onChange={event => {
-              const setValue = startOrEnd === SEARCH_LIMITS.START ? setSearchStartPeriod : setSearchEndPeriod;
+                setValue(Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1))
+              }}
+            />
+            <Select
+              value={startOrEnd === SEARCH_LIMITS.START ? searchStartPeriod : searchEndPeriod}
+              onChange={event => {
+                const setValue = startOrEnd === SEARCH_LIMITS.START ? setSearchStartPeriod : setSearchEndPeriod;
 
-              setValue(event.target.value);
-            }}
-          >
-            {SEARCH_PERIODS.map(period => (
-              <MenuItem key={period} value={period}>
-                {__(`${startOrEnd === SEARCH_LIMITS.START ? '' : ' '}${SEARCH_PERIOD_LABELS[period]}${getPluralizePeriodsSuffix(startOrEnd === SEARCH_LIMITS.START ? searchStartInterval : searchEndInterval)}`)}
-              </MenuItem>
-            ))}
-          </Select>
-        </Grid>
+                setValue(event.target.value);
+              }}
+            >
+              {SEARCH_PERIODS.map(period => (
+                <MenuItem key={period} value={period}>
+                  {__(` ${SEARCH_PERIOD_LABELS[period]}${getPluralizePeriodsSuffix(startOrEnd === SEARCH_LIMITS.START ? searchStartInterval : searchEndInterval)}`)}
+                </MenuItem>
+              ))}
+            </Select>
+          </Grid>
+          {startOrEnd === SEARCH_LIMITS.START ? __('after current time') : null}
+        </>
+
       )
     },
     {
       type: SEARCH_TYPE.DATETIME,
-      title: startOrEnd === SEARCH_LIMITS.START ? 'In date and time' : 'Until date and time',
+      title: startOrEnd === SEARCH_LIMITS.START ? 'Date and time ' : 'Until date and time',
       width: 200,
       content: (
         <Grid container alignItems="center" justifyContent="center">
@@ -210,6 +239,28 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
               onChange={value => {
                 if (startOrEnd === SEARCH_LIMITS.START) {
                   setSearchStartTime(value);
+                  switch (searchEndType) {
+                    case SEARCH_TYPE.DEFAULT:
+                      const { dayEnd } = getDayBounds(value);
+                      setSearchEndTime(dayEnd);
+                      break;
+                    case SEARCH_TYPE.PERIOD:
+                      const newSearchEndTime = new Date(value);
+                      newSearchEndTime.setMinutes(
+                        newSearchEndTime.getMinutes() + SEARCH_PERIOD_DURATION[searchEndPeriod] * searchEndInterval,
+                        0
+                      );
+                      setSearchEndTime(newSearchEndTime);
+                      break;
+                    case SEARCH_TYPE.DATETIME:
+                      if (value > searchEndTime) {
+                        const { dayEnd } = getDayBounds(value);
+                        setSearchEndTime(dayEnd);
+                      }
+                      break;
+                    default:
+                      break;
+                  }
                 } else {
                   setSearchEndTime(value);
                 }
@@ -237,14 +288,14 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
   const SEARCH_DURING_BLOCKS = [
     {
       type: SEARCH_DURING_TYPE.DEFAULT,
-      title: limitDurationInDays === 0 ? 'Whole day' : 'Whole days',
+      title: limitDurationInDays <= 1 ? 'Whole day' : 'Whole days',
       width: 100,
       content: null,
     },
     {
       type: SEARCH_DURING_TYPE.CUSTOM,
       title: '',
-      width: 200,
+      width: 170,
       content: (
         <Grid container direction="column" alignItems="center" justifyContent="center">
           <Select
@@ -260,7 +311,7 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
           >
             {SEARCH_DURING_CUSTOM_TYPES.map(type => (
               <MenuItem key={type} value={type}>
-                {__(`${SEARCH_DURING_CUSTOM_TYPE_LABEL[type]}${limitDurationInDays === 0 || type === SEARCH_DURING_CUSTOM_TYPE.WORK_HOURS ? '' : 's'}`)}
+                {__(`${SEARCH_DURING_CUSTOM_TYPE_LABEL[type]}${(limitDurationInDays < 1.5 || type === SEARCH_DURING_CUSTOM_TYPE.WORK_HOURS) ? '' : 's'}`)}
               </MenuItem>
             ))}
           </Select>
@@ -298,7 +349,7 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
       <DialogContent>
         <Content container direction="column">
           <Row container direction="row" alignItems="center">
-            <RowName>{__('Start search:')}</RowName>
+            <RowName>{__('From:')}</RowName>
             {SEARCH_BLOCKS(SEARCH_LIMITS.START).map(({type, title, width, content, handleClick}) => (
               <SelectBlock
                 key={type}
@@ -336,7 +387,19 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
             ))}
           </Row>
           <Row container direction="row" alignItems="center">
-            <RowName>{__('During:')}</RowName>
+            <RowName>
+              {__('During')}&nbsp;
+              <Tooltip
+                title={(
+                  <TooltipText>
+                    {__('Limits time range per each day. For example, to prevent scheduling work meeting outside of working hours')}
+                  </TooltipText>
+                )}
+              >
+                <HelpIcon />
+              </Tooltip>
+              :
+            </RowName>
             {SEARCH_DURING_BLOCKS.map(({type, title, width, content, handleClick}) => (
               <SelectBlock
                 key={type}
@@ -386,7 +449,8 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
                   toDate,
                   fromTime,
                   toTime
-                })
+                });
+                onClose();
               }}
             >
               {__('Save')}

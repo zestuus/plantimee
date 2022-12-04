@@ -13,8 +13,10 @@ const {
   checkRepeatIntervalMatch,
   getWeekdayNumber,
   countCertainDaySinceStartOfMonth,
-  countCertainDayTillEndOfMonth
+  countCertainDayTillEndOfMonth,
+  getDayTimeLimitingTasks,
 } = require("../utils/helpers");
+const { serialize } = require('../utils/serializers');
 
 const router = express.Router();
 
@@ -765,15 +767,8 @@ router.post('/extract', privateRoute, async (req, res) => {
 
 router.get('/hours', privateRoute, async (req, res) => {
   const { id } = req.user;
-  const { fromDate, toDate, fromTime, toTime, event: eventIdStr, duration: durationStr } = req.query;
-  const eventId = parseInt(eventIdStr, 10);
-  const duration = parseInt(durationStr, 10);
+  const { fromDate, toDate, fromTime, toTime, event: eventId, duration } = serialize(req.query, 'hours');
   const msDuration = duration * MINUTE;
-
-  console.log(fromDate);
-  console.log(toDate);
-  console.log(fromTime);
-  console.log(toTime);
 
   const user = await db.User.findOne({
     where: { id },
@@ -822,51 +817,57 @@ router.get('/hours', privateRoute, async (req, res) => {
 
   let raw_tasks = [];
 
-  const collectTasks = (eventData) => {
+  let start = new Date();
+  let { dayEnd: end } = getDayBounds(start);
+  if (fromDate) start = fromDate;
+  if (toDate) end = toDate;
+
+  const collectTask = (eventData) => {
     const startDate = new Date(eventData.startTime);
     const endDate = new Date(eventData.endTime);
-    const now = new Date();
 
-    if (eventData.startTime && eventData.endTime && !eventData.isFullDay && now < startDate && startDate < endDate) {
-      raw_tasks.push([startDate.getTime(), endDate.getTime()]);
+    if (eventData.startTime && eventData.endTime && !eventData.isFullDay && start < endDate && startDate < endDate && startDate < end) {
+      let taskStart = startDate;
+      let taskEnd = endDate;
+      if (startDate < start) taskStart = start;
+      if (end < endDate) taskEnd = end;
+      raw_tasks.push([taskStart.getTime(), taskEnd.getTime()]);
     }
   }
 
-  collectTasks(event);
-  events.forEach(collectTasks);
-  own_events.forEach(collectTasks);
+  events.forEach(collectTask);
+  own_events.forEach(collectTask);
   attendees.forEach(attendee => {
-    attendee.events.forEach(collectTasks);
-    attendee.own_events.forEach(collectTasks);
+    attendee.events.forEach(collectTask);
+    attendee.own_events.forEach(collectTask);
   })
 
-  const tasks = _.uniqBy(raw_tasks, item => JSON.stringify(item));
+  const dayTimeLimitingTasks = (fromTime && toTime) ? (
+    getDayTimeLimitingTasks(start, end, fromTime, toTime)
+  ) : [];
 
-  const now = new Date();
+  const tasks = _.uniqBy([
+    ...raw_tasks,
+    ...dayTimeLimitingTasks
+  ], item => JSON.stringify(item));
 
-  let segments = [[]];
-  segments[0].push(now.getTime());
-  now.setHours(23);
-  now.setMinutes(59);
-  now.setSeconds(59);
-  segments[0].push(now.getTime());
+  let segments = [[start.getTime(), end.getTime()]];
 
-  let segmentsCopy;
   tasks.forEach(task => {
-    segmentsCopy = _.cloneDeep(segments);
-    segmentsCopy.forEach(segment => {
-      if (task[0] <= segment[0] && task[1] < segment[1] && segment[0] < task[1]){
-        segment[0] = task[1];
-      } else if (segment[0] < task[0] && segment[1] <= task[1] && task[0] < segment[1]){
-        segment[1] = task[0];
-      } else if (segment[0] < task[0] && task[1] < segment[1]) {
-        segmentsCopy.push([task[1], segment[1]]);
-        segment[1] = task[0];
-      } else if (segment[0] === task[0] && task[1] === segment[1]) {
-        segment[0] = segment[1];
+    segments = segments.reduce((result, segment) => {
+      if (task[1] <= segment[0] || segment[1] <= task[0]) {
+        result.push([segment[0], segment[1]]);
+      } else {
+        if (segment[0] < task[0] && task[0] < segment[1]) {
+          result.push([segment[0], task[0]]);
+        }
+        if (segment[0] < task[1] && task[1] < segment[1]) {
+          result.push([task[1], segment[1]]);
+        }
       }
-    });
-    segments = _.cloneDeep(segmentsCopy);
+
+      return result;
+    }, []);
   });
 
   const sortedSegments = _.sortBy(segments, seg => seg[0]);

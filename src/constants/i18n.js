@@ -190,8 +190,8 @@ const DICTIONARY = {
   'Auto find free time': {
     [LANGUAGE.UK]: "Знайти вільний час автоматично",
   },
-  'Cannot find free time in chosen range. Please update find conditions': {
-    [LANGUAGE.UK]: "Не вдалося знайти вільний час у вибраних межах. Будь ласка, оновіть умови пошуку",
+  'Cannot find free time in chosen range. Please update find conditions and try again': {
+    [LANGUAGE.UK]: "Не вдалося знайти вільний час у вибраних межах. Будь ласка, оновіть умови пошуку і спробуйте знову",
   },
   'Verification code': {
     [LANGUAGE.UK]: "Код підтвердження",
@@ -670,8 +670,8 @@ const DICTIONARY = {
   'All events': {
     [LANGUAGE.UK]: 'Усі події',
   },
-  'Start search:': {
-    [LANGUAGE.UK]: 'Починати пошук:',
+  'From:': {
+    [LANGUAGE.UK]: 'Від:',
   },
   'Now': {
     [LANGUAGE.UK]: 'Зараз',
@@ -685,8 +685,8 @@ const DICTIONARY = {
   'Until end of the day': {
     [LANGUAGE.UK]: 'До кінця дня',
   },
-  'In date and time': {
-    [LANGUAGE.UK]: 'В дату і час',
+  'Date and time ': {
+    [LANGUAGE.UK]: 'Дати і часу',
   },
   'Until date and time': {
     [LANGUAGE.UK]: 'До дати і часу',
@@ -726,6 +726,21 @@ const DICTIONARY = {
   },
   'Nights': {
     [LANGUAGE.UK]: 'Ночей',
+  },
+  'after current time': {
+    [LANGUAGE.UK]: 'після поточного часу',
+  },
+  'Limits time range per each day. For example, to prevent scheduling work meeting outside of working hours': {
+    [LANGUAGE.UK]: 'Обмежує доступний час в межах кожної доби. Наприклад, щоб запобігти плануванню робочих дзвінків в поза робочий час',
+  },
+  'Event time is automatically adjusted to': {
+    [LANGUAGE.UK]: 'Час події автоматично змінено на',
+  },
+  "Please update find conditions and try again if suggested times aren't suitable for you": {
+    [LANGUAGE.UK]: 'Будь ласка, оновіть умови пошуку і спробуйте знову, якщо запропонований час вам не підходить',
+  },
+  'See event on the timeline': {
+    [LANGUAGE.UK]: 'Переглянути подію на часовій шкалі',
   },
 };
 

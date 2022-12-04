@@ -79,6 +79,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [reloadSwitch, setReloadSwitch] = useState(false);
   const [reloadDate, setReloadDate] = useState(new Date());
+  const [selectedEventDate, setSelectedEventDate] = useState(null);
 
   const columnsVisibility = {
     timeline: true,
@@ -361,6 +362,8 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
                 invitedEvents={invitedEvents}
                 setChosenEvent={handleChosenEventChange}
                 handleReload={handleReload}
+                selectedEventDate={selectedEventDate}
+                setSelectedEventDate={setSelectedEventDate}
               />
             </Column>
           )}
@@ -395,6 +398,7 @@ const EventDashboard = ({ translate: __, googleOAuthToken }) => {
                 onFindAutomatically={handleFindAutomatically}
                 setChosenEvent={handleChosenEventChange}
                 onChangeOwnEvent={handleChangeOwnEvent}
+                setSelectedEventDate={setSelectedEventDate}
               />
             </Column>
           )}

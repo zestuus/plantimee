@@ -19,14 +19,14 @@ import TimelineEventBar from "./TimelineEventBar";
 import {
   EnglishDays,
   HourHeight,
-  OneDay,
+  OneDay, OneHour,
   PRIMARY_COLOR,
   UkrainianDaysShort,
   UkrainianMonths
 } from '../../constants/config';
 import withSettings from '../HOCs/withSettings';
 import { LANGUAGE, LOCALE } from '../../constants/enums';
-import {extendCollisionList, filterEventsByDate, getWeekdayNumber} from "../../utils/helpers";
+import { extendCollisionList, filterEventsByDate, getDayBounds, getWeekdayNumber } from "../../utils/helpers";
 
 export const ColumnTitle = styled.h3`
   margin: 5px 0 7.5px 7.5px;
@@ -77,7 +77,7 @@ const DateArrow = styled(IconButton)`
   padding: 0;
 `;
 
-const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, militaryTime, handleReload, translate: __, language }) => {
+const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, militaryTime, selectedEventDate, setSelectedEventDate, handleReload, translate: __, language }) => {
   const dateNow = new Date();
   const [now, setNow] = useState({
     hour: dateNow.getHours(), minute: dateNow.getMinutes()
@@ -100,6 +100,18 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, militaryTime, hand
   useEffect(() => {
     handleReload(chosenDate);
   }, [chosenDate])
+
+  useEffect(() => {
+    if (selectedEventDate) {
+      const { dayStart } = getDayBounds(selectedEventDate);
+      const newChosenDate = new Date(selectedEventDate)
+      const top = (newChosenDate - dayStart) / OneHour * HourHeight - 1;
+
+      document.getElementById('timeline-scroll').scrollTo({ top, behavior: 'smooth' });
+      setChosenDate(newChosenDate);
+      setSelectedEventDate(null);
+    }
+  }, [selectedEventDate])
 
   const [month, dayNumber, year] = chosenDate.toDateString().split(' ').slice(-3);
   const dayLabel = EnglishDays[getWeekdayNumber(chosenDate)].slice(0,3);
@@ -247,7 +259,7 @@ const Timeline = ({ ownEvents, invitedEvents, setChosenEvent, militaryTime, hand
           </DateArrow>
         </Grid>
       ) : null}
-      <ScrollArea>
+      <ScrollArea id="timeline-scroll">
         <ScrollContentWrapper container direction="column" alignItems="stretch">
           {Array.from(Array(24).keys()).map(hour => (
               <HourContainer key={`hour-${hour}`}>

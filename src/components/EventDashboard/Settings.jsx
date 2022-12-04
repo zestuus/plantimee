@@ -2,6 +2,8 @@ import React, { forwardRef, useEffect, useState } from 'react';
 import styled from "styled-components";
 import MapPicker from "react-google-map-picker";
 
+import DateFnsUtils from "@date-io/date-fns";
+
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import Checkbox from "@material-ui/core/Checkbox";
@@ -14,6 +16,12 @@ import SearchIcon from '@material-ui/icons/Search';
 import AddIcon from '@material-ui/icons/Add';
 import SettingsIcon from '@material-ui/icons/Settings';
 import Alert from '@material-ui/lab/Alert';
+import EventNoteIcon from '@material-ui/icons/EventNote';
+import Tooltip from "@material-ui/core/Tooltip";
+import { LinkOff } from "@material-ui/icons";
+import { MenuItem, Radio, Select } from "@material-ui/core";
+import ToggleButton from "@material-ui/lab/ToggleButton";
+import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 
 import {ColumnTitle} from './Timeline';
 import {
@@ -45,13 +53,7 @@ import {
   REPEAT_FREQ_LABEL,
   REPEAT_FREQ_TYPES
 } from "../../constants/enums";
-import DateFnsUtils from "@date-io/date-fns";
 import googleIcon from "../../images/google.svg";
-import Tooltip from "@material-ui/core/Tooltip";
-import { LinkOff } from "@material-ui/icons";
-import { MenuItem, Radio, Select } from "@material-ui/core";
-import ToggleButton from "@material-ui/lab/ToggleButton";
-import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 import ConfirmDialog from '../dialogs/ConfirmDialog';
 import Event from "./Event";
 
@@ -143,12 +145,14 @@ const Settings = ({
   onFindAutomatically,
   setChosenEvent,
   onChangeOwnEvent,
+  setSelectedEventDate,
  }) => {
   const [zoom, setZoom] = useState(DefaultZoom);
   const [open, setOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [autoFindProps, setAutoFindProps] = useState({});
   const [autoFindError, setAutoFindError] = useState('');
+  const [autoFindInfo, setAutoFindInfo] = useState('');
   const [attendeeFindError, setAttendeeFindError] = useState('');
   const [keywordToLookFor, setKeywordToLookFor] = useState('');
   const [placesToChoose, setPlacesToChoose] = useState([]);
@@ -383,8 +387,6 @@ const Settings = ({
   const nowTime = new Date();
   nowTime.setSeconds(0);
 
-  console.log('autoFindProps', autoFindProps);
-
   return (
     <Container container direction="column" justifyContent="flex-start">
       <ColumnHeader
@@ -585,7 +587,20 @@ const Settings = ({
                 </React.Fragment>
               )}
             </ParticipantsBlock>
-            <SettingsBlockTitle>{__('Date and time')}</SettingsBlockTitle>
+            <Grid container justifyContent="space-between" alignItems="center">
+              <SettingsBlockTitle>{__('Date and time')}</SettingsBlockTitle>
+              <Tooltip
+                title={(
+                  <TooltipText>
+                    {__('See event on the timeline')}
+                  </TooltipText>
+                )}
+              >
+                <IconButton onClick={() => setSelectedEventDate(eventData.startTime)}>
+                  <EventNoteIcon />
+                </IconButton>
+              </Tooltip>
+            </Grid>
             <FormControlLabel
               control={
                 <Checkbox
@@ -794,16 +809,20 @@ const Settings = ({
                   color="primary"
                   variant="contained"
                   onClick={ async () => {
-                    const result = onFindAutomatically({
+                    const result = await onFindAutomatically({
                       event: eventData.id,
                       duration: daysLong * 24*60 + hoursLong*60 + minutesLong,
                       ...autoFindProps
                     })
-                    if (!await result) {
+                    console.log(result);
+                    if (!result) {
                       setAutoFindError(
-                        __("Cannot find free time in chosen range. Please update find conditions"))
+                        __("Cannot find free time in chosen range. Please update find conditions and try again")
+                      );
+                      setAutoFindInfo('');
                     } else {
-                      setAutoFindError('')
+                      setAutoFindError('');
+                      setAutoFindInfo(`${__('Event time is automatically adjusted to')}: ${formatDateString(result.startTime).replace('T', ' ')} - ${formatDateString(result.endTime).replace('T', ' ')}. ${__('Please update find conditions and try again if suggested times aren\'t suitable for you')}`);
                     }
                     handleBlur('startTime');
                   }}
@@ -825,9 +844,16 @@ const Settings = ({
                     <SettingsIcon />
                   </IconButton>
                 </Tooltip>
-                {autoFindError && (
-                  <Alert severity="error" style={{ margin: '10px 0'}} onClose={() => setAutoFindError('')}>
-                    {autoFindError}
+                {(autoFindError || autoFindInfo) && (
+                  <Alert
+                    severity={autoFindError ? 'error' : 'info'}
+                    style={{ margin: '10px 0'}}
+                    onClose={() => {
+                      setAutoFindError('')
+                      setAutoFindInfo('')
+                    }}
+                  >
+                    {autoFindError || autoFindInfo}
                   </Alert>
                 )}
                 <AutoFindModal

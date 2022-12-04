@@ -83,6 +83,48 @@ const checkRepeatIntervalMatch = (startDate, repeatInterval, repeatFreq, compare
   return ((unitGetter(compareDate) - unitGetter(startDate)) % (repeatInterval || 1)) === 0;
 };
 
+const getDateObjectFromTimeString = (timeString, date = null) => {
+  const [hours, minutes] = timeString.split(':');
+  const result = date ? new Date(date) : new Date();
+  result.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+  return result;
+};
+
+const getDayTimeLimitingTasks = (from, to, timeFrom, timeTo) => {
+  const result = [];
+  let currDayStart = new Date(from);
+  let { dayEnd: currDayEnd } = getDayBounds(currDayStart);
+  if (currDayStart < to && to < currDayEnd) {
+    currDayEnd = new Date(to);
+  }
+  currDayEnd.setMinutes(currDayEnd.getMinutes() + 1, 0, 0);
+
+  while (currDayStart <= to) {
+    const startTimeInDay = getDateObjectFromTimeString(timeFrom, currDayStart);
+    const endTimeInDay = getDateObjectFromTimeString(timeTo, currDayStart);
+    if (endTimeInDay <= currDayStart || currDayEnd <= startTimeInDay) {
+      result.push([currDayStart.getTime(), currDayEnd.getTime()]);
+    } else {
+      if (currDayStart < startTimeInDay && startTimeInDay < currDayEnd) {
+        result.push([currDayStart.getTime(), startTimeInDay.getTime()]);
+      }
+      if (currDayStart < endTimeInDay && endTimeInDay < currDayEnd) {
+        result.push([endTimeInDay.getTime(), currDayEnd.getTime()]);
+      }
+    }
+    currDayStart = new Date(currDayEnd);
+    ({ dayEnd: currDayEnd } = getDayBounds(currDayEnd));
+    if (currDayStart < to && to < currDayEnd) {
+      currDayEnd = new Date(to);
+    }
+    currDayEnd.setMinutes(currDayEnd.getMinutes() + 1, 0, 0);
+  }
+
+  return result;
+}
+
+const getSegmentDatesMap = ([from, to]) => [new Date(from), new Date(to)];
+
 module.exports = {
   getDayBounds,
   getEventInstance,
@@ -90,5 +132,7 @@ module.exports = {
   countCertainDayTillEndOfMonth,
   getDayOfMonth,
   getWeekdayNumber,
-  checkRepeatIntervalMatch
+  checkRepeatIntervalMatch,
+  getDayTimeLimitingTasks,
+  getSegmentDatesMap
 };

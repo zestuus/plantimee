@@ -29,6 +29,7 @@ const SelectBlock = ({ title, onClick, children, width, selected = false }) => {
   return (
     <Block
       container
+      direction="column"
       alignItems="center"
       justifyContent="center"
       selected={selected}

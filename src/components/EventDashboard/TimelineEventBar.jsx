@@ -67,7 +67,7 @@ const TimelineEventBar = ({
     height = (endDateTime - startDateTime) / OneHour * HourHeight;
   }
 
-  const zIndex = Math.round((startDateTime - dayStart) / OneMinute);
+  const zIndex = Math.round((startDateTime - dayStart) / OneMinute / 1.2);
 
   const dateString = formatEventTime(startTime, endTime, isFullDay, militaryTime);
 
