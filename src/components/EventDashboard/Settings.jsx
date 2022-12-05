@@ -1199,10 +1199,10 @@ const Settings = ({
                 color="primary"
                 variant="contained"
                 onClick={ async () => {
-                  const result = await findVenueAutomatically(eventData.id);
+                  const { radius, type, algorithm } = autoFindVenueProps;
+                  const result = await findVenueAutomatically(eventData.id, algorithm);
                   if (result) {
                     const { lat, lng } = result;
-                    const { radius, type } = autoFindVenueProps;
                     await handleChangeLocation(lat, lng, radius, type);
                   }
                 }}

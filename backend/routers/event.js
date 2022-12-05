@@ -118,13 +118,19 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
   return eventData;
 }
 
-const addEventOccurrence = (acc, event, chosenDate, attendees, extraFields = {}) => {
+const getEventOccurence = (event, chosenDate) => {
   const startTime = new Date(event.startTime);
   const eventDuration = new Date(event.endTime) - startTime;
   startTime.setFullYear(chosenDate.getFullYear());
   startTime.setMonth(chosenDate.getMonth());
   startTime.setDate(chosenDate.getDate());
   const endTime = new Date(startTime.getTime() + eventDuration);
+
+  return { startTime, endTime };
+}
+
+const addEventOccurrence = (acc, event, chosenDate, attendees, extraFields = {}) => {
+  const { startTime, endTime } = getEventOccurence(event, chosenDate);
 
   acc.push(getEventInstance(event, startTime.toISOString(), endTime.toISOString(), attendees, extraFields));
 }
@@ -767,7 +773,7 @@ router.post('/extract', privateRoute, async (req, res) => {
 
 router.get('/venue', privateRoute, async (req, res) => {
   const { id } = req.user;
-  const { eventId } = req.query;
+  const { eventId, algorithm } = req.query;
 
   const user = await db.User.findOne({
     where: { id }
@@ -789,7 +795,6 @@ router.get('/venue', privateRoute, async (req, res) => {
   const coords = event.attendees.map(({ latitude, longitude }) => (
     latitude && longitude && ({ lat: latitude, lng: longitude })
   ));
-
   const mean = coords.reduce((result, point) => {
     result.lat += point.lat;
     result.lng += point.lng;
@@ -798,7 +803,75 @@ router.get('/venue', privateRoute, async (req, res) => {
   mean.lat /= coords.length || 1;
   mean.lng /= coords.length || 1;
 
-  res.send(mean);
+  if (algorithm === 'MEAN') {
+    return res.send(mean);
+  }
+
+  const min = coords.reduce((result, point) => {
+    if (point.lat < result.lat) result.lat = point.lat;
+    if (point.lng < result.lng) result.lng = point.lng;
+    return result;
+  }, { ...coords[0] });
+  const max = coords.reduce((result, point) => {
+    if (point.lat > result.lat) result.lat = point.lat;
+    if (point.lng > result.lng) result.lng = point.lng;
+    return result;
+  }, { ...coords[0] });
+  const stepPoint = {
+    lat: (max.lat - min.lat),
+    lng: (max.lng - min.lng),
+  };
+  const eps = 0.000001;
+
+  const distance = (a, b) => Math.sqrt((b.lat-a.lat) ** 2 + (b.lng-a.lng) ** 2);
+  const distanceSum = (point, otherPoints) => (
+    otherPoints.reduce((result, p) => result + distance(p, point), 0)
+  );
+  const move = (point, diff, direction) => {
+    const result = { ...point };
+    switch (direction) {
+      case 'up':
+        result.lat += diff.lat;
+        break;
+      case 'down':
+        result.lat -= diff.lat;
+        break;
+      case 'left':
+        result.lng -= diff.lng;
+        break;
+      case 'right':
+        result.lng += diff.lng;
+        break;
+    }
+    return result;
+  }
+
+  const currPoint = { ...mean };
+
+  while(stepPoint.lat > eps && stepPoint.lng > eps) {
+    const nextOptions = [
+      currPoint,
+      move(currPoint, stepPoint, 'up'),
+      move(currPoint, stepPoint, 'down'),
+      move(currPoint, stepPoint, 'left'),
+      move(currPoint, stepPoint, 'right'),
+    ];
+
+    const distanceSums = nextOptions.map(point => distanceSum(point, coords));
+    const bestOption = distanceSums.reduce((result, sum, index) => {
+      if (sum < result.value) {
+        result = { index, value: sum };
+      }
+      return result;
+    }, { index: 0, value: distanceSums[0] });
+    currPoint.lat = nextOptions[bestOption.index].lat;
+    currPoint.lng = nextOptions[bestOption.index].lng;
+
+    stepPoint.lat = stepPoint.lat / 2;
+    stepPoint.lng = stepPoint.lng / 2;
+  }
+
+  res.send(currPoint);
 });
 
 router.get('/hours', privateRoute, async (req, res) => {
@@ -859,8 +932,8 @@ router.get('/hours', privateRoute, async (req, res) => {
   if (toDate) end = toDate;
 
   const collectTask = (eventData) => {
-    const startDate = new Date(eventData.startTime);
-    const endDate = new Date(eventData.endTime);
+    let startDate = new Date(eventData.startTime);
+    let endDate = new Date(eventData.endTime);
 
     if (eventData.startTime && eventData.endTime && !eventData.isFullDay && start < endDate && startDate < endDate && startDate < end) {
       let taskStart = startDate;
@@ -868,6 +941,23 @@ router.get('/hours', privateRoute, async (req, res) => {
       if (startDate < start) taskStart = start;
       if (end < endDate) taskEnd = end;
       raw_tasks.push([taskStart.getTime(), taskEnd.getTime()]);
+    }
+    if (eventData.repeatEnabled) {
+      let from = new Date(start);
+      while (from < end) {
+        if (checkIfDayHasEventOccurrence(from, eventData)) {
+          ({ startTime: startDate, endTime: endDate } = getEventOccurence(event, from));
+
+          if (eventData.startTime && eventData.endTime && !eventData.isFullDay && start < endDate && startDate < endDate && startDate < end) {
+            let taskStart = startDate;
+            let taskEnd = endDate;
+            if (startDate < start) taskStart = start;
+            if (end < endDate) taskEnd = end;
+            raw_tasks.push([taskStart.getTime(), taskEnd.getTime()]);
+          }
+        }
+        from.setDate(from.getDate() + 1);
+      }
     }
   }
 

@@ -123,12 +123,13 @@ export const inviteParticipant = async data => {
   }
 }
 
-export const findVenueAutomatically = async eventId => {
+export const findVenueAutomatically = async (eventId, algorithm) => {
   try {
     const response = await axios.get(`${url}/venue`, {
       ...getAuthHeader(),
       params: {
-        eventId
+        eventId,
+        algorithm
       }
     });
     return response.data;

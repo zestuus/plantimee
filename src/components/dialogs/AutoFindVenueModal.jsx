@@ -218,6 +218,18 @@ const LOCATION_TYPE_LABEL = {
 
 const LOCATION_TYPES = Object.values(LOCATION_TYPE);
 
+const ALGORITHM_TYPE = {
+  MEDIAN: 'MEDIAN',
+  MEAN: 'MEAN'
+};
+
+const ALGORITHM_TYPE_LABEL = {
+  [ALGORITHM_TYPE.MEDIAN]: 'Median',
+  [ALGORITHM_TYPE.MEAN]: 'Mean'
+};
+
+const ALGORITHM_TYPES = Object.values(ALGORITHM_TYPE);
+
 const AutoFindVenueModal = ({ open, onClose, onSave, translate: __ }) => {
   const now = new Date();
   now.setSeconds(0, 0);
@@ -225,6 +237,7 @@ const AutoFindVenueModal = ({ open, onClose, onSave, translate: __ }) => {
 
   const [type, setType] = useState(LOCATION_TYPE.ANY);
   const [radius, setRadius] = useState(50);
+  const [algorithm, setAlgorithm] = useState(ALGORITHM_TYPE.MEDIAN);
 
   return (
     <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
@@ -258,6 +271,19 @@ const AutoFindVenueModal = ({ open, onClose, onSave, translate: __ }) => {
                 <TextField {...params} label={__('Location type')} variant="outlined" />
               )}
             />
+            <Autocomplete
+              disableClearable
+              value={algorithm}
+              options={ALGORITHM_TYPES}
+              getOptionLabel={(option) => __(ALGORITHM_TYPE_LABEL[option])}
+              style={{ width: 200, marginTop: 15 }}
+              onChange={(e, value) => {
+                setAlgorithm(value);
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label={__('Algorithm')} variant="outlined" />
+              )}
+            />
           </Grid>
           <DialogActions>
             <Button
@@ -269,7 +295,7 @@ const AutoFindVenueModal = ({ open, onClose, onSave, translate: __ }) => {
               variant="contained"
               color="primary"
               onClick={() => {
-                onSave({ type: type === LOCATION_TYPE.ANY ? null : type, radius });
+                onSave({ type: type === LOCATION_TYPE.ANY ? null : type, radius, algorithm });
                 onClose();
               }}
             >

@@ -1051,6 +1051,15 @@ const DICTIONARY = {
   'm': {
     [LANGUAGE.UK]: 'м'
   },
+  'Median': {
+    [LANGUAGE.UK]: 'Медіана'
+  },
+  'Mean': {
+    [LANGUAGE.UK]: 'Середнє'
+  },
+  'Algorithm': {
+    [LANGUAGE.UK]: 'Алгоритм'
+  },
 };
 
 export default DICTIONARY;
