@@ -765,6 +765,42 @@ router.post('/extract', privateRoute, async (req, res) => {
   }
 });
 
+router.get('/venue', privateRoute, async (req, res) => {
+  const { id } = req.user;
+  const { eventId } = req.query;
+
+  const user = await db.User.findOne({
+    where: { id }
+  });
+
+  if (!user) {
+    return res.status(403).send("Invalid token!");
+  }
+
+  const event = await db.Event.findOne({
+    where: { id: eventId },
+    include: [{
+      model: db.User,
+      as: 'attendees'
+    }]
+  });
+
+  event.attendees.push(user)
+  const coords = event.attendees.map(({ latitude, longitude }) => (
+    latitude && longitude && ({ lat: latitude, lng: longitude })
+  ));
+
+  const mean = coords.reduce((result, point) => {
+    result.lat += point.lat;
+    result.lng += point.lng;
+    return result;
+  }, { lat: 0, lng: 0 });
+  mean.lat /= coords.length || 1;
+  mean.lng /= coords.length || 1;
+
+  res.send(mean);
+});
+
 router.get('/hours', privateRoute, async (req, res) => {
   const { id } = req.user;
   const { fromDate, toDate, fromTime, toTime, event: eventId, duration } = serialize(req.query, 'hours');

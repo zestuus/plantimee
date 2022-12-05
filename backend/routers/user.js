@@ -17,8 +17,31 @@ router.get('/profile', privateRoute, async (req, res) => {
     return res.status(403).send("Invalid token!");
   }
 
-  const { username, full_name, email, mfa } = user;
-  res.send({ username, full_name, email, mfaEnabled: !!mfa });
+  const { username, full_name, email, latitude, longitude, address, mfa } = user;
+  res.send({ username, full_name, email, latitude, longitude, address, mfaEnabled: !!mfa });
+})
+
+router.put('/profile', privateRoute, async (req, res) => {
+  const { id } = req.user;
+  const user = await db.User.findOne({ where: { id } });
+
+  if (!user) {
+    return res.status(403).send("Invalid token!");
+  }
+
+  const { full_name, email, latitude, longitude, address } = req.body;
+
+  user.full_name = full_name;
+  user.email = email;
+  user.latitude = latitude;
+  user.longitude = longitude;
+  user.address = address;
+  try {
+    await user.save();
+    res.send(user);
+  } catch (err) {
+    res.status(400).send(err);
+  }
 })
 
 router.get('/list', privateRoute, async (req, res) => {

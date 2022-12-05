@@ -14,6 +14,15 @@ export const getProfile = async () => {
   }
 }
 
+export const updateProfile = async (data) => {
+  try {
+    const response = await axios.put(`${url}/profile`, { ...data }, getAuthHeader());
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+}
+
 export const enableMfa = async () => {
   try {
     const response = await axios.post(`${url}/mfa`, null, getAuthHeader());
@@ -29,14 +38,5 @@ export const disableMfa = async () => {
     return response.status === 200;
   } catch (e) {
     return false;
-  }
-}
-
-export const getAllUsers = async () => {
-  try {
-    const response = await axios.get(`${url}/list`, getAuthHeader());
-    return response.data;
-  } catch (e) {
-    return null;
   }
 }

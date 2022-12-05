@@ -25,6 +25,15 @@ module.exports = {
       email: {
         type: Sequelize.STRING
       },
+      latitude: {
+        type: Sequelize.FLOAT
+      },
+      longitude: {
+        type: Sequelize.FLOAT
+      },
+      address: {
+        type: Sequelize.STRING
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

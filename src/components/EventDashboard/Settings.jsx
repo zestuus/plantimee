@@ -55,7 +55,9 @@ import {
 } from "../../constants/enums";
 import googleIcon from "../../images/google.svg";
 import ConfirmDialog from '../dialogs/ConfirmDialog';
+import AutoFindVenueModal from '../dialogs/AutoFindVenueModal';
 import Event from "./Event";
+import { findVenueAutomatically } from '../../api/event';
 
 const Input = styled(TextField)`
     margin: 10px 0;
@@ -115,8 +117,8 @@ const MapWrapper = styled(Grid)`
   }
 `;
 
-const DefaultLocation = { lat: 49.843625, lng: 24.026442};
-const DefaultZoom = 10;
+export const DefaultLocation = { lat: 49.843625, lng: 24.026442};
+export const DefaultZoom = 10;
 
 const TooltipToggleButton = forwardRef(
   ({ TooltipProps, ...props }, ref) => {
@@ -158,6 +160,8 @@ const Settings = ({
   const [placesToChoose, setPlacesToChoose] = useState([]);
   const [showMap, setShowMap] = useState(true);
   const [selectedRange, setSelectedRange] = useState(0);
+  const [autoFindVenueModalOpen, setAutoFindVenueModalOpen] = useState(false);
+  const [autoFindVenueProps, setAutoFindVenueProps] = useState({});
 
   const isInvitedEvent = !!(eventData && eventData.organizer);
   const readOnly = isInvitedEvent ? { InputProps: { readOnly: true }} : {};
@@ -299,11 +303,11 @@ const Settings = ({
     }
   };
 
-  const handleChangeLocation = async (lat, lng) => {
+  const handleChangeLocation = async (lat, lng, radius = 10, type = null) => {
     const latitude = roundFloat(lat,7);
     const longitude = roundFloat(lng,7);
 
-    const { results } = await findNearbyLocation({ location: `${latitude},${longitude}`, language }) || {};
+    const { results } = await findNearbyLocation({ location: `${latitude},${longitude}`, language, radius, type }) || {};
     if (results) {
       const placesFound = results.filter(place => place.business_status);
 
@@ -786,14 +790,9 @@ const Settings = ({
                   onChange={(event) => {
                     if (event.target.value) {
                       const endTime = new Date(eventData.startTime);
-                      console.log('endTime', endTime);
                       endTime.setDate(endTime.getDate() + daysLong);
-                      console.log('endTime', endTime);
                       endTime.setHours(endTime.getHours() + hoursLong);
-                      console.log('endTime', endTime);
                       endTime.setMinutes(endTime.getMinutes() + parseInt(event.target.value, 10));
-                      console.log('endTime', endTime);
-                      console.log('newMinutes', parseInt(event.target.value, 10));
                       onChangeOwnEventLocally({
                         ...eventData,
                         endTime: formatDateString(endTime)
@@ -814,7 +813,6 @@ const Settings = ({
                       duration: daysLong * 24*60 + hoursLong*60 + minutesLong,
                       ...autoFindProps
                     })
-                    console.log(result);
                     if (!result) {
                       setAutoFindError(
                         __("Cannot find free time in chosen range. Please update find conditions and try again")
@@ -1195,6 +1193,38 @@ const Settings = ({
                 }}
               />
             )}
+            <Grid container direction="row" style={{ margin: '10px 0' }}>
+              <Button
+                style={{ flex: 1 }}
+                color="primary"
+                variant="contained"
+                onClick={ async () => {
+                  const result = await findVenueAutomatically(eventData.id);
+                  if (result) {
+                    const { lat, lng } = result;
+                    const { radius, type } = autoFindVenueProps;
+                    await handleChangeLocation(lat, lng, radius, type);
+                  }
+                }}
+              >
+                <SearchIcon /> {__('Auto find venue')}
+              </Button>
+              <Tooltip
+                title={(
+                  <TooltipText>
+                    {__('Automatic venue planning settings')}
+                  </TooltipText>
+                )}
+              >
+                <IconButton
+                  style={{ padding: 0, marginLeft: 10 }}
+                  onClick={() => {
+                    setAutoFindVenueModalOpen(true);
+                  }}>
+                  <SettingsIcon />
+                </IconButton>
+              </Tooltip>
+            </Grid>
             {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && GOOGLE_MAPS_API_KEY && showMap
               && (
                 <MapWrapper readOnly={isInvitedEvent}>
@@ -1234,6 +1264,11 @@ const Settings = ({
         onSubmit={() => isInvitedEvent ? onRejectInvitation(eventData.id) : onDeleteOwnEvent(eventData.id)}
         onClose={() => setConfirmDialogOpen(false)}
         message={__(`Do you really want to ${isInvitedEvent ? 'reject the invite' : 'remove the event'}?`)}
+      />
+      <AutoFindVenueModal
+        open={autoFindVenueModalOpen}
+        onSave={(props) => { setAutoFindVenueProps(props) }}
+        onClose={() => setAutoFindVenueModalOpen(false)}
       />
     </Container>
   );

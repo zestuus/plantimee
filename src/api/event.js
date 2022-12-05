@@ -123,6 +123,20 @@ export const inviteParticipant = async data => {
   }
 }
 
+export const findVenueAutomatically = async eventId => {
+  try {
+    const response = await axios.get(`${url}/venue`, {
+      ...getAuthHeader(),
+      params: {
+        eventId
+      }
+    });
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+}
+
 export const findHoursAutomatically = async data => {
   try {
     const {

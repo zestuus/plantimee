@@ -301,6 +301,9 @@ const DICTIONARY = {
   'Address': {
     [LANGUAGE.UK]: 'Адреса',
   },
+  'Home address': {
+    [LANGUAGE.UK]: 'Домашня адреса',
+  },
   'You are free that time': {
     [LANGUAGE.UK]: 'Ви вільні в цей час',
   },
@@ -741,6 +744,312 @@ const DICTIONARY = {
   },
   'See event on the timeline': {
     [LANGUAGE.UK]: 'Переглянути подію на часовій шкалі',
+  },
+  'Auto find venue': {
+    [LANGUAGE.UK]: 'Знайти місце автоматично',
+  },
+  'Any': {
+    [LANGUAGE.UK]: 'Довільний'
+  },
+  'Accounting': {
+    [LANGUAGE.UK]: 'Бухгалтерський облік'
+  },
+  'Airport': {
+    [LANGUAGE.UK]: 'Аеропорт'
+  },
+  'Amusement Park': {
+    [LANGUAGE.UK]: 'Парк розваг'
+  },
+  'Aquarium': {
+    [LANGUAGE.UK]: 'Акваріум'
+  },
+  'Art Gallery': {
+    [LANGUAGE.UK]: 'Художня галерея'
+  },
+  'Atm': {
+    [LANGUAGE.UK]: 'Банкомат'
+  },
+  'Bakery': {
+    [LANGUAGE.UK]: 'Пекарня'
+  },
+  'Bank': {
+    [LANGUAGE.UK]: 'Банк'
+  },
+  'Bar': {
+    [LANGUAGE.UK]: 'Бар'
+  },
+  'Beauty Salon': {
+    [LANGUAGE.UK]: 'Салон краси'
+  },
+  'Bicycle Store': {
+    [LANGUAGE.UK]: 'Магазин велосипедів'
+  },
+  'Book Store': {
+    [LANGUAGE.UK]: 'Книжковий магазин'
+  },
+  'Bowling Alley': {
+    [LANGUAGE.UK]: 'Боулінг'
+  },
+  'Bus Station': {
+    [LANGUAGE.UK]: 'Автобусна зупинка'
+  },
+  'Cafe': {
+    [LANGUAGE.UK]: 'Кафе'
+  },
+  'Campground': {
+    [LANGUAGE.UK]: 'Кемпінг'
+  },
+  'Car Dealer': {
+    [LANGUAGE.UK]: 'Магазин автомобілів'
+  },
+  'Car Rental': {
+    [LANGUAGE.UK]: 'Оренда автомобілів'
+  },
+  'Car Repair': {
+    [LANGUAGE.UK]: 'Ремонт автомобілів'
+  },
+  'Car Wash': {
+    [LANGUAGE.UK]: 'Автомийка'
+  },
+  'Casino': {
+    [LANGUAGE.UK]: 'Казино'
+  },
+  'Cemetery': {
+    [LANGUAGE.UK]: 'Цвинтар'
+  },
+  'Church': {
+    [LANGUAGE.UK]: 'Церква'
+  },
+  'City Hall': {
+    [LANGUAGE.UK]: 'Ратуша'
+  },
+  'Clothing Store': {
+    [LANGUAGE.UK]: 'Магазин одягу'
+  },
+  'Convenience Store': {
+    [LANGUAGE.UK]: 'Магазин'
+  },
+  'Courthouse': {
+    [LANGUAGE.UK]: 'Суд'
+  },
+  'Dentist': {
+    [LANGUAGE.UK]: 'Дантист'
+  },
+  'Department Store': {
+    [LANGUAGE.UK]: 'Універмаг'
+  },
+  'Doctor': {
+    [LANGUAGE.UK]: 'Лікар'
+  },
+  'Drugstore': {
+    [LANGUAGE.UK]: 'Аптека'
+  },
+  'Electrician': {
+    [LANGUAGE.UK]: 'Електрик'
+  },
+  'Electronics Store': {
+    [LANGUAGE.UK]: 'Магазин електроніки'
+  },
+  'Embassy': {
+    [LANGUAGE.UK]: 'Посольство'
+  },
+  'Fire Station': {
+    [LANGUAGE.UK]: 'Пожежна станція'
+  },
+  'Florist': {
+    [LANGUAGE.UK]: 'Флорист'
+  },
+  'Funeral Home': {
+    [LANGUAGE.UK]: 'Похоронне бюро'
+  },
+  'Furniture Store': {
+    [LANGUAGE.UK]: 'Меблевий магазин'
+  },
+  'Gas Station': {
+    [LANGUAGE.UK]: 'Заправна станція'
+  },
+  'Gym': {
+    [LANGUAGE.UK]: 'Спортзал'
+  },
+  'Hair Care': {
+    [LANGUAGE.UK]: 'Догляд за волоссям'
+  },
+  'Hardware Store': {
+    [LANGUAGE.UK]: 'Магазин побутової техніки\n'
+  },
+  'Hindu Temple': {
+    [LANGUAGE.UK]: 'Індуїстський храм'
+  },
+  'Home Goods Store': {
+    [LANGUAGE.UK]: 'Магазин товарів для дому'
+  },
+  'Hospital': {
+    [LANGUAGE.UK]: 'Лікарня'
+  },
+  'Insurance Agency': {
+    [LANGUAGE.UK]: 'Страхова компанія'
+  },
+  'Jewelry Store': {
+    [LANGUAGE.UK]: 'Ювелірний магазин'
+  },
+  'Laundry': {
+    [LANGUAGE.UK]: 'Пральня'
+  },
+  'Lawyer': {
+    [LANGUAGE.UK]: 'Юрист'
+  },
+  'Library': {
+    [LANGUAGE.UK]: 'Бібліотека'
+  },
+  'Light Rail Station': {
+    [LANGUAGE.UK]: 'Залізнична станція'
+  },
+  'Liquor Store': {
+    [LANGUAGE.UK]: 'Магазин алкогольних напоїв'
+  },
+  'Local Government Office': {
+    [LANGUAGE.UK]: 'Офіс місцевого самоврядування'
+  },
+  'Locksmith': {
+    [LANGUAGE.UK]: 'Слюсар'
+  },
+  'Lodging': {
+    [LANGUAGE.UK]: 'Ночівля'
+  },
+  'Meal Delivery': {
+    [LANGUAGE.UK]: 'Доставка їжі'
+  },
+  'Meal Takeaway': {
+    [LANGUAGE.UK]: 'Їжа на винос'
+  },
+  'Mosque': {
+    [LANGUAGE.UK]: 'Мечеть'
+  },
+  'Movie Rental': {
+    [LANGUAGE.UK]: 'Прокат фільмів'
+  },
+  'Movie Theater': {
+    [LANGUAGE.UK]: 'Кінотеатр'
+  },
+  'Moving Company': {
+    [LANGUAGE.UK]: 'Перевізна компанія'
+  },
+  'Museum': {
+    [LANGUAGE.UK]: 'Музей'
+  },
+  'Night Club': {
+    [LANGUAGE.UK]: 'Нічний клуб'
+  },
+  'Painter': {
+    [LANGUAGE.UK]: 'Маляр'
+  },
+  'Park': {
+    [LANGUAGE.UK]: 'Парк'
+  },
+  'Parking': {
+    [LANGUAGE.UK]: 'Парковка'
+  },
+  'Pet Store': {
+    [LANGUAGE.UK]: 'Зоомагазин'
+  },
+  'Pharmacy': {
+    [LANGUAGE.UK]: 'Аптека'
+  },
+  'Physiotherapist': {
+    [LANGUAGE.UK]: 'Фізіотерапевт'
+  },
+  'Plumber': {
+    [LANGUAGE.UK]: 'Сантехнік'
+  },
+  'Police': {
+    [LANGUAGE.UK]: 'Поліція'
+  },
+  'Post Office': {
+    [LANGUAGE.UK]: 'Пошта'
+  },
+  'Primary School': {
+    [LANGUAGE.UK]: 'Початкова школа'
+  },
+  'Real Estate Agency': {
+    [LANGUAGE.UK]: 'Агентство нерухомості'
+  },
+  'Restaurant': {
+    [LANGUAGE.UK]: 'Ресторан'
+  },
+  'Roofing Contractor': {
+    [LANGUAGE.UK]: 'Покрівельний підрядник'
+  },
+  'Rv Park': {
+    [LANGUAGE.UK]: 'Парк автофургонів'
+  },
+  'School': {
+    [LANGUAGE.UK]: 'Школа'
+  },
+  'Secondary School': {
+    [LANGUAGE.UK]: 'Середня школа'
+  },
+  'Shoe Store': {
+    [LANGUAGE.UK]: 'Магазин взуття'
+  },
+  'Shopping Mall': {
+    [LANGUAGE.UK]: 'Торговий центр'
+  },
+  'Spa': {
+    [LANGUAGE.UK]: 'Спа'
+  },
+  'Stadium': {
+    [LANGUAGE.UK]: 'Стадіон'
+  },
+  'Storage': {
+    [LANGUAGE.UK]: 'Склад'
+  },
+  'Store': {
+    [LANGUAGE.UK]: 'Магазин'
+  },
+  'Subway Station': {
+    [LANGUAGE.UK]: 'Станція метро'
+  },
+  'Supermarket': {
+    [LANGUAGE.UK]: 'Супермаркет'
+  },
+  'Synagogue': {
+    [LANGUAGE.UK]: 'Синагога'
+  },
+  'Taxi Stand': {
+    [LANGUAGE.UK]: 'Зупинка таксі'
+  },
+  'Tourist Attraction': {
+    [LANGUAGE.UK]: 'Визначне місце'
+  },
+  'Train Station': {
+    [LANGUAGE.UK]: 'Залізницна станція'
+  },
+  'Transit Station': {
+    [LANGUAGE.UK]: 'Транзитна станція'
+  },
+  'Travel Agency': {
+    [LANGUAGE.UK]: 'Тур-агенція'
+  },
+  'University': {
+    [LANGUAGE.UK]: 'Університет'
+  },
+  'Veterinary Care': {
+    [LANGUAGE.UK]: 'Ветеринарна допомога'
+  },
+  'Zoo': {
+    [LANGUAGE.UK]: 'Зоопарк'
+  },
+  'Location type': {
+    [LANGUAGE.UK]: 'Тип закладу'
+  },
+  'Search radius': {
+    [LANGUAGE.UK]: 'Радіус пошуку'
+  },
+  'Auto find venue settings': {
+    [LANGUAGE.UK]: 'Налаштування автоматичного планування місця'
+  },
+  'm': {
+    [LANGUAGE.UK]: 'м'
   },
 };
 
