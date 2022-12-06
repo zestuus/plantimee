@@ -201,7 +201,10 @@ const AutoFindModal = ({ open, autoFindProps, onClose, setAutoFindProps, transla
               onChange={event => {
                 const setValue = startOrEnd === SEARCH_LIMITS.START ? setSearchStartInterval : setSearchEndInterval;
 
-                setValue(Math.max(Math.min(parseInt(event.target.value, 10), 1000), 1))
+                const newValue = parseInt(event.target.value, 10);
+                if (!isNaN(newValue)) {
+                  setValue(Math.max(Math.min(newValue, 1000), 1));
+                }
               }}
             />
             <Select

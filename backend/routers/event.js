@@ -14,7 +14,7 @@ const {
   getWeekdayNumber,
   countCertainDaySinceStartOfMonth,
   countCertainDayTillEndOfMonth,
-  getDayTimeLimitingTasks,
+  getDayTimeLimitingTasks, getSegmentDatesMap,
 } = require("../utils/helpers");
 const { serialize } = require('../utils/serializers');
 
@@ -53,7 +53,7 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
   const {
     name, description, completed, startTime, endTime, recurringEventId, originalStartTime, isFullDay,
     latitude, longitude, placeName, address, url, googleId, googleCalendarId, isGuestListPublic,
-    repeatEnabled, repeatFreq, repeatInterval, repeatByDayReceived, repeatUntil, repeatCount
+    repeatEnabled, repeatFreq, repeatInterval, repeatUntil, repeatCount, repeatByDay: repeatByDayReceived
   } = eventData;
   const repeatByDay = repeatByDayReceived === 'onDay' ? '' : repeatByDayReceived;
 
@@ -81,11 +81,11 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
       if (!repeatEnabled) {
         event.noLongerRecurrent = true;
       } else if (
-        event.repeatFreq !== repeatFreq ||
-        event.repeatInterval !== repeatInterval ||
-        event.repeatByDay !== repeatByDay ||
-        event.repeatUntil !== repeatUntil ||
-        event.repeatCount !== repeatCount
+        (event.repeatFreq !== repeatFreq) ||
+        (event.repeatInterval !== repeatInterval) ||
+        (event.repeatByDay !== repeatByDay) ||
+        (event.repeatUntil !== repeatUntil) ||
+        (event.repeatCount !== repeatCount)
       ) {
         event.repeatChanged = true;
       }
@@ -118,7 +118,39 @@ const editEvent = async (eventData, UserId, keys=['id']) => {
   return eventData;
 }
 
-const getEventOccurence = (event, chosenDate) => {
+const buildSeparateInstance = (recurrentEvent, originalStartTime, startTime, endTime) => {
+  const { UserId, id: recurrentEventId, name, description, url, latitude, longitude, placeName, address } = recurrentEvent;
+  
+  return {
+    UserId,
+    name,
+    description,
+    url,
+    startTime,
+    endTime,
+    latitude,
+    longitude,
+    placeName,
+    address,
+    recurrentEventId,
+    originalStartTime: startTime,
+    completed: false,
+    isFullDay: false,
+    isGuestListPublic: true,
+    repeatEnabled: false,
+    repeatFreq: null,
+    repeatInterval: null,
+    repeatByDay: null,
+    repeatUntil: null,
+    repeatCount: null,
+    googleId: null,
+    googleCalendarId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+};
+
+const getEventOccurrence = (event, chosenDate) => {
   const startTime = new Date(event.startTime);
   const eventDuration = new Date(event.endTime) - startTime;
   startTime.setFullYear(chosenDate.getFullYear());
@@ -130,7 +162,7 @@ const getEventOccurence = (event, chosenDate) => {
 }
 
 const addEventOccurrence = (acc, event, chosenDate, attendees, extraFields = {}) => {
-  const { startTime, endTime } = getEventOccurence(event, chosenDate);
+  const { startTime, endTime } = getEventOccurrence(event, chosenDate);
 
   acc.push(getEventInstance(event, startTime.toISOString(), endTime.toISOString(), attendees, extraFields));
 }
@@ -188,9 +220,9 @@ const checkIfDayHasEventOccurrence = (date, event) => {
     case REPEAT_FREQ.DAILY:
       return checkRepeatIntervalMatch(startTime, event.repeatInterval, event.repeatFreq, dayStart)
     case REPEAT_FREQ.WEEKLY:
-      const daysOfWeek = event.repeatByDay.split(',').map(dayTxt => (
+      const daysOfWeek = event.repeatByDay && event.repeatByDay.split(',').map(dayTxt => (
         EnglishDays.findIndex(el => dayTxt === el.slice(0,2).toUpperCase())
-      ));
+      )) || [];
       daysOfWeek.sort();
       return daysOfWeek.includes(getWeekdayNumber(dayStart)) && (
         checkRepeatIntervalMatch(startTime, event.repeatInterval, event.repeatFreq, dayStart)
@@ -427,6 +459,8 @@ router.get('/list-instances', privateRoute, async (req, res) => {
         [Op.not]: {
           startTime: {
             [Op.lt]: dayEnd,
+            // TODO: check and use this condition
+            // [Op.eq]: sequelize.col('endTime')
           },
           endTime: {
             [Op.gt]: dayStart,
@@ -529,7 +563,6 @@ router.put('/', privateRoute, async (req, res) => {
       }
     }));
   }
-
 
   try {
     await event.save();
@@ -726,36 +759,7 @@ router.post('/extract', privateRoute, async (req, res) => {
     const duration = recurrentEvent.endTime - recurrentEvent.startTime;
     const endTime = new Date(duration + startTime.getTime());
 
-    const { name, description, url, latitude, longitude, placeName, address } = recurrentEvent;
-
-    const eventData = {
-      UserId: id,
-      name,
-      description,
-      url,
-      startTime,
-      endTime,
-      latitude,
-      longitude,
-      placeName,
-      address,
-      recurrentEventId,
-      originalStartTime: startTime,
-      completed: false,
-      isFullDay: false,
-      isGuestListPublic: true,
-      repeatEnabled: false,
-      repeatFreq: null,
-      repeatInterval: null,
-      repeatByDay: null,
-      repeatUntil: null,
-      repeatCount: null,
-      googleId: null,
-      googleCalendarId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
+    const eventData = buildSeparateInstance(recurrentEvent, originalStartTime, startTime, endTime);
     const event = await db.Event.build(eventData);
 
     try {
@@ -924,17 +928,14 @@ router.get('/hours', privateRoute, async (req, res) => {
 
   const { attendees } = event;
 
-  let raw_tasks = [];
-
   let start = new Date();
   let { dayEnd: end } = getDayBounds(start);
   if (fromDate) start = fromDate;
   if (toDate) end = toDate;
 
-  const collectTask = (eventData) => {
-    let startDate = new Date(eventData.startTime);
-    let endDate = new Date(eventData.endTime);
+  let raw_tasks = [];
 
+  const addTask = (eventData, startDate, endDate) => {
     if (eventData.startTime && eventData.endTime && !eventData.isFullDay && start < endDate && startDate < endDate && startDate < end) {
       let taskStart = startDate;
       let taskEnd = endDate;
@@ -942,19 +943,21 @@ router.get('/hours', privateRoute, async (req, res) => {
       if (end < endDate) taskEnd = end;
       raw_tasks.push([taskStart.getTime(), taskEnd.getTime()]);
     }
+  }
+
+  const collectTask = (eventData) => {
+    if (eventData.id === event.id || eventData.recurrentEventId === event.id) return;
+    let startDate = new Date(eventData.startTime);
+    let endDate = new Date(eventData.endTime);
+
+    addTask(eventData, startDate, endDate);
     if (eventData.repeatEnabled) {
       let from = new Date(start);
       while (from < end) {
         if (checkIfDayHasEventOccurrence(from, eventData)) {
-          ({ startTime: startDate, endTime: endDate } = getEventOccurence(event, from));
+          ({ startTime: startDate, endTime: endDate } = getEventOccurrence(event, from));
 
-          if (eventData.startTime && eventData.endTime && !eventData.isFullDay && start < endDate && startDate < endDate && startDate < end) {
-            let taskStart = startDate;
-            let taskEnd = endDate;
-            if (startDate < start) taskStart = start;
-            if (end < endDate) taskEnd = end;
-            raw_tasks.push([taskStart.getTime(), taskEnd.getTime()]);
-          }
+          addTask(eventData, startDate, endDate);
         }
         from.setDate(from.getDate() + 1);
       }
@@ -1000,10 +1003,91 @@ router.get('/hours', privateRoute, async (req, res) => {
 
   const segmentToInsertIn = sortedSegments.find(seg => msDuration < (seg[1] - seg[0]+0.05));
   if (segmentToInsertIn) {
-    event.startTime = new Date(segmentToInsertIn[0])
-    event.endTime = new Date(segmentToInsertIn[0] + msDuration)
-
+    event.startTime = new Date(segmentToInsertIn[0]);
+    event.endTime = new Date(segmentToInsertIn[0] + msDuration);
     const savedEvent = await event.save();
+
+    if (event.repeatEnabled) {
+      segmentToInsertIn[0] = segmentToInsertIn[0] + msDuration;
+
+      console.log('sortedSegments', sortedSegments.map(getSegmentDatesMap));
+
+      await db.Event.destroy({
+        where: {
+          recurrentEventId: event.id,
+          startTime: {
+            [Op.gt]: start,
+          },
+          endTime: {
+            [Op.lt]: end,
+          }
+        }
+      });
+
+      let newEventOccurrences = [];
+      let from = new Date(start);
+      while (from < end) {
+        const { dayStart: possibleDayStart, dayEnd: possibleDayEnd } = getDayBounds(from);
+        const dayStart = Math.max(start.getTime(), possibleDayStart.getTime());
+        const dayEnd = Math.min(possibleDayEnd.getTime(), end.getTime());
+        if (checkIfDayHasEventOccurrence(from, event)) {
+          const { startTime: startDate, endTime: endDate } = getEventOccurrence(event, from);
+
+          let prevSegment = null;
+          let foundStartTime = null;
+          for (const seg of sortedSegments) {
+            const segStart = Math.max(seg[0], dayStart);
+            const segEnd = Math.min(seg[1], dayEnd);
+            if ((segEnd - segStart) < msDuration) {}
+            else if (segStart < startDate && endDate < segEnd) {
+              foundStartTime = startDate.getTime();
+              break;
+            } else if (segEnd < startDate) {
+              prevSegment = [segStart, segEnd];
+            } else if (endDate < segStart) {
+              if (prevSegment) {
+                const diffToPrev = startDate - prevSegment[1];
+                const diffToCurr = segStart - endDate;
+                if (diffToPrev < diffToCurr) {
+                  foundStartTime = prevSegment[0];
+                  break;
+                } else {
+                  foundStartTime = segStart;
+                  break;
+                }
+              } else {
+                foundStartTime = segStart;
+                break;
+              }
+            } else if (segStart < startDate || endDate < segEnd) {
+              foundStartTime = segStart;
+              break;
+            }
+          }
+
+          if (foundStartTime) {
+            if (foundStartTime !== startDate.getTime()) {
+              newEventOccurrences.push(
+                buildSeparateInstance(event, startDate, new Date(foundStartTime), new Date(foundStartTime + msDuration))
+              );
+            }
+          } else {
+            newEventOccurrences.push(
+              buildSeparateInstance(event, startDate, new Date(startDate), new Date(startDate))
+            );
+          }
+        }
+        from.setDate(from.getDate() + 1);
+      }
+
+      if (newEventOccurrences.length) {
+        try {
+          await db.Event.bulkCreate(newEventOccurrences);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
 
     return res.send(savedEvent);
   }

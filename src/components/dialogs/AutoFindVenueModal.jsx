@@ -224,8 +224,8 @@ const ALGORITHM_TYPE = {
 };
 
 const ALGORITHM_TYPE_LABEL = {
-  [ALGORITHM_TYPE.MEDIAN]: 'Median',
-  [ALGORITHM_TYPE.MEAN]: 'Mean'
+  [ALGORITHM_TYPE.MEDIAN]: 'Geometric median',
+  [ALGORITHM_TYPE.MEAN]: 'Center of mass'
 };
 
 const ALGORITHM_TYPES = Object.values(ALGORITHM_TYPE);

@@ -739,8 +739,8 @@ const DICTIONARY = {
   'Event time is automatically adjusted to': {
     [LANGUAGE.UK]: 'Час події автоматично змінено на',
   },
-  "Please update find conditions and try again if suggested times aren't suitable for you": {
-    [LANGUAGE.UK]: 'Будь ласка, оновіть умови пошуку і спробуйте знову, якщо запропонований час вам не підходить',
+  "If suggested times aren't suitable for you update find conditions and try again": {
+    [LANGUAGE.UK]: 'Якщо запропонований час вам не підходить, оновіть умови пошуку і спробуйте знову',
   },
   'See event on the timeline': {
     [LANGUAGE.UK]: 'Переглянути подію на часовій шкалі',
@@ -1057,8 +1057,17 @@ const DICTIONARY = {
   'Mean': {
     [LANGUAGE.UK]: 'Середнє'
   },
+  'Geometric median': {
+    [LANGUAGE.UK]: ' Геометрична медіана'
+  },
+  'Center of mass': {
+    [LANGUAGE.UK]: 'Центр мас'
+  },
   'Algorithm': {
     [LANGUAGE.UK]: 'Алгоритм'
+  },
+  'Event time is still the same': {
+    [LANGUAGE.UK]: 'Час події не змінився'
   },
 };
 

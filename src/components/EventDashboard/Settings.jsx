@@ -819,8 +819,16 @@ const Settings = ({
                       );
                       setAutoFindInfo('');
                     } else {
+                      const before = new Date(result.startTime);
+                      const after = new Date(eventData.startTime);
+                      const mainInfo = before.getTime() === after.getTime() ? (
+                        __('Event time is still the same')
+                      ) : (
+                        `${__('Event time is automatically adjusted to')}: ${formatDateString(before).replace('T', ' ')} - ${formatDateString(after).replace('T', ' ')}`
+                      );
+
+                      setAutoFindInfo(`${mainInfo}. ${__('If suggested times aren\'t suitable for you update find conditions and try again')}`);
                       setAutoFindError('');
-                      setAutoFindInfo(`${__('Event time is automatically adjusted to')}: ${formatDateString(result.startTime).replace('T', ' ')} - ${formatDateString(result.endTime).replace('T', ' ')}. ${__('Please update find conditions and try again if suggested times aren\'t suitable for you')}`);
                     }
                     handleBlur('startTime');
                   }}

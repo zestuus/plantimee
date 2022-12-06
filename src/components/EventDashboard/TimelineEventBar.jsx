@@ -1,10 +1,11 @@
 import React from 'react';
 import styled from "styled-components";
+import ScheduleIcon from "@material-ui/icons/Schedule";
+import Tooltip from "@material-ui/core/Tooltip";
+
 import {HourHeight, OneHour, OneMinute} from "../../constants/config";
 import {formatEventTime, getDayBounds, getOtherEventHasSeparateCollisionsBefore} from "../../utils/helpers";
-import ScheduleIcon from "@material-ui/icons/Schedule";
 import { BubbleInline } from "./Event";
-import Tooltip from "@material-ui/core/Tooltip";
 import {AVAILABILITY_STATUS} from "../../constants/enums";
 
 const EventBar = styled.div`
@@ -24,10 +25,11 @@ const EventBar = styled.div`
   color: ${props => props.bgColor && props.bgColor.length === 9 && props.bgColor.slice(-2) !== 'ff' ? '#484848' : 'white'};
   overflow: hidden;
   ${props => `
+    ${props.$height < 5 ? 'display: none;': ''}
     top: ${props.$top + 21}px;
-    height: ${props.$height < 5 ? 5 : props.$height}px;
-    ${props.$completed ? 'text-decoration: line-through;' : ''};
-    ${props.$height < 35 ? 'padding: 0;' : 'padding: 10px;'};
+    height: ${props.$height}px;
+    ${props.$completed ? 'text-decoration: line-through;' : ''}
+    ${props.$height < 35 ? 'padding: 0;' : 'padding: 10px;'}
   `};
 `;
 
