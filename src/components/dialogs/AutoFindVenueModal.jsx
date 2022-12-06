@@ -276,7 +276,7 @@ const AutoFindVenueModal = ({ open, onClose, onSave, translate: __ }) => {
               value={algorithm}
               options={ALGORITHM_TYPES}
               getOptionLabel={(option) => __(ALGORITHM_TYPE_LABEL[option])}
-              style={{ width: 200, marginTop: 15 }}
+              style={{ width: 300, marginTop: 15 }}
               onChange={(e, value) => {
                 setAlgorithm(value);
               }}

@@ -824,7 +824,7 @@ const Settings = ({
                       const mainInfo = before.getTime() === after.getTime() ? (
                         __('Event time is still the same')
                       ) : (
-                        `${__('Event time is automatically adjusted to')}: ${formatDateString(before).replace('T', ' ')} - ${formatDateString(after).replace('T', ' ')}`
+                        `${__('Event time is automatically adjusted to')}: ${formatDateString(before).replace('T', ' ')} - ${formatDateString(result.endTime).replace('T', ' ')}`
                       );
 
                       setAutoFindInfo(`${mainInfo}. ${__('If suggested times aren\'t suitable for you update find conditions and try again')}`);
@@ -1201,38 +1201,40 @@ const Settings = ({
                 }}
               />
             )}
-            <Grid container direction="row" style={{ margin: '10px 0' }}>
-              <Button
-                style={{ flex: 1 }}
-                color="primary"
-                variant="contained"
-                onClick={ async () => {
-                  const { radius, type, algorithm } = autoFindVenueProps;
-                  const result = await findVenueAutomatically(eventData.id, algorithm);
-                  if (result) {
-                    const { lat, lng } = result;
-                    await handleChangeLocation(lat, lng, radius, type);
-                  }
-                }}
-              >
-                <SearchIcon /> {__('Auto find venue')}
-              </Button>
-              <Tooltip
-                title={(
-                  <TooltipText>
-                    {__('Automatic venue planning settings')}
-                  </TooltipText>
-                )}
-              >
-                <IconButton
-                  style={{ padding: 0, marginLeft: 10 }}
-                  onClick={() => {
-                    setAutoFindVenueModalOpen(true);
-                  }}>
-                  <SettingsIcon />
-                </IconButton>
-              </Tooltip>
-            </Grid>
+            {!isInvitedEvent && (
+              <Grid container direction="row" style={{ margin: '10px 0' }}>
+                <Button
+                  style={{ flex: 1 }}
+                  color="primary"
+                  variant="contained"
+                  onClick={ async () => {
+                    const { radius, type, algorithm } = autoFindVenueProps;
+                    const result = await findVenueAutomatically(eventData.id, algorithm);
+                    if (result) {
+                      const { lat, lng } = result;
+                      await handleChangeLocation(lat, lng, radius, type);
+                    }
+                  }}
+                >
+                  <SearchIcon /> {__('Auto find venue')}
+                </Button>
+                <Tooltip
+                  title={(
+                    <TooltipText>
+                      {__('Automatic venue planning settings')}
+                    </TooltipText>
+                  )}
+                >
+                  <IconButton
+                    style={{ padding: 0, marginLeft: 10 }}
+                    onClick={() => {
+                      setAutoFindVenueModalOpen(true);
+                    }}>
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            )}
             {(!isInvitedEvent || (eventData.latitude && eventData.longitude)) && GOOGLE_MAPS_API_KEY && showMap
               && (
                 <MapWrapper readOnly={isInvitedEvent}>

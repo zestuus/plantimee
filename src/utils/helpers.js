@@ -124,7 +124,7 @@ export const filterEventsByDate = (events, date) => {
       endDateTime.setMilliseconds(0);
     }
 
-    if (eventData && eventData.startTime && eventData.endTime && startDateTime <= dayEnd && endDateTime >= dayStart) {
+    if (eventData && eventData.startTime && eventData.endTime && startDateTime <= dayEnd && endDateTime >= dayStart && startDateTime < endDateTime) {
       if (eventData.isFullDay) {
         acc[1].push(eventData);
       } else {

@@ -25,7 +25,6 @@ const EventBar = styled.div`
   color: ${props => props.bgColor && props.bgColor.length === 9 && props.bgColor.slice(-2) !== 'ff' ? '#484848' : 'white'};
   overflow: hidden;
   ${props => `
-    ${props.$height < 5 ? 'display: none;': ''}
     top: ${props.$top + 21}px;
     height: ${props.$height}px;
     ${props.$completed ? 'text-decoration: line-through;' : ''}
